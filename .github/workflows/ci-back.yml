@@ -1,0 +1,32 @@
+name: Back
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/back/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "web/back/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: web/back/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web/back
+        run: npm ci
+
+      - name: Build
+        working-directory: web/back
+        run: npm run build
