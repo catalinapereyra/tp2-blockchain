@@ -4,3 +4,4 @@ cache
 dist
 .env
 typechain-types
+scripts/deployed.json
