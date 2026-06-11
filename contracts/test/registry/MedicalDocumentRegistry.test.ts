@@ -14,6 +14,42 @@ describe("MedicalDocumentRegistry", function () {
     const DOC_TYPE = "estudio de sangre";
     const OFF_CHAIN_REF = "ipfs://QmXyz123";
 
+    async function signMedicalDocument(
+        docRegistry: any,
+        signer: any,
+        patient: string,
+        documentHash: string,
+        documentType: string,
+        offChainRef: string,
+        doctor: string
+    ) {
+        const network = await ethers.provider.getNetwork();
+        const domain = {
+            name: "MedicalDocumentRegistry",
+            version: "1",
+            chainId: network.chainId,
+            verifyingContract: await docRegistry.getAddress(),
+        };
+        const types = {
+            MedicalDocument: [
+                { name: "patient", type: "address" },
+                { name: "documentHash", type: "bytes32" },
+                { name: "documentType", type: "string" },
+                { name: "offChainRef", type: "string" },
+                { name: "doctor", type: "address" },
+            ],
+        };
+        const value = {
+            patient,
+            documentHash,
+            documentType,
+            offChainRef,
+            doctor,
+        };
+
+        return signer.signTypedData(domain, types, value);
+    }
+
     async function deployAll() {
         const [admin, doctor, patient, stranger] = await ethers.getSigners();
 
@@ -145,6 +181,118 @@ describe("MedicalDocumentRegistry", function () {
 
             await expect(
                 docRegistry.connect(doctor).registerDocument(patient.address, SAMPLE_HASH, DOC_TYPE, OFF_CHAIN_REF)
+            ).to.be.revertedWith("MedicalDocumentRegistry: hash ya registrado");
+        });
+    });
+
+
+    describe("registerSignedDocument", function () {
+        it("registra un documento con firma EIP-712 del medico", async function () {
+            const { docRegistry, doctor, patient, stranger } = await deployAll();
+            const signature = await signMedicalDocument(
+                docRegistry,
+                doctor,
+                patient.address,
+                SAMPLE_HASH,
+                DOC_TYPE,
+                OFF_CHAIN_REF,
+                doctor.address
+            );
+
+            await expect(
+                docRegistry
+                    .connect(stranger)
+                    .registerSignedDocument(patient.address, SAMPLE_HASH, DOC_TYPE, OFF_CHAIN_REF, doctor.address, signature)
+            )
+                .to.emit(docRegistry, "DocumentRegistered")
+                .withArgs(0n, patient.address, doctor.address, DocumentStatus.VERIFIED_ISSUER_DOCUMENT);
+
+            const doc = await docRegistry.getDocument(0n);
+            expect(doc.documentHash).to.equal(SAMPLE_HASH);
+            expect(doc.patient).to.equal(patient.address);
+            expect(doc.issuer).to.equal(doctor.address);
+            expect(doc.documentType).to.equal(DOC_TYPE);
+            expect(doc.offChainRef).to.equal(OFF_CHAIN_REF);
+            expect(doc.status).to.equal(DocumentStatus.VERIFIED_ISSUER_DOCUMENT);
+        });
+
+        it("reverts si firma una wallet distinta al medico esperado", async function () {
+            const { docRegistry, doctor, patient, stranger } = await deployAll();
+            const signature = await signMedicalDocument(
+                docRegistry,
+                stranger,
+                patient.address,
+                SAMPLE_HASH,
+                DOC_TYPE,
+                OFF_CHAIN_REF,
+                doctor.address
+            );
+
+            await expect(
+                docRegistry
+                    .connect(stranger)
+                    .registerSignedDocument(patient.address, SAMPLE_HASH, DOC_TYPE, OFF_CHAIN_REF, doctor.address, signature)
+            ).to.be.revertedWith("MedicalDocumentRegistry: firma no corresponde al medico");
+        });
+
+        it("reverts si el medico firmante no esta verificado", async function () {
+            const { docRegistry, patient, stranger } = await deployAll();
+            const signature = await signMedicalDocument(
+                docRegistry,
+                stranger,
+                patient.address,
+                SAMPLE_HASH,
+                DOC_TYPE,
+                OFF_CHAIN_REF,
+                stranger.address
+            );
+
+            await expect(
+                docRegistry
+                    .connect(patient)
+                    .registerSignedDocument(patient.address, SAMPLE_HASH, DOC_TYPE, OFF_CHAIN_REF, stranger.address, signature)
+            ).to.be.revertedWith("MedicalDocumentRegistry: medico no verificado");
+        });
+
+        it("reverts si cambia un dato despues de firmar", async function () {
+            const { docRegistry, doctor, patient, stranger } = await deployAll();
+            const signature = await signMedicalDocument(
+                docRegistry,
+                doctor,
+                patient.address,
+                SAMPLE_HASH,
+                DOC_TYPE,
+                OFF_CHAIN_REF,
+                doctor.address
+            );
+
+            await expect(
+                docRegistry
+                    .connect(stranger)
+                    .registerSignedDocument(patient.address, SAMPLE_HASH_2, DOC_TYPE, OFF_CHAIN_REF, doctor.address, signature)
+            ).to.be.revertedWith("MedicalDocumentRegistry: firma no corresponde al medico");
+        });
+
+        it("reverts si el hash firmado ya fue registrado", async function () {
+            const { docRegistry, doctor, patient, stranger } = await deployAll();
+            const signature = await signMedicalDocument(
+                docRegistry,
+                doctor,
+                patient.address,
+                SAMPLE_HASH,
+                DOC_TYPE,
+                OFF_CHAIN_REF,
+                doctor.address
+            );
+
+            await docRegistry
+                .connect(stranger)
+                .registerSignedDocument(patient.address, SAMPLE_HASH, DOC_TYPE, OFF_CHAIN_REF, doctor.address, signature);
+
+            await expect(
+                docRegistry
+                    .connect(stranger)
+                    .registerSignedDocument(patient.address, SAMPLE_HASH, DOC_TYPE, OFF_CHAIN_REF, doctor.address, signature)
             ).to.be.revertedWith("MedicalDocumentRegistry: hash ya registrado");
         });
     });
