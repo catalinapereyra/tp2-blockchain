@@ -7,15 +7,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//perfil off-chain del usuario, el rol y el estado viven en el contrato UserRegistry en bc
+//aca solo guardamos lo que la bc no puede guardar
+model UserProfile {
+  id            Int      @id @default(autoincrement())
+  walletAddress String   @unique
+  name          String
+  lastName      String?
+  email         String?
+  //nonce para el login con wallet, el front firma este string con MetaMask,
+  //el back verifica la firma
+  nonce         String   @default(uuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+//metadatos off-chain de documentos medicos
+//el hash y el estado viven en MedicalDocumentRegistry en bc
+//aca guardamos el titulo, descr y el CID de IPFS para poder mostrarlos en el front
 model DocumentMetadata {
-  id               Int      @id @default(autoincrement())
-  documentIdOnChain Int     @unique
-  patientAddress   String
-  emitterAddress   String
-  title            String
-  description      String?
-  documentType     String
-  ipfsCid          String
-  ipfsUrl          String
-  createdAt        DateTime @default(now())
+  id                Int      @id @default(autoincrement())
+  documentIdOnChain Int      @unique
+  patientAddress    String
+  emitterAddress    String
+  title             String
+  description       String?
+  documentType      String
+  ipfsCid           String
+  ipfsUrl           String
+  createdAt         DateTime @default(now())
 }
