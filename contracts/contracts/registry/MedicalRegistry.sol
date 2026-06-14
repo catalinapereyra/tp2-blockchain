@@ -14,7 +14,7 @@ contract MedicalRegistry is Ownable {
     }
 
 
-    mapping(address => MedicalEmitter) private _emitters;
+    mapping(address => MedicalEmitter) private _emitters; //Relaciona una wallet con sus datos de emisor médico
     mapping(address => bool) private _registered;
 
     //direccion del UserRegistry, único contrato autorizado a llamar registerEmitter/revokeEmitter

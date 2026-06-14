@@ -14,12 +14,8 @@ import { UploadService } from "./upload.service";
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
-  /**
-   * POST /api/upload
-   * Sube un archivo a IPFS via Pinata.
-   * Devuelve el CID, la URL y el hash del archivo para registrar en el contrato.
-   * Requiere JWT válido.
-   */
+  //sube un archivo a IPFS via Pinata
+  //Devuelve el CID, la URL y el hash del archivo para registrar en el contrato
   @Post()
   @UseGuards(AuthGuard("jwt"))
   @UseInterceptors(

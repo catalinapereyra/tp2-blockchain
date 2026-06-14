@@ -80,10 +80,23 @@ async function main() {
     const outputPath = path.join(__dirname, "deployed.json");
     fs.writeFileSync(outputPath, JSON.stringify(addresses, null, 2));
 
+    const network = await ethers.provider.getNetwork();
+    const isTestnet = network.chainId !== 31337n;
+
     console.log("\n✔  Direcciones guardadas en scripts/deployed.json");
     console.log("\n╔══════════════════════════════════════════╗");
     console.log("║           Deploy completado ✔            ║");
     console.log("╚══════════════════════════════════════════╝\n");
+
+    if (isTestnet) {
+        console.log("Para verificar los contratos en Etherscan, corré:");
+        console.log(`  npx hardhat verify --network sepolia ${addresses.medicalRegistry}`);
+        console.log(`  npx hardhat verify --network sepolia ${addresses.userRegistry}`);
+        console.log(`  npx hardhat verify --network sepolia ${addresses.docRegistry} ${addresses.medicalRegistry} ${addresses.userRegistry}`);
+        console.log(`  npx hardhat verify --network sepolia ${addresses.permissionManager} ${addresses.docRegistry} ${addresses.userRegistry}`);
+        console.log(`  npx hardhat verify --network sepolia ${addresses.prescriptionManager} ${addresses.medicalRegistry} ${addresses.userRegistry} ${addresses.docRegistry}`);
+        console.log("");
+    }
 }
 
 main().catch((err) => {
