@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/navbar.tsx","./src/context/walletcontext.tsx","./src/lib/api.ts","./src/lib/contracts.ts","./src/pages/admindashboard.tsx","./src/pages/doctordashboard.tsx","./src/pages/home.tsx","./src/pages/patientdashboard.tsx","./src/pages/pending.tsx","./src/pages/register.tsx"],"version":"5.9.3"}
