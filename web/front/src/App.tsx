@@ -41,12 +41,12 @@ export default function App() {
           </ProtectedRoute>
         } />
         <Route path="/patient" element={
-          <ProtectedRoute condition={isRegistered && isApproved && role === 0}>
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
             <PatientDashboard />
           </ProtectedRoute>
         } />
         <Route path="/doctor" element={
-          <ProtectedRoute condition={isRegistered && isApproved && role !== null && role !== 0}>
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0}>
             <DoctorDashboard />
           </ProtectedRoute>
         } />

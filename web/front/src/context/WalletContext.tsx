@@ -103,6 +103,29 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } else {
       setLoading(false);
     }
+
+    // Si MetaMask cambia de cuenta, cerrar sesión automáticamente
+    const eth = (window as any).ethereum;
+    if (!eth) return;
+
+    function handleAccountsChanged(accounts: string[]) {
+      const newAddr = accounts[0]?.toLowerCase();
+      const currentSaved = localStorage.getItem("wallet");
+      if (!newAddr || newAddr !== currentSaved) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("wallet");
+        setAddress(null);
+        setRole(null);
+        setIsRegistered(false);
+        setIsApproved(false);
+        setIsAdmin(false);
+        // Redirigir a home
+        window.location.href = "/";
+      }
+    }
+
+    eth.on("accountsChanged", handleAccountsChanged);
+    return () => eth.removeListener("accountsChanged", handleAccountsChanged);
   }, []);
 
   return (
