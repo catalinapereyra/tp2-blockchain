@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../context/WalletContext";
 
+const ADMIN_ADDRESS = (import.meta.env.VITE_ADMIN_ADDRESS as string).toLowerCase();
+
 const ROLES = [
   {
     key: "patient",
@@ -58,6 +60,8 @@ export default function Home() {
     await connect();
   }
 
+  const isAdminWallet = currentAccount?.toLowerCase() === ADMIN_ADDRESS;
+
   return (
     <div style={styles.page}>
       <div style={styles.header}>
@@ -66,31 +70,45 @@ export default function Home() {
         <p style={styles.subtitle}>Gestión de documentos médicos en blockchain</p>
       </div>
 
-      {currentAccount && (
-        <div style={styles.accountBadge}>
-          MetaMask activa: <strong>{currentAccount.slice(0, 8)}...{currentAccount.slice(-6)}</strong>
-          <span style={styles.accountNote}> — si querés entrar con otra cuenta, cambiala en MetaMask antes de conectar</span>
+      {isAdminWallet ? (
+        /* Vista especial solo para la wallet admin */
+        <div style={styles.adminCard}>
+          <div style={styles.adminIcon}>🔐</div>
+          <h2 style={styles.adminTitle}>Panel de Administración</h2>
+          <p style={styles.adminDesc}>
+            Wallet detectada: <code style={styles.adminAddr}>{currentAccount!.slice(0, 10)}...{currentAccount!.slice(-6)}</code>
+          </p>
+          <button
+            style={styles.adminBtn}
+            onClick={() => handleConnect("admin")}
+            disabled={loading}
+          >
+            {loading ? "Conectando..." : "Acceder como Administrador"}
+          </button>
         </div>
+      ) : (
+        /* Vista normal para pacientes y profesionales */
+        <>
+          <div style={styles.cards}>
+            {ROLES.map((r) => (
+              <div key={r.key} style={{ ...styles.card, borderTop: `4px solid ${r.color}` }}>
+                <div style={styles.icon}>{r.icon}</div>
+                <h2 style={{ ...styles.cardTitle, color: r.color }}>{r.title}</h2>
+                <p style={styles.cardDesc}>{r.desc}</p>
+                <button
+                  style={{ ...styles.btn, background: r.color }}
+                  onClick={() => handleConnect(r.key)}
+                  disabled={loading}
+                >
+                  {loading && selected === r.key ? "Conectando..." : "Entrar"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
-      <div style={styles.cards}>
-        {ROLES.map((r) => (
-          <div key={r.key} style={{ ...styles.card, borderTop: `4px solid ${r.color}` }}>
-            <div style={styles.icon}>{r.icon}</div>
-            <h2 style={{ ...styles.cardTitle, color: r.color }}>{r.title}</h2>
-            <p style={styles.cardDesc}>{r.desc}</p>
-            <button
-              style={{ ...styles.btn, background: r.color }}
-              onClick={() => handleConnect(r.key)}
-              disabled={loading}
-            >
-              {loading && selected === r.key ? "Conectando..." : "Entrar"}
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <p style={styles.footer}>Documentos firmados y verificados en Sepolia Testnet</p>
+      <p style={styles.footer}>Documentos firmados y verificados</p>
     </div>
   );
 }
@@ -152,4 +170,22 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
   },
   footer: { color: "rgba(255,255,255,0.45)", fontSize: 12, marginTop: 32 },
+  adminCard: {
+    background: "white",
+    borderRadius: 20,
+    padding: "48px 40px",
+    maxWidth: 420,
+    width: "100%",
+    boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
+    textAlign: "center" as const,
+    border: "2px solid #6366f1",
+  },
+  adminIcon: { fontSize: 52, marginBottom: 12 },
+  adminTitle: { fontSize: 22, fontWeight: 800, color: "#1e1b4b", margin: "0 0 10px" },
+  adminDesc: { color: "#64748b", fontSize: 14, marginBottom: 28 },
+  adminAddr: { background: "#f1f5f9", padding: "2px 8px", borderRadius: 4, fontSize: 13, fontFamily: "monospace" },
+  adminBtn: {
+    width: "100%", background: "#4f46e5", color: "white", border: "none",
+    padding: "14px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer",
+  },
 };
