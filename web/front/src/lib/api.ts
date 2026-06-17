@@ -37,6 +37,9 @@ export const api = {
     title: string;
     description?: string;
     documentType: string;
+    studyType?: string;
+    studyDate?: string;
+    labName?: string;
     ipfsCid: string;
     ipfsUrl: string;
   }) => request("/api/documents", { method: "POST", body: JSON.stringify(data) }),

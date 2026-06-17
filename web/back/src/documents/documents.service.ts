@@ -8,6 +8,9 @@ export interface CreateDocumentDto {
   title: string;
   description?: string;
   documentType: string;
+  studyType?: string;
+  studyDate?: string;
+  labName?: string;
   ipfsCid: string;
   ipfsUrl: string;
 }
@@ -39,11 +42,20 @@ export class DocumentsService {
     });
     if (existing) throw new ConflictException("Ya existe metadata para ese documento");
 
+
     return this.prisma.documentMetadata.create({
       data: {
-        ...dto,
+        documentIdOnChain: dto.documentIdOnChain,
         patientAddress: dto.patientAddress.toLowerCase(),
         emitterAddress: dto.emitterAddress.toLowerCase(),
+        title: dto.title,
+        description: dto.description ?? null,
+        documentType: dto.documentType,
+        studyType: dto.studyType ?? null,
+        studyDate: dto.studyDate ? new Date(dto.studyDate) : null,
+        labName: dto.labName ?? null,
+        ipfsCid: dto.ipfsCid,
+        ipfsUrl: dto.ipfsUrl,
       },
     });
   }

@@ -2,16 +2,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
 
-const ROLE_INFO: Record<number, { label: string; color: string }> = {
-  1: { label: "Médico",       color: "#0ea5e9" },
-  2: { label: "Laboratorio",  color: "#10b981" },
-  3: { label: "Institución",  color: "#f59e0b" },
-};
-
 export default function DoctorDashboard() {
-  const { address, role } = useWallet();
+  const { address } = useWallet();
   const navigate = useNavigate();
-  const info = role !== null ? ROLE_INFO[role] ?? ROLE_INFO[1] : ROLE_INFO[1];
+  const info = { label: "Médico", color: "#0ea5e9" };
 
   const ACTIONS = [
     {

@@ -6,11 +6,16 @@ import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Pending from "./pages/Pending";
 import AdminDashboard from "./pages/AdminDashboard";
-import PatientDashboard from "./pages/PatientDashboard";
+import PatientDashboard from "./pages/patient/PatientDashboard";
+import MisEstudiosPage from "./pages/patient/MisEstudiosPage";
+import SubirEstudioPage from "./pages/patient/SubirEstudioPage";
+import SolicitarRecetaPage from "./pages/patient/SolicitarRecetaPage";
+import MisMedicosPage from "./pages/patient/MisMedicosPage";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import RecetasPage from "./pages/doctor/RecetasPage";
 import PacientesPage from "./pages/doctor/PacientesPage";
 import PacienteDetailPage from "./pages/doctor/PacienteDetailPage";
+import LabDashboard from "./pages/lab/LabDashboard";
 
 function ProtectedRoute({ children, condition }: { children: React.ReactElement; condition: boolean }) {
   const { address, loading } = useWallet();
@@ -48,24 +53,49 @@ export default function App() {
             <PatientDashboard />
           </ProtectedRoute>
         } />
+        <Route path="/patient/estudios" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
+            <MisEstudiosPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/patient/subir" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
+            <SubirEstudioPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/patient/recetas" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
+            <SolicitarRecetaPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/patient/medicos" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
+            <MisMedicosPage />
+          </ProtectedRoute>
+        } />
         <Route path="/doctor" element={
-          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0}>
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 1}>
             <DoctorDashboard />
           </ProtectedRoute>
         } />
         <Route path="/doctor/recetas" element={
-          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0}>
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 1}>
             <RecetasPage />
           </ProtectedRoute>
         } />
         <Route path="/doctor/pacientes" element={
-          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0}>
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 1}>
             <PacientesPage />
           </ProtectedRoute>
         } />
         <Route path="/doctor/pacientes/:address" element={
-          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0}>
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 1}>
             <PacienteDetailPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/lab" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0 && role !== 1}>
+            <LabDashboard />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/" />} />
