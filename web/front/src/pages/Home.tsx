@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../context/WalletContext";
+import { getErrorMessage } from "../lib/error";
 
 const ADMIN_ADDRESS = (import.meta.env.VITE_ADMIN_ADDRESS as string).toLowerCase();
 
@@ -50,6 +51,7 @@ export default function Home() {
   const [selected, setSelected] = useState<string | null>(null);
   const [currentAccount, setCurrentAccount] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   useEffect(() => {
     const eth = (window as any).ethereum;
@@ -73,8 +75,13 @@ export default function Home() {
 
   async function handleConnect(roleKey: string) {
     setSelected(roleKey);
+    setConnectError(null);
     localStorage.setItem("intended_role", roleKey);
-    await connect();
+    try {
+      await connect();
+    } catch (e: unknown) {
+      setConnectError(getErrorMessage(e));
+    }
   }
 
   const isAdminWallet = currentAccount?.toLowerCase() === ADMIN_ADDRESS;
@@ -152,6 +159,15 @@ export default function Home() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {connectError && (
+          <div style={styles.errorBanner}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            {connectError}
           </div>
         )}
 
@@ -286,6 +302,20 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "'DM Sans', sans-serif",
     alignSelf: "stretch",
     textAlign: "center" as const,
+  },
+  errorBanner: {
+    marginTop: 20,
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    background: "#fef2f2",
+    color: "#dc2626",
+    border: "1px solid #fecaca",
+    borderRadius: 10,
+    padding: "10px 16px",
+    fontSize: 13,
+    maxWidth: 480,
+    width: "100%",
   },
   footer: {
     marginTop: 52,

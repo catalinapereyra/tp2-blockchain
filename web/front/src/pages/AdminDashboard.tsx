@@ -60,10 +60,11 @@ export default function AdminDashboard() {
 
   async function loadPending() {
     setLoadingPending(true);
+    setError("");
     try {
       setPendingUsers(await fetchPendingFromEtherscan());
-    } catch (e: any) {
-      console.error(e);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error cargando solicitudes");
     } finally {
       setLoadingPending(false);
     }
@@ -79,8 +80,9 @@ export default function AdminDashboard() {
       if (!reg) { setError("Wallet no registrada"); return; }
       const u = await contract.getUser(searchAddr);
       setSearchData({ address: searchAddr, role: Number(u.role), status: Number(u.status), registeredAt: Number(u.registeredAt) });
-    } catch (e: any) {
-      setError(e.reason || e.message);
+    } catch (e: unknown) {
+      const err = e as { reason?: string; message?: string };
+      setError(err.reason || err.message || "Error desconocido");
     } finally {
       setSearchLoading(false);
     }
@@ -101,8 +103,9 @@ export default function AdminDashboard() {
         const u = await c.getUser(addr);
         setSearchData({ address: addr, role: Number(u.role), status: Number(u.status), registeredAt: Number(u.registeredAt) });
       }
-    } catch (e: any) {
-      setError(e.reason || e.message);
+    } catch (e: unknown) {
+      const err = e as { reason?: string; message?: string };
+      setError(err.reason || err.message || "Error desconocido");
     } finally {
       setActionLoading(null);
     }

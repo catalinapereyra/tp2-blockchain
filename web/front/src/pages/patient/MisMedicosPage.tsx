@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
 import { api } from "../../lib/api";
 import { getPermissionManager } from "../../lib/contracts";
+import { getErrorMessage } from "../../lib/error";
 
 interface DocMeta {
   id: number;
@@ -51,6 +52,7 @@ export default function MisMedicosPage() {
 
   // Revocación
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [revokeError, setRevokeError] = useState("");
 
   useEffect(() => { if (address) load(); }, [address]);
 
@@ -78,8 +80,8 @@ export default function MisMedicosPage() {
       try {
         const tx = await pm.grantDocumentAccess(docId, targetDoctor);
         await tx.wait();
-      } catch (contractErr: any) {
-        const msg: string = contractErr?.message ?? "";
+      } catch (contractErr: unknown) {
+        const msg = getErrorMessage(contractErr);
         if (!msg.includes("acceso ya otorgado")) throw contractErr;
       }
       await api.grantPermission({ patientAddress: address, doctorAddress: targetDoctor, documentIdOnChain: docId });
@@ -97,8 +99,8 @@ export default function MisMedicosPage() {
       setNewDoctorAddr("");
       setNewSelectedIds([]);
       await load();
-    } catch (e: any) {
-      setGrantError(e.message || "Error al dar acceso");
+    } catch (e: unknown) {
+      setGrantError(getErrorMessage(e));
     } finally {
       setGranting(false);
     }
@@ -114,8 +116,8 @@ export default function MisMedicosPage() {
       setAddingToDoctor(null);
       setAddDocIds([]);
       await load();
-    } catch (e: any) {
-      setAddDocError(e.message || "Error al dar acceso");
+    } catch (e: unknown) {
+      setAddDocError(getErrorMessage(e));
     } finally {
       setAddingDocs(false);
     }
@@ -125,13 +127,14 @@ export default function MisMedicosPage() {
     if (!address) return;
     const key = `${doctorAddress}-${docId}`;
     setRevoking(key);
+    setRevokeError("");
     try {
       const pm = await getPermissionManager();
       try {
         const tx = await pm.revokeDocumentAccess(docId, doctorAddress);
         await tx.wait();
-      } catch (contractErr: any) {
-        const msg: string = contractErr?.message ?? "";
+      } catch (contractErr: unknown) {
+        const msg = getErrorMessage(contractErr);
         // Si ya fue revocado on-chain, igual limpiamos la DB
         if (!msg.includes("no tiene acceso")) throw contractErr;
       }
@@ -145,8 +148,8 @@ export default function MisMedicosPage() {
           )
           .filter((d) => d.documents.length > 0)
       );
-    } catch (e: any) {
-      alert(e.message || "Error al revocar");
+    } catch (e: unknown) {
+      setRevokeError(getErrorMessage(e));
     } finally {
       setRevoking(null);
     }
@@ -219,6 +222,7 @@ export default function MisMedicosPage() {
         )}
 
         {error && <div style={s.errorBox}>{error}</div>}
+        {revokeError && <div style={s.errorBox}>{revokeError}</div>}
         {loading && <div style={s.center}><div style={s.spinner} /></div>}
 
         {!loading && doctors.length === 0 && (
