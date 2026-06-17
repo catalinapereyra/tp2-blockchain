@@ -1,37 +1,54 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useWallet } from "../../context/WalletContext";
+import { api } from "../../lib/api";
 import PacienteCard, { Paciente } from "../../components/doctor/PacienteCard";
 
-const MOCK_PACIENTES: Paciente[] = [
-  {
-    address: "0xa05317a6208826d4f9c71b3e1234567890abcdef",
-    studyCount: 3,
-    lastStudyDate: "16 jun 2026",
-    pendingDiagnosis: 2,
-  },
-  {
-    address: "0xb08d7b3c791b5ead1234567890abcdefabcdef12",
-    studyCount: 1,
-    lastStudyDate: "10 jun 2026",
-    pendingDiagnosis: 1,
-  },
-  {
-    address: "0xc1234567890abcdefabcdef12b08d7b3c791b5ea",
-    studyCount: 5,
-    lastStudyDate: "14 jun 2026",
-    pendingDiagnosis: 0,
-  },
-];
+interface DocMeta {
+  documentIdOnChain: number;
+  studyDate?: string;
+  createdAt: string;
+}
+
+interface PatientEntry {
+  patientAddress: string;
+  documents: DocMeta[];
+}
+
+function toLastDate(docs: DocMeta[]): string {
+  const dates = docs.map((d) => new Date(d.studyDate ?? d.createdAt).getTime()).filter(Boolean);
+  if (dates.length === 0) return "—";
+  const max = new Date(Math.max(...dates));
+  return max.toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" });
+}
 
 export default function PacientesPage() {
   const navigate = useNavigate();
+  const { address } = useWallet();
+
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
 
-  const filtered = MOCK_PACIENTES.filter((p) =>
+  useEffect(() => {
+    if (!address) return;
+    api.getDoctorPatients(address)
+      .then((entries: PatientEntry[]) => {
+        setPacientes(entries.map((e) => ({
+          address: e.patientAddress,
+          studyCount: e.documents.length,
+          lastStudyDate: toLastDate(e.documents),
+          pendingDiagnosis: 0,
+        })));
+      })
+      .catch((e: any) => setError(e.message || "Error cargando pacientes"))
+      .finally(() => setLoading(false));
+  }, [address]);
+
+  const filtered = pacientes.filter((p) =>
     p.address.toLowerCase().includes(search.toLowerCase())
   );
-
-  const totalPending = MOCK_PACIENTES.reduce((sum, p) => sum + p.pendingDiagnosis, 0);
 
   return (
     <div style={s.page}>
@@ -55,31 +72,47 @@ export default function PacientesPage() {
           <div>
             <h1 style={s.pageTitle}>Mis pacientes</h1>
             <p style={s.pageSubtitle}>
-              {MOCK_PACIENTES.length} pacientes · {totalPending > 0 ? `${totalPending} estudios sin diagnóstico` : "Todo diagnosticado"}
+              {loading ? "Cargando…" : `${pacientes.length} paciente${pacientes.length !== 1 ? "s" : ""} con acceso activo`}
             </p>
           </div>
         </div>
 
-        <div style={s.searchWrap}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input
-            style={s.searchInput}
-            placeholder="Buscar por dirección…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        {filtered.length === 0 ? (
-          <div style={s.empty}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            <span>No se encontraron pacientes</span>
+        {!loading && pacientes.length > 0 && (
+          <div style={s.searchWrap}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              style={s.searchInput}
+              placeholder="Buscar por dirección…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-        ) : (
+        )}
+
+        {loading && <div style={s.center}><div style={s.spinner} /></div>}
+
+        {error && <div style={s.errorBox}>{error}</div>}
+
+        {!loading && pacientes.length === 0 && (
+          <div style={s.empty}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" strokeWidth="1.5">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            </svg>
+            <p style={s.emptyText}>Ningún paciente te dio acceso a sus estudios todavía.</p>
+          </div>
+        )}
+
+        {!loading && filtered.length > 0 && (
           <div style={s.list}>
             {filtered.map((p) => <PacienteCard key={p.address} paciente={p} />)}
+          </div>
+        )}
+
+        {!loading && search && filtered.length === 0 && (
+          <div style={s.empty}>
+            <span style={s.emptyText}>No se encontraron pacientes con esa dirección.</span>
           </div>
         )}
       </div>
@@ -91,8 +124,7 @@ const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "calc(100vh - 56px)",
     background: "linear-gradient(135deg, #eef2ff 0%, #f8faff 40%, #f0fdf8 100%)",
-    fontFamily: "'DM Sans', sans-serif",
-    paddingBottom: 60,
+    fontFamily: "'DM Sans', sans-serif", paddingBottom: 60,
   },
   container: { maxWidth: 680, margin: "0 auto", padding: "28px 20px" },
   topBar: { marginBottom: 20 },
@@ -116,9 +148,20 @@ const s: Record<string, React.CSSProperties> = {
     fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" as const,
     background: "white",
   },
+  center: { display: "flex", justifyContent: "center", padding: "48px 0" },
+  spinner: {
+    width: 28, height: 28, border: "3px solid #e2e8f0",
+    borderTopColor: "#6366f1", borderRadius: "50%",
+    animation: "spin 0.8s linear infinite",
+  },
+  errorBox: {
+    background: "#fef2f2", border: "1px solid #fecaca",
+    borderRadius: 10, padding: "12px 16px", fontSize: 13, color: "#dc2626",
+  },
   list: { display: "flex", flexDirection: "column" as const, gap: 8 },
   empty: {
-    display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 10,
-    padding: "48px 0", color: "#94a3b8", fontSize: 13,
+    display: "flex", flexDirection: "column" as const, alignItems: "center",
+    gap: 12, padding: "60px 0", textAlign: "center" as const,
   },
+  emptyText: { fontSize: 14, color: "#94a3b8", margin: 0 },
 };

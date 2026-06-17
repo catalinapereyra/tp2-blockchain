@@ -3,6 +3,7 @@ const BASE = import.meta.env.VITE_API_URL;
 async function request(path: string, options?: RequestInit) {
   const token = localStorage.getItem("token");
   const res = await fetch(`${BASE}${path}`, {
+    cache: "no-store",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -43,6 +44,16 @@ export const api = {
     ipfsCid: string;
     ipfsUrl: string;
   }) => request("/api/documents", { method: "POST", body: JSON.stringify(data) }),
+  getPermissions: (patientAddress: string) =>
+    request(`/api/permissions/${patientAddress}`),
+  getDoctorPatients: (doctorAddress: string) =>
+    request(`/api/permissions/doctor/${doctorAddress}`),
+  getSharedDocs: (patientAddress: string, doctorAddress: string) =>
+    request(`/api/permissions/shared?patient=${patientAddress}&doctor=${doctorAddress}`),
+  grantPermission: (data: { patientAddress: string; doctorAddress: string; documentIdOnChain: number }) =>
+    request("/api/permissions", { method: "POST", body: JSON.stringify(data) }),
+  revokePermission: (data: { patientAddress: string; doctorAddress: string; documentIdOnChain: number }) =>
+    request("/api/permissions", { method: "DELETE", body: JSON.stringify(data) }),
   uploadFile: (file: File) => {
     const token = localStorage.getItem("token");
     const form = new FormData();
