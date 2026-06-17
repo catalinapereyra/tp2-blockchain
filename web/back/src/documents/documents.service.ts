@@ -8,19 +8,32 @@ export interface CreateDocumentDto {
   title: string;
   description?: string;
   documentType: string;
+  studyType?: string;
+  labName?: string;
+  notes?: string;
   ipfsCid: string;
   ipfsUrl: string;
+}
+
+export interface DocumentFilters {
+  patientAddress?: string;
+  emitterAddress?: string;
 }
 
 @Injectable()
 export class DocumentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(patientAddress?: string) {
+  async findAll(filters: DocumentFilters = {}) {
     return this.prisma.documentMetadata.findMany({
-      where: patientAddress
-        ? { patientAddress: patientAddress.toLowerCase() }
-        : undefined,
+      where: {
+        ...(filters.patientAddress
+          ? { patientAddress: filters.patientAddress.toLowerCase() }
+          : {}),
+        ...(filters.emitterAddress
+          ? { emitterAddress: filters.emitterAddress.toLowerCase() }
+          : {}),
+      },
       orderBy: { createdAt: "desc" },
     });
   }

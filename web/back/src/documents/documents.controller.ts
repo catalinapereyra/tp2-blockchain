@@ -5,10 +5,10 @@ import { DocumentsService, CreateDocumentDto } from "./documents.service";
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
-  //devuelve todos los documentos de ese paciente guardados en la base de datos
+  //devuelve documentos guardados en la base de datos, con filtros opcionales
   @Get()
-  findAll(@Query("patient") patient?: string) {
-    return this.documentsService.findAll(patient);
+  findAll(@Query("patient") patient?: string, @Query("emitter") emitter?: string) {
+    return this.documentsService.findAll({ patientAddress: patient, emitterAddress: emitter });
   }
 
   //Devuelve los metadatos de UN documento específico por su id de base de datos

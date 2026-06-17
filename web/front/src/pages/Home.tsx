@@ -51,7 +51,8 @@ export default function Home() {
     if (!isRegistered) { navigate("/register"); return; }
     if (!isApproved) { navigate("/pending"); return; }
     if (role === 0) navigate("/patient");
-    else navigate("/doctor");
+    else if (role === 1) navigate("/doctor");
+    else navigate("/laboratory");
   }, [address, role, isRegistered, isApproved, isAdmin, loading]);
 
   async function handleConnect(roleKey: string) {

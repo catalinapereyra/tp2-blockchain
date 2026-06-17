@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useWallet } from "./context/WalletContext";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
@@ -8,6 +8,7 @@ import Pending from "./pages/Pending";
 import AdminDashboard from "./pages/AdminDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import LaboratoryDashboard from "./pages/LaboratoryDashboard";
 
 function ProtectedRoute({ children, condition }: { children: React.ReactElement; condition: boolean }) {
   const { address, loading } = useWallet();
@@ -19,10 +20,12 @@ function ProtectedRoute({ children, condition }: { children: React.ReactElement;
 
 export default function App() {
   const { address, isAdmin, isRegistered, isApproved, role } = useWallet();
+  const location = useLocation();
+  const hideGlobalNavbar = location.pathname === "/laboratory";
 
   return (
     <>
-      {address && <Navbar />}
+      {address && !hideGlobalNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/register" element={
@@ -46,8 +49,13 @@ export default function App() {
           </ProtectedRoute>
         } />
         <Route path="/doctor" element={
-          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0}>
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 1}>
             <DoctorDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/laboratory" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && (role === 2 || role === 3)}>
+            <LaboratoryDashboard />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/" />} />

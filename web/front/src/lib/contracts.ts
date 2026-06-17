@@ -40,6 +40,7 @@ export const DOCUMENT_REGISTRY_ABI = [
   "function verifyDocument(uint256 documentId, bytes32 hashToVerify) external view returns (bool)",
   "function revokeDocument(uint256 documentId) external",
   "function documentExists(uint256 documentId) external view returns (bool)",
+  "event DocumentRegistered(uint256 indexed documentId, address indexed patient, address indexed issuer, uint8 status)",
 ];
 
 export const PRESCRIPTION_MANAGER_ABI = [

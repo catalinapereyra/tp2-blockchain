@@ -17,6 +17,7 @@ interface WalletContextType {
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
+const ADMIN_ADDRESS = (import.meta.env.VITE_ADMIN_ADDRESS as string | undefined)?.toLowerCase();
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
@@ -33,7 +34,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setIsRegistered(registered);
 
       const owner: string = await contract.owner();
-      setIsAdmin(owner.toLowerCase() === addr.toLowerCase());
+      const normalizedAddr = addr.toLowerCase();
+      setIsAdmin(owner.toLowerCase() === normalizedAddr || ADMIN_ADDRESS === normalizedAddr);
 
       if (registered) {
         const approved = await contract.isApproved(addr);
