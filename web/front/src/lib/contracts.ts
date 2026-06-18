@@ -43,6 +43,17 @@ export const DOCUMENT_REGISTRY_ABI = [
   "event DocumentRegistered(uint256 indexed documentId, address indexed patient, address indexed issuer, uint8 status)",
 ];
 
+export const PERMISSION_MANAGER_ABI = [
+  "function grantDocumentAccess(uint256 documentId, address grantee) external",
+  "function revokeDocumentAccess(uint256 documentId, address grantee) external",
+  "function grantGlobalAccess(address grantee) external",
+  "function revokeGlobalAccess(address grantee) external",
+  "function hasAccess(address patient, uint256 documentId, address grantee) external view returns (bool)",
+  "function hasDocumentAccess(address patient, uint256 documentId, address grantee) external view returns (bool)",
+  "event DocumentAccessGranted(address indexed patient, uint256 indexed documentId, address indexed grantee)",
+  "event DocumentAccessRevoked(address indexed patient, uint256 indexed documentId, address indexed grantee)",
+];
+
 export const PRESCRIPTION_MANAGER_ABI = [
   "function requestPrescription(address doctor, string calldata prescriptionType) external returns (uint256)",
   "function acceptPrescription(uint256 id) external",
@@ -80,6 +91,11 @@ export async function getMedicalRegistry() {
 export async function getDocumentRegistry() {
   const signer = await getSigner();
   return new ethers.Contract(ADDRESSES.documentRegistry, DOCUMENT_REGISTRY_ABI, signer);
+}
+
+export async function getPermissionManager() {
+  const signer = await getSigner();
+  return new ethers.Contract(ADDRESSES.permissionManager, PERMISSION_MANAGER_ABI, signer);
 }
 
 export async function getPrescriptionManager() {

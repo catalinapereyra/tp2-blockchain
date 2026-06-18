@@ -1,8 +1,19 @@
+import { useNavigate } from "react-router-dom";
+import { useWallet } from "../../context/WalletContext";
+
 const items = [
   { icon: "⌂", label: "Inicio", active: true },
 ];
 
 export function LaboratorySidebar() {
+  const navigate = useNavigate();
+  const { logout } = useWallet();
+
+  function handleLogout() {
+    logout();
+    navigate("/", { replace: true });
+  }
+
   return (
     <aside style={styles.sidebar}>
       <div style={styles.brand}>
@@ -24,7 +35,7 @@ export function LaboratorySidebar() {
 
       <div style={styles.bottom}>
         <button style={styles.bottomItem}>? Soporte</button>
-        <button style={styles.bottomItem}>↪ Cerrar sesion</button>
+        <button type="button" style={styles.bottomItem} onClick={handleLogout}>↪ Cerrar sesion</button>
       </div>
     </aside>
   );

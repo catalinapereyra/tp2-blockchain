@@ -22,12 +22,22 @@ model UserProfile {
   updatedAt     DateTime @updatedAt
 }
 
+model DocumentAccess {
+  id                Int      @id @default(autoincrement())
+  patientAddress    String
+  doctorAddress     String
+  documentIdOnChain Int
+  grantedAt         DateTime @default(now())
+
+  @@unique([patientAddress, doctorAddress, documentIdOnChain])
+}
+
 //metadatos off-chain de documentos medicos
 //el hash y el estado viven en MedicalDocumentRegistry en bc
 //aca guardamos el titulo, descr y el CID de IPFS para poder mostrarlos en el front
 model DocumentMetadata {
-  id                Int      @id @default(autoincrement())
-  documentIdOnChain Int      @unique
+  id                Int       @id @default(autoincrement())
+  documentIdOnChain Int       @unique
   patientAddress    String
   emitterAddress    String
   title             String
@@ -36,7 +46,8 @@ model DocumentMetadata {
   studyType         String?
   labName           String?
   notes             String?
+  studyDate         DateTime?
   ipfsCid           String
   ipfsUrl           String
-  createdAt         DateTime @default(now())
+  createdAt         DateTime  @default(now())
 }

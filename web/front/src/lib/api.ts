@@ -6,11 +6,12 @@ export type DocumentMetadata = {
   patientAddress: string;
   emitterAddress: string;
   title: string;
-  description?: string | null;
+  description?: string;
   documentType: string;
-  studyType?: string | null;
-  labName?: string | null;
-  notes?: string | null;
+  studyType?: string;
+  studyDate?: string;
+  labName?: string;
+  notes?: string;
   ipfsCid: string;
   ipfsUrl: string;
   createdAt: string;
@@ -19,6 +20,7 @@ export type DocumentMetadata = {
 async function request(path: string, options?: RequestInit) {
   const token = localStorage.getItem("token");
   const res = await fetch(`${BASE}${path}`, {
+    cache: "no-store",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -43,10 +45,11 @@ export const api = {
   getMe: () => request("/api/auth/me"),
   updateProfile: (data: { name?: string; lastName?: string; email?: string }) =>
     request("/api/auth/profile", { method: "PUT", body: JSON.stringify(data) }),
-  getDocuments: (filters?: { patient?: string; emitter?: string }) => {
+  getDocuments: (filters?: string | { patient?: string; emitter?: string }) => {
     const params = new URLSearchParams();
-    if (filters?.patient) params.set("patient", filters.patient);
-    if (filters?.emitter) params.set("emitter", filters.emitter);
+    if (typeof filters === "string") params.set("patient", filters);
+    if (typeof filters === "object" && filters?.patient) params.set("patient", filters.patient);
+    if (typeof filters === "object" && filters?.emitter) params.set("emitter", filters.emitter);
     const query = params.toString();
     return request(`/api/documents${query ? `?${query}` : ""}`) as Promise<DocumentMetadata[]>;
   },
@@ -61,6 +64,7 @@ export const api = {
     description?: string;
     documentType: string;
     studyType?: string;
+    studyDate?: string;
     labName?: string;
     notes?: string;
     ipfsCid: string;
@@ -78,6 +82,16 @@ export const api = {
     ipfsCid: string;
     ipfsUrl: string;
   }) => request("/api/laboratory/studies", { method: "POST", body: JSON.stringify(data) }),
+  getPermissions: (patientAddress: string) =>
+    request(`/api/permissions/${patientAddress}`),
+  getDoctorPatients: (doctorAddress: string) =>
+    request(`/api/permissions/doctor/${doctorAddress}`),
+  getSharedDocs: (patientAddress: string, doctorAddress: string) =>
+    request(`/api/permissions/shared?patient=${patientAddress}&doctor=${doctorAddress}`),
+  grantPermission: (data: { patientAddress: string; doctorAddress: string; documentIdOnChain: number }) =>
+    request("/api/permissions", { method: "POST", body: JSON.stringify(data) }),
+  revokePermission: (data: { patientAddress: string; doctorAddress: string; documentIdOnChain: number }) =>
+    request("/api/permissions", { method: "DELETE", body: JSON.stringify(data) }),
   uploadFile: (file: File) => {
     const token = localStorage.getItem("token");
     const form = new FormData();
@@ -96,6 +110,8 @@ export const api = {
         originalName: string;
         mimeType: string;
         sizeBytes: number;
+        error?: string;
+        message?: string;
       };
     });
   },

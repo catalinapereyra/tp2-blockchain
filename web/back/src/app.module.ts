@@ -5,6 +5,7 @@ import { DocumentsModule } from "./documents/documents.module";
 import { UploadModule } from "./upload/upload.module";
 import { AuthModule } from "./auth/auth.module";
 import { LaboratoryModule } from "./laboratory/laboratory.module";
+import { PermissionsModule } from "./permissions/permissions.module";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { LaboratoryModule } from "./laboratory/laboratory.module";
     DocumentsModule,
     LaboratoryModule,
     UploadModule,
+    PermissionsModule,
   ],
 })
 export class AppModule {}

@@ -63,8 +63,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   async function connect() {
     if (!(window as any).ethereum) {
-      alert("Instalá MetaMask para continuar");
-      return;
+      throw new Error("Instalá MetaMask para continuar");
     }
     setLoading(true);
     try {
@@ -75,9 +74,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       await login(addr);
       setAddress(addr);
       await loadChainData(addr);
-    } catch (e: any) {
-      console.error(e);
-      alert(e.message || "Error conectando");
     } finally {
       setLoading(false);
     }
@@ -90,6 +86,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("wallet");
+    localStorage.removeItem("intended_role");
     setAddress(null);
     setRole(null);
     setIsRegistered(false);

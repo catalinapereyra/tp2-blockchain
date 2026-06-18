@@ -27,6 +27,7 @@ export default function Register() {
   const [selected, setSelected] = useState<OptionKey>(() =>
     intendedToKey(localStorage.getItem("intended_role"))
   );
+  const [fromHome] = useState<boolean>(() => !!localStorage.getItem("intended_role"));
 
   useEffect(() => {
     localStorage.removeItem("intended_role");
@@ -61,24 +62,33 @@ export default function Register() {
     <div style={styles.container}>
       <div style={styles.card}>
         <h2 style={styles.title}>Crear cuenta</h2>
-        <p style={styles.sub}>Seleccioná tu rol en MediChain</p>
+        <p style={styles.sub}>
+          {fromHome ? "Confirmá tu registro en MediChain" : "Seleccioná tu rol en MediChain"}
+        </p>
 
         {error && <div style={styles.error}>{error}</div>}
 
-        <div style={styles.grid}>
-          {OPTIONS.map((opt) => (
-            <button
-              key={opt.key}
-              style={opt.key === selected ? { ...styles.option, ...styles.optionSelected } : styles.option}
-              onClick={() => setSelected(opt.key)}
-              disabled={loading}
-            >
-              <span style={styles.icon}>{opt.icon}</span>
-              <strong style={{ fontSize: 14 }}>{opt.label}</strong>
-              <span style={styles.desc}>{opt.desc}</span>
-            </button>
-          ))}
-        </div>
+        {fromHome ? (
+          <div style={styles.rolePreview}>
+            <span style={styles.icon}>{selectedOpt.icon}</span>
+            <strong style={{ fontSize: 18 }}>{selectedOpt.label}</strong>
+          </div>
+        ) : (
+          <div style={styles.grid}>
+            {OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                style={opt.key === selected ? { ...styles.option, ...styles.optionSelected } : styles.option}
+                onClick={() => setSelected(opt.key)}
+                disabled={loading}
+              >
+                <span style={styles.icon}>{opt.icon}</span>
+                <strong style={{ fontSize: 14 }}>{opt.label}</strong>
+                <span style={styles.desc}>{opt.desc}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {selected !== "patient" && (
           <div style={styles.approvalBanner}>
@@ -123,6 +133,17 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%", background: "#1e40af", color: "white", border: "none",
     padding: "14px", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer",
     marginTop: 4,
+  },
+  rolePreview: {
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    gap: 8,
+    padding: "24px",
+    border: "2px solid #1e40af",
+    borderRadius: 12,
+    background: "#eff6ff",
+    marginBottom: 20,
   },
   approvalBanner: {
     background: "#fffbeb",
