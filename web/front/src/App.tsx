@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useWallet } from "./context/WalletContext";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
@@ -15,7 +15,7 @@ import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import RecetasPage from "./pages/doctor/RecetasPage";
 import PacientesPage from "./pages/doctor/PacientesPage";
 import PacienteDetailPage from "./pages/doctor/PacienteDetailPage";
-import LabDashboard from "./pages/lab/LabDashboard";
+import LaboratoryDashboard from "./pages/LaboratoryDashboard";
 
 function ProtectedRoute({ children, condition }: { children: React.ReactElement; condition: boolean }) {
   const { address, loading } = useWallet();
@@ -27,10 +27,12 @@ function ProtectedRoute({ children, condition }: { children: React.ReactElement;
 
 export default function App() {
   const { address, isAdmin, isRegistered, isApproved, role } = useWallet();
+  const location = useLocation();
+  const hideGlobalNavbar = location.pathname === "/lab" || location.pathname === "/laboratory";
 
   return (
     <>
-      {address && <Navbar />}
+      {address && !hideGlobalNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/register" element={
@@ -95,9 +97,10 @@ export default function App() {
         } />
         <Route path="/lab" element={
           <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0 && role !== 1}>
-            <LabDashboard />
+            <LaboratoryDashboard />
           </ProtectedRoute>
         } />
+        <Route path="/laboratory" element={<Navigate to="/lab" />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>

@@ -44,8 +44,9 @@ model DocumentMetadata {
   description       String?
   documentType      String
   studyType         String?
-  studyDate         DateTime?
   labName           String?
+  notes             String?
+  studyDate         DateTime?
   ipfsCid           String
   ipfsUrl           String
   createdAt         DateTime  @default(now())

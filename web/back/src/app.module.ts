@@ -4,6 +4,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { DocumentsModule } from "./documents/documents.module";
 import { UploadModule } from "./upload/upload.module";
 import { AuthModule } from "./auth/auth.module";
+import { LaboratoryModule } from "./laboratory/laboratory.module";
 import { PermissionsModule } from "./permissions/permissions.module";
 
 @Module({
@@ -12,6 +13,7 @@ import { PermissionsModule } from "./permissions/permissions.module";
     PrismaModule,
     AuthModule,
     DocumentsModule,
+    LaboratoryModule,
     UploadModule,
     PermissionsModule,
   ],
