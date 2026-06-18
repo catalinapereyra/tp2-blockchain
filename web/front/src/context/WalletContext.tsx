@@ -10,6 +10,7 @@ interface WalletContextType {
   isRegistered: boolean;
   isApproved: boolean;
   isAdmin: boolean;
+  userStatus: number | null;
   loading: boolean;
   connect: () => Promise<void>;
   logout: () => void;
@@ -24,6 +25,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [isRegistered, setIsRegistered] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userStatus, setUserStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function loadChainData(addr: string) {
@@ -40,9 +42,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setIsApproved(approved);
         const r = await contract.getRole(addr);
         setRole(Number(r));
+        const u = await contract.getUser(addr);
+        setUserStatus(Number(u.status));
       } else {
         setIsApproved(false);
         setRole(null);
+        setUserStatus(null);
       }
     } catch (e) {
       console.error("Error cargando datos del contrato", e);
@@ -89,6 +94,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setIsRegistered(false);
     setIsApproved(false);
     setIsAdmin(false);
+    setUserStatus(null);
   }
 
   useEffect(() => {
@@ -115,6 +121,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setIsRegistered(false);
         setIsApproved(false);
         setIsAdmin(false);
+        setUserStatus(null);
         // Redirigir a home
         window.location.href = "/";
       }
@@ -133,6 +140,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         isRegistered,
         isApproved,
         isAdmin,
+        userStatus,
         loading,
         connect,
         logout,
