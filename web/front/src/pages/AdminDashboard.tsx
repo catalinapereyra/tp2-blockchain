@@ -321,6 +321,15 @@ function UserRow({ user, onAction, actionLoading, showAddress }: {
             {actionLoading === user.address + "revokeUser" ? "…" : "Revocar"}
           </button>
         )}
+        {user.status === 3 && (
+          <button
+            style={{ ...s.btnRevoke, background: "#16a34a", opacity: actionLoading !== null ? 0.6 : 1 }}
+            disabled={actionLoading !== null}
+            onClick={() => onAction("approveUser", user.address)}
+          >
+            {actionLoading === user.address + "approveUser" ? "…" : "Re-aprobar"}
+          </button>
+        )}
       </div>
     </div>
   );
