@@ -12,6 +12,8 @@ import SubirEstudioPage from "./pages/patient/SubirEstudioPage";
 import SolicitarRecetaPage from "./pages/patient/SolicitarRecetaPage";
 import MisMedicosPage from "./pages/patient/MisMedicosPage";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
+import FirmarEstudioPage from "./pages/doctor/FirmarEstudioPage";
+import PendientesFirmaPage from "./pages/patient/PendientesFirmaPage";
 import RecetasPage from "./pages/doctor/RecetasPage";
 import PacientesPage from "./pages/doctor/PacientesPage";
 import PacienteDetailPage from "./pages/doctor/PacienteDetailPage";
@@ -76,6 +78,11 @@ export default function App() {
             <MisMedicosPage />
           </ProtectedRoute>
         } />
+        <Route path="/patient/pendientes" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
+            <PendientesFirmaPage />
+          </ProtectedRoute>
+        } />
         <Route path="/doctor" element={
           <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 1}>
             <DoctorDashboard />
@@ -94,6 +101,11 @@ export default function App() {
         <Route path="/doctor/pacientes/:address" element={
           <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 1}>
             <PacienteDetailPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/doctor/firmar" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 1}>
+            <FirmarEstudioPage />
           </ProtectedRoute>
         } />
         <Route path="/lab" element={

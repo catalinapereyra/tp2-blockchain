@@ -11,6 +11,7 @@ export type DocumentMetadata = {
   patientLastName?: string | null;
   emitterName?: string | null;
   emitterLastName?: string | null;
+  emitterRole?: number | null; // 0=paciente, 1=médico, 2=lab, 3=institución
   title: string;
   description?: string;
   documentType: string;
@@ -37,6 +38,25 @@ export type AppUser = {
   walletAddress: string;
   name: string;
   lastName?: string | null;
+};
+
+// Documento firmado off-chain por un médico, pendiente de que el paciente lo registre
+export type SignedDoc = {
+  id: number;
+  patientAddress: string;
+  doctorAddress: string;
+  doctorName?: string | null;
+  documentHash: string;
+  documentType: string;
+  offChainRef: string;
+  signature: string;
+  title: string;
+  studyType?: string | null;
+  notes?: string | null;
+  fileName: string;
+  mimeType: string;
+  status: string;
+  createdAt: string;
 };
 
 async function request(path: string, options?: RequestInit) {
@@ -73,6 +93,33 @@ export const api = {
   // Nombre/apellido off-chain de una wallet (null si no tiene perfil cargado)
   getProfileByWallet: (wallet: string) =>
     request(`/api/auth/profile/${wallet}`) as Promise<AppUser | null>,
+
+  // ── Documentos firmados (EIP-712) ──────────────────────────────────────
+  // El médico firma off-chain y guarda el documento pendiente
+  createSignedDocument: (data: {
+    patientAddress: string;
+    documentHash: string;
+    documentType: string;
+    offChainRef: string;
+    signature: string;
+    title: string;
+    studyType?: string;
+    notes?: string;
+    fileBase64: string;
+    fileName: string;
+    mimeType: string;
+  }) => request("/api/signed-documents", { method: "POST", body: JSON.stringify(data) }),
+  // Documentos firmados pendientes de registrar de un paciente
+  getSignedDocuments: (patient: string) =>
+    request(`/api/signed-documents?patient=${encodeURIComponent(patient)}`) as Promise<SignedDoc[]>,
+  // URL para ver/descargar el archivo firmado pendiente
+  signedDocFileUrl: (id: number) => `${BASE}/api/signed-documents/${id}/file`,
+  // El paciente ya lo registró on-chain → pasamos el archivo a su historial
+  registerSignedDocument: (id: number, documentIdOnChain: number) =>
+    request(`/api/signed-documents/${id}/register`, {
+      method: "POST",
+      body: JSON.stringify({ documentIdOnChain }),
+    }),
   getDocuments: (filters?: string | { patient?: string; emitter?: string }) => {
     const params = new URLSearchParams();
     if (typeof filters === "string") params.set("patient", filters);

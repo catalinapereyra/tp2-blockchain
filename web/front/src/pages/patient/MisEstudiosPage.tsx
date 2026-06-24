@@ -17,6 +17,7 @@ interface DocRecord {
   studyDate?: string;
   labName?: string;
   emitterName?: string | null;
+  emitterRole?: number | null;
   fileName: string;
   mimeType: string;
   diagnoses?: { doctorName?: string | null; text: string }[];
@@ -42,7 +43,12 @@ function groupDocuments(docs: DocRecord[], myAddress: string): Grupo[] {
       studyDate: doc.studyDate ?? doc.createdAt,
       title: doc.title,
       labName: doc.labName ?? doc.emitterName ?? undefined,
-      uploadedBy: doc.emitterAddress.toLowerCase() === myAddress.toLowerCase() ? "patient" : "lab",
+      uploadedBy:
+        doc.emitterAddress.toLowerCase() === myAddress.toLowerCase()
+          ? "patient"
+          : doc.emitterRole === 1
+            ? "doctor"
+            : "lab",
       fileUrl: api.fileUrl(doc.documentIdOnChain),
       diagnoses: doc.diagnoses ?? [],
     });

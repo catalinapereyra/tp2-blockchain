@@ -70,6 +70,20 @@ const ACTIONS = [
     desc: "Gestioná qué médicos pueden ver tus estudios.",
     badge: "2 con acceso",
   },
+  {
+    path: "/patient/pendientes",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.emerald500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><circle cx="11" cy="11" r="2"/>
+      </svg>
+    ),
+    iconBg: palette.emerald50,
+    border: palette.emerald200,
+    bg: palette.emerald50,
+    title: "Documentos firmados",
+    desc: "Registrá en tu historial los estudios que firmó un médico.",
+    badge: "Pendientes",
+  },
 ];
 
 export default function PatientDashboard() {

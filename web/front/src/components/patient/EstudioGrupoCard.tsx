@@ -6,7 +6,7 @@ export interface EstudioItem {
   studyDate: string; // ISO string o cualquier fecha parseable
   title: string;
   labName?: string;
-  uploadedBy: "lab" | "patient";
+  uploadedBy: "lab" | "patient" | "doctor";
   fileUrl?: string;
   diagnoses?: { doctorName?: string | null; text: string }[];
 }
@@ -79,13 +79,18 @@ export default function EstudioGrupoCard({ studyType, category, estudios }: Prop
                   <div style={s.itemMeta}>
                     <span style={s.metaText}>{fmtDate(e.studyDate)}</span>
                     {e.labName && <><span style={s.metaText}>·</span><span style={s.metaText}>{e.labName}</span></>}
-                    <span style={{
-                      ...s.uploadedPill,
-                      background: e.uploadedBy === "lab" ? palette.emerald50 : palette.indigoSoft,
-                      color: e.uploadedBy === "lab" ? palette.emerald600 : palette.indigo500,
-                    }}>
-                      {e.uploadedBy === "lab" ? "✓ Lab" : "Subido por vos"}
-                    </span>
+                    {(() => {
+                      const pill = {
+                        lab: { label: "✓ Lab", bg: palette.emerald50, color: palette.emerald600 },
+                        doctor: { label: "✓ Médico", bg: palette.sky50, color: palette.sky500 },
+                        patient: { label: "Subido por vos", bg: palette.indigoSoft, color: palette.indigo500 },
+                      }[e.uploadedBy];
+                      return (
+                        <span style={{ ...s.uploadedPill, background: pill.bg, color: pill.color }}>
+                          {pill.label}
+                        </span>
+                      );
+                    })()}
                   </div>
                   {e.diagnoses && e.diagnoses.length > 0 && (
                     <div style={s.diagList}>

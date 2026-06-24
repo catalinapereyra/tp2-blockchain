@@ -44,6 +44,21 @@ export default function DoctorDashboard() {
       badgeBg: palette.violet100,
       path: "/doctor/pacientes",
     },
+    {
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.emerald500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/>
+        </svg>
+      ),
+      bg: palette.emerald50,
+      border: palette.emerald200,
+      title: "Firmar estudio",
+      desc: "Firmás el estudio sin pagar gas; el paciente lo registra en su historial.",
+      badge: "Sin gas",
+      badgeColor: palette.emerald600,
+      badgeBg: palette.mint50,
+      path: "/doctor/firmar",
+    },
   ];
 
   return (

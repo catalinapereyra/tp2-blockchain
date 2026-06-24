@@ -30,6 +30,7 @@ export const USER_REGISTRY_ABI = [
 export const DOCUMENT_REGISTRY_ABI = [
   "function uploadOwnDocument(bytes32 documentHash, string calldata documentType, string calldata offChainRef) external returns (uint256)",
   "function registerDocument(address patient, bytes32 documentHash, string calldata documentType, string calldata offChainRef) external returns (uint256)",
+  "function registerSignedDocument(address patient, bytes32 documentHash, string calldata documentType, string calldata offChainRef, address doctor, bytes calldata signature) external returns (uint256)",
   "function getDocument(uint256 documentId) external view returns (tuple(uint256 id, bytes32 documentHash, address patient, address issuer, string documentType, string offChainRef, uint256 issuedAt, uint8 status))",
   "function getPatientDocuments(address patient) external view returns (uint256[])",
   "function verifyDocument(uint256 documentId, bytes32 hashToVerify) external view returns (bool)",
@@ -82,6 +83,36 @@ export function getUserRegistryReadOnly() {
 export async function getDocumentRegistry() {
   const signer = await getSigner();
   return new ethers.Contract(ADDRESSES.documentRegistry, DOCUMENT_REGISTRY_ABI, signer);
+}
+
+// Datos que el médico firma off-chain con EIP-712 (sin pagar gas).
+// Tiene que coincidir EXACTO con el TYPEHASH y el dominio del contrato.
+export type MedicalDocumentValue = {
+  patient: string;
+  documentHash: string;
+  documentType: string;
+  offChainRef: string;
+  doctor: string;
+};
+
+export async function signMedicalDocument(value: MedicalDocumentValue): Promise<string> {
+  const signer = await getSigner();
+  const domain = {
+    name: "MedicalDocumentRegistry",
+    version: "1",
+    chainId: Number(import.meta.env.VITE_CHAIN_ID),
+    verifyingContract: ADDRESSES.documentRegistry,
+  };
+  const types = {
+    MedicalDocument: [
+      { name: "patient", type: "address" },
+      { name: "documentHash", type: "bytes32" },
+      { name: "documentType", type: "string" },
+      { name: "offChainRef", type: "string" },
+      { name: "doctor", type: "address" },
+    ],
+  };
+  return signer.signTypedData(domain, types, value);
 }
 
 export async function getPermissionManager() {

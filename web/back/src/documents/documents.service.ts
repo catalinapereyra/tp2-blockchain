@@ -63,6 +63,9 @@ export class DocumentsService {
       patientLastName: patient?.lastName ?? null,
       emitterName: emitter?.name ?? null,
       emitterLastName: emitter?.lastName ?? null,
+      // Rol del emisor (0=paciente, 1=médico, 2=lab, 3=institución) para mostrar
+      // "verificado por médico/laboratorio" según corresponda.
+      emitterRole: emitter?.role ?? null,
     };
   }
 
