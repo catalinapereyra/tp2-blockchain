@@ -169,6 +169,26 @@ export default function MisMedicosPage() {
     }
   }
 
+  // Agrega el médico a "mis médicos" sin compartir ningún documento (solo DB, sin gas)
+  async function handleAddDoctorOnly() {
+    if (!address || !newDoctorAddr.startsWith("0x")) return;
+    setGranting(true);
+    setGrantError("");
+    try {
+      await api.addMyDoctor(address, newDoctorAddr);
+      setShowGrant(false);
+      setNewDoctorAddr("");
+      setNewSelectedIds([]);
+      await load();
+      toast.show("Médico agregado");
+    } catch (e: unknown) {
+      setGrantError(getErrorMessage(e));
+      toast.show("No se pudo agregar el médico", "error");
+    } finally {
+      setGranting(false);
+    }
+  }
+
 
   async function handleGrantAll() {
     if (!address || !newDoctorAddr.startsWith("0x")) return;
@@ -348,6 +368,14 @@ export default function MisMedicosPage() {
                 accent={palette.amber500}
               />
             </div>
+
+            <button
+              style={{ ...s.addOnlyBtn, opacity: newDoctorAddr.startsWith("0x") && !granting ? 1 : 0.5 }}
+              disabled={!newDoctorAddr.startsWith("0x") || granting}
+              onClick={handleAddDoctorOnly}
+            >
+              + Agregar a mis médicos (sin compartir documentos)
+            </button>
             {myDocs.length === 0 ? (
               <p style={s.emptySmall}>No tenés estudios para compartir aún.</p>
             ) : (
@@ -574,6 +602,11 @@ const s: Record<string, React.CSSProperties> = {
     display: "inline-flex", alignItems: "center", justifyContent: "center",
     background: palette.amber50, color: palette.amber600, border: `1.5px solid ${palette.amber200}`,
     padding: "11px 16px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+    cursor: "pointer", fontFamily: fontFamily.sans, width: "100%",
+  },
+  addOnlyBtn: {
+    background: palette.slate50, color: palette.slate600, border: `1.5px solid ${palette.slate200}`,
+    padding: "9px 14px", borderRadius: 10, fontSize: 12, fontWeight: 600,
     cursor: "pointer", fontFamily: fontFamily.sans, width: "100%",
   },
   errorBox: { background: palette.red50, border: `1px solid ${palette.red200}`, borderRadius: 10, padding: "12px 16px", fontSize: 13, color: palette.red600, marginBottom: 16 },

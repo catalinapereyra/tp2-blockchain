@@ -59,6 +59,17 @@ export type SignedDoc = {
   createdAt: string;
 };
 
+// Texto + nombres off-chain de una receta (el estado vive on-chain)
+export type PrescriptionMeta = {
+  prescriptionIdOnChain: number;
+  patientAddress: string;
+  doctorAddress: string;
+  patientName?: string | null;
+  doctorName?: string | null;
+  description: string;
+  createdAt: string;
+};
+
 async function request(path: string, options?: RequestInit) {
   const token = localStorage.getItem("token");
   const res = await fetch(`${BASE}${path}`, {
@@ -171,6 +182,20 @@ export const api = {
     request(`/api/permissions/${patientAddress}`),
   getDoctorPatients: (doctorAddress: string) =>
     request(`/api/permissions/doctor/${doctorAddress}`),
+  // Agregar/quitar un médico de "mis médicos" sin compartir documentos
+  addMyDoctor: (patientAddress: string, doctorAddress: string) =>
+    request("/api/permissions/doctor", { method: "POST", body: JSON.stringify({ patientAddress, doctorAddress }) }),
+  removeMyDoctor: (patientAddress: string, doctorAddress: string) =>
+    request("/api/permissions/doctor", { method: "DELETE", body: JSON.stringify({ patientAddress, doctorAddress }) }),
+  // ── Recetas ────────────────────────────────────────────────────────────
+  // El paciente guarda el texto privado tras solicitar la receta on-chain
+  createPrescription: (data: { prescriptionIdOnChain: number; doctorAddress: string; description: string }) =>
+    request("/api/prescriptions", { method: "POST", body: JSON.stringify(data) }),
+  // Recetas (texto + nombres) por médico o por paciente
+  getPrescriptions: (filter: { doctor?: string; patient?: string }) => {
+    const q = filter.doctor ? `doctor=${filter.doctor}` : `patient=${filter.patient}`;
+    return request(`/api/prescriptions?${q}`) as Promise<PrescriptionMeta[]>;
+  },
   getSharedDocs: (patientAddress: string, doctorAddress: string) =>
     request(`/api/permissions/shared?patient=${patientAddress}&doctor=${doctorAddress}`),
   grantPermission: (data: { patientAddress: string; doctorAddress: string; documentIdOnChain: number }) =>

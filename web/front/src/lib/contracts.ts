@@ -61,6 +61,10 @@ export const PRESCRIPTION_MANAGER_ABI = [
   "function getPrescription(uint256 id) external view returns (tuple(uint256 id, address patient, address doctor, string prescriptionType, uint8 status, bytes32 documentHash, string offChainRef, uint256 requestedAt, uint256 updatedAt))",
   "function getPatientPrescriptions(address patient) external view returns (uint256[])",
   "function getDoctorPrescriptions(address doctor) external view returns (uint256[])",
+  "event PrescriptionRequested(uint256 indexed id, address indexed patient, address indexed doctor, string prescriptionType)",
+  "event PrescriptionAccepted(uint256 indexed id, address indexed doctor)",
+  "event PrescriptionRejected(uint256 indexed id, address indexed doctor)",
+  "event PrescriptionIssued(uint256 indexed id, address indexed doctor, bytes32 documentHash)",
 ];
 
 export function getProvider() {

@@ -1,46 +1,76 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
+import { useWallet } from "../../context/WalletContext";
 import { api, AppUser } from "../../lib/api";
-import { getUserRegistryReadOnly } from "../../lib/contracts";
+import { getPrescriptionManager } from "../../lib/contracts";
+import { getErrorMessage } from "../../lib/error";
 import UserSelect from "../../components/common/UserSelect";
+import { useToast } from "../../components/common/Toast";
+import { useLoader } from "../../components/common/Loader";
 import { palette, fontFamily, gradients } from "../../styles";
 
 export default function SolicitarRecetaPage() {
   const navigate = useNavigate();
+  const { address } = useWallet();
+  const toast = useToast();
+  const loader = useLoader();
   const [doctorAddress, setDoctorAddress] = useState("");
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [medicos, setMedicos] = useState<AppUser[]>([]);
 
-  // Carga los médicos registrados (nombre off-chain) y deja solo los aprobados on-chain
+  // Solo "mis médicos" (con los que compartí docs o agregué a mi lista)
   useEffect(() => {
+    if (!address) return;
     (async () => {
       try {
-        const doctors = await api.getUsers(1);
-        const registry = getUserRegistryReadOnly();
-        const verified = await Promise.all(
-          doctors.map(async (d) => {
-            try {
-              return (await registry.isVerifiedEmitter(ethers.getAddress(d.walletAddress))) ? d : null;
-            } catch {
-              return null;
-            }
+        const entries: { doctorAddress: string }[] = await api.getPermissions(address);
+        const list = await Promise.all(
+          entries.map(async (e) => {
+            const p = await api.getProfileByWallet(e.doctorAddress).catch(() => null);
+            return { walletAddress: e.doctorAddress, name: p?.name || "Médico", lastName: p?.lastName ?? null };
           }),
         );
-        setMedicos(verified.filter((d): d is AppUser => d !== null));
+        setMedicos(list);
       } catch {
         setMedicos([]);
       }
     })();
-  }, []);
+  }, [address]);
 
-  const canSubmit = doctorAddress.startsWith("0x") && description.trim().length > 0;
+  const canSubmit = doctorAddress.startsWith("0x") && description.trim().length > 0 && !submitting;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Acá iría: PrescriptionManager.requestPrescription(doctorAddress, description)
-    setSubmitted(true);
+    if (!address || !canSubmit) return;
+    setSubmitting(true);
+    loader.show("Confirmá en MetaMask…");
+    try {
+      // On-chain solo va un tipo genérico; el detalle queda off-chain (privado)
+      const pm = await getPrescriptionManager();
+      const tx = await pm.requestPrescription(ethers.getAddress(doctorAddress), "receta");
+      loader.show("Enviando solicitud…");
+      const receipt = await tx.wait();
+
+      const event = receipt.logs
+        .map((log: any) => { try { return pm.interface.parseLog(log); } catch { return null; } })
+        .find((p: any) => p?.name === "PrescriptionRequested");
+      if (!event) throw new Error("No se pudo obtener el id de la receta");
+      const prescriptionIdOnChain = Number(event.args.id ?? event.args[0]);
+
+      // Guardamos el texto privado off-chain
+      await api.createPrescription({ prescriptionIdOnChain, doctorAddress: ethers.getAddress(doctorAddress), description: description.trim() });
+
+      toast.show("Solicitud enviada");
+      setSubmitted(true);
+    } catch (err: unknown) {
+      toast.show(getErrorMessage(err) || "No se pudo enviar la solicitud", "error");
+    } finally {
+      loader.hide();
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -51,7 +81,7 @@ export default function SolicitarRecetaPage() {
             <div style={s.successIcon}>📋</div>
             <h2 style={s.successTitle}>Solicitud enviada</h2>
             <p style={s.successDesc}>El médico va a recibir tu solicitud y podrá aceptarla o rechazarla desde su panel.</p>
-            <button style={s.btnPrimary} onClick={() => navigate("/patient")}>Volver al inicio</button>
+            <button style={s.btnPrimary} onClick={() => navigate("/patient/recetas")}>Volver al inicio</button>
           </div>
         </div>
       </div>
@@ -62,7 +92,7 @@ export default function SolicitarRecetaPage() {
     <div style={s.page}>
       <div style={s.container}>
         <div style={s.topBar}>
-          <button style={s.backBtn} onClick={() => navigate("/patient")}>
+          <button style={s.backBtn} onClick={() => navigate("/patient/recetas")}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
             Volver
           </button>
@@ -91,7 +121,7 @@ export default function SolicitarRecetaPage() {
               value={doctorAddress}
               onChange={setDoctorAddress}
               placeholder="Seleccioná un médico…"
-              emptyText="No hay médicos aprobados disponibles todavía."
+              emptyText="No tenés médicos. Agregá uno en 'Mis médicos'."
               accent={palette.sky500}
             />
           </div>
@@ -108,7 +138,7 @@ export default function SolicitarRecetaPage() {
           </div>
 
           <button type="submit" style={{ ...s.submitBtn, opacity: canSubmit ? 1 : 0.5 }} disabled={!canSubmit}>
-            Enviar solicitud
+            {submitting ? "Enviando…" : "Enviar solicitud"}
           </button>
         </form>
       </div>

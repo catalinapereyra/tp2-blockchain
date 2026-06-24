@@ -7,6 +7,7 @@ import { AuthModule } from "./auth/auth.module";
 import { LaboratoryModule } from "./laboratory/laboratory.module";
 import { PermissionsModule } from "./permissions/permissions.module";
 import { SignedDocumentsModule } from "./signed-documents/signed-documents.module";
+import { PrescriptionsModule } from "./prescriptions/prescriptions.module";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { SignedDocumentsModule } from "./signed-documents/signed-documents.modul
     UploadModule,
     PermissionsModule,
     SignedDocumentsModule,
+    PrescriptionsModule,
   ],
 })
 export class AppModule {}

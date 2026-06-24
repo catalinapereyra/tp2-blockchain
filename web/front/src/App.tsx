@@ -10,6 +10,7 @@ import PatientDashboard from "./pages/patient/PatientDashboard";
 import MisEstudiosPage from "./pages/patient/MisEstudiosPage";
 import SubirEstudioPage from "./pages/patient/SubirEstudioPage";
 import SolicitarRecetaPage from "./pages/patient/SolicitarRecetaPage";
+import MisRecetasPage from "./pages/patient/MisRecetasPage";
 import MisMedicosPage from "./pages/patient/MisMedicosPage";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import FirmarEstudioPage from "./pages/doctor/FirmarEstudioPage";
@@ -69,6 +70,11 @@ export default function App() {
           </ProtectedRoute>
         } />
         <Route path="/patient/recetas" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
+            <MisRecetasPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/patient/recetas/solicitar" element={
           <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
             <SolicitarRecetaPage />
           </ProtectedRoute>

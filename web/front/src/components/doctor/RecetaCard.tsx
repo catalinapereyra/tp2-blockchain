@@ -21,11 +21,13 @@ const STATUS_CONFIG: Record<RecetaStatus, { label: string; bg: string; color: st
 
 interface Props {
   receta: Receta;
+  busy?: boolean;
   onAccept?: (id: number) => void;
   onReject?: (id: number) => void;
+  onIssue?: (id: number) => void;
 }
 
-export default function RecetaCard({ receta, onAccept, onReject }: Props) {
+export default function RecetaCard({ receta, busy, onAccept, onReject, onIssue }: Props) {
   const sc = STATUS_CONFIG[receta.status];
 
   return (
@@ -38,8 +40,11 @@ export default function RecetaCard({ receta, onAccept, onReject }: Props) {
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
             </div>
-            <span style={s.addr}>{receta.patientAddress.slice(0, 10)}…{receta.patientAddress.slice(-6)}</span>
+            {receta.patientName
+              ? <span style={s.patientName}>{receta.patientName}</span>
+              : <span style={s.addr}>{receta.patientAddress.slice(0, 10)}…{receta.patientAddress.slice(-6)}</span>}
           </div>
+          {receta.patientName && <span style={s.addrSmall}>{receta.patientAddress.slice(0, 10)}…{receta.patientAddress.slice(-6)}</span>}
           <p style={s.desc}>"{receta.description}"</p>
         </div>
         <div style={s.right}>
@@ -50,13 +55,22 @@ export default function RecetaCard({ receta, onAccept, onReject }: Props) {
 
       {receta.status === "pending" && (
         <div style={s.actions}>
-          <button style={s.btnAccept} onClick={() => onAccept?.(receta.id)}>
+          <button style={{ ...s.btnAccept, opacity: busy ? 0.5 : 1 }} disabled={busy} onClick={() => onAccept?.(receta.id)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             Aceptar
           </button>
-          <button style={s.btnReject} onClick={() => onReject?.(receta.id)}>
+          <button style={{ ...s.btnReject, opacity: busy ? 0.5 : 1 }} disabled={busy} onClick={() => onReject?.(receta.id)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             Rechazar
+          </button>
+        </div>
+      )}
+
+      {receta.status === "accepted" && (
+        <div style={s.actions}>
+          <button style={{ ...s.btnAccept, opacity: busy ? 0.5 : 1 }} disabled={busy} onClick={() => onIssue?.(receta.id)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            {busy ? "Emitiendo…" : "Emitir receta (adjuntar PDF)"}
           </button>
         </div>
       )}
@@ -89,6 +103,8 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   addr: { fontFamily: fontFamily.mono, fontSize: 12, color: palette.slate700, fontWeight: 500 },
+  patientName: { fontSize: 14, fontWeight: 600, color: palette.slate900 },
+  addrSmall: { fontFamily: fontFamily.mono, fontSize: 11, color: palette.slate400 },
   desc: { fontSize: 13, color: palette.slate600, margin: 0, fontStyle: "italic" },
   statusPill: { fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 },
   date: { fontSize: 11, color: palette.slate400 },

@@ -33,9 +33,9 @@ const ACTIONS = [
     iconBg: palette.sky50,
     border: palette.sky200,
     bg: palette.sky50,
-    title: "Solicitar receta",
-    desc: "Pedile una receta a tu médico desde la app.",
-    badge: "1 receta emitida",
+    title: "Mis recetas",
+    desc: "Tus recetas emitidas y solicitá nuevas a tu médico.",
+    badge: null,
   },
   {
     path: "/patient/medicos",

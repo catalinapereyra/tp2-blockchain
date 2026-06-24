@@ -56,6 +56,27 @@ model Diagnosis {
   @@unique([documentIdOnChain, doctorAddress])
 }
 
+// Relación "este es mi médico" (off-chain). Permite tener un médico en la lista
+// sin compartirle ningún documento. No necesita estar on-chain.
+model PatientDoctor {
+  id             Int      @id @default(autoincrement())
+  patientAddress String
+  doctorAddress  String
+  createdAt      DateTime @default(now())
+
+  @@unique([patientAddress, doctorAddress])
+}
+
+// Texto privado de la receta (off-chain). On-chain solo queda el estado y el hash.
+model Prescription {
+  id                    Int      @id @default(autoincrement())
+  prescriptionIdOnChain Int      @unique
+  patientAddress        String
+  doctorAddress         String
+  description           String // qué pide el paciente (privado)
+  createdAt             DateTime @default(now())
+}
+
 model DocumentAccess {
   id                Int      @id @default(autoincrement())
   patientAddress    String

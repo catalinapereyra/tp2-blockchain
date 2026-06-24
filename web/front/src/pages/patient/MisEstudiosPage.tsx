@@ -36,6 +36,7 @@ function groupDocuments(docs: DocRecord[], myAddress: string): Grupo[] {
   const map = new Map<string, Grupo>();
 
   for (const doc of docs) {
+    if (doc.documentType === "receta") continue; // las recetas van en su propia solapa
     const key = doc.studyType || doc.documentType;
     if (!map.has(key)) {
       map.set(key, { studyType: key, category: doc.documentType, estudios: [] });
