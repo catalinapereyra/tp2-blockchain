@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RecetaCard, { Receta } from "../../components/doctor/RecetaCard";
+import { palette, fontFamily, gradients } from "../../styles";
 
 const MOCK_RECETAS: Receta[] = [
   {
@@ -61,7 +62,7 @@ export default function RecetasPage() {
 
         <div style={s.pageHeader}>
           <div style={s.pageIconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={palette.sky500} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
               <rect x="9" y="3" width="6" height="4" rx="1"/>
               <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
@@ -94,7 +95,7 @@ export default function RecetasPage() {
         {/* Lista */}
         {filtered.length === 0 ? (
           <div style={s.empty}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" strokeWidth="1.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={palette.slate200} strokeWidth="1.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
             <span>No hay solicitudes en esta categoría</span>
           </div>
         ) : (
@@ -112,41 +113,41 @@ export default function RecetasPage() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "calc(100vh - 56px)",
-    background: "linear-gradient(135deg, #eef2ff 0%, #f8faff 40%, #f0fdf8 100%)",
-    fontFamily: "'DM Sans', sans-serif",
+    background: gradients.app,
+    fontFamily: fontFamily.sans,
     paddingBottom: 60,
   },
   container: { maxWidth: 680, margin: "0 auto", padding: "28px 20px" },
   topBar: { marginBottom: 20 },
   backBtn: {
     display: "inline-flex", alignItems: "center", gap: 5,
-    background: "none", border: "none", color: "#64748b",
+    background: "none", border: "none", color: palette.slate500,
     fontSize: 13, fontWeight: 500, cursor: "pointer", padding: 0,
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fontFamily.sans,
   },
   pageHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 24 },
   pageIconWrap: {
-    width: 44, height: 44, borderRadius: 12, background: "#f0f9ff",
+    width: 44, height: 44, borderRadius: 12, background: palette.sky50,
     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  pageTitle: { fontSize: 20, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "-0.4px" },
-  pageSubtitle: { fontSize: 13, color: "#94a3b8", margin: "2px 0 0" },
+  pageTitle: { fontSize: 20, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.4px" },
+  pageSubtitle: { fontSize: 13, color: palette.slate400, margin: "2px 0 0" },
   filters: { display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" as const },
   filterBtn: {
     display: "flex", alignItems: "center", gap: 6,
-    background: "white", border: "1.5px solid #e2e8f0",
+    background: palette.white, border: `1.5px solid ${palette.slate200}`,
     borderRadius: 10, padding: "7px 14px", fontSize: 13, fontWeight: 500,
-    cursor: "pointer", color: "#475569", fontFamily: "'DM Sans', sans-serif",
+    cursor: "pointer", color: palette.slate600, fontFamily: fontFamily.sans,
   },
-  filterBtnActive: { borderColor: "#0ea5e9", color: "#0ea5e9", background: "#f0f9ff" },
+  filterBtnActive: { borderColor: palette.sky500, color: palette.sky500, background: palette.sky50 },
   filterCount: {
-    background: "#f1f5f9", color: "#94a3b8",
+    background: palette.slate100, color: palette.slate400,
     fontSize: 11, fontWeight: 700, padding: "1px 6px", borderRadius: 20,
   },
-  filterCountActive: { background: "#e0f2fe", color: "#0ea5e9" },
+  filterCountActive: { background: palette.sky100, color: palette.sky500 },
   list: { display: "flex", flexDirection: "column" as const, gap: 10 },
   empty: {
     display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 10,
-    padding: "48px 0", color: "#94a3b8", fontSize: 13,
+    padding: "48px 0", color: palette.slate400, fontSize: 13,
   },
 };

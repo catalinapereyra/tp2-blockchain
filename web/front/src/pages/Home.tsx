@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../context/WalletContext";
 import { getErrorMessage } from "../lib/error";
+import { palette, fontFamily, gradients } from "../styles";
 
 const ADMIN_ADDRESS = (import.meta.env.VITE_ADMIN_ADDRESS as string).toLowerCase();
 
@@ -16,8 +17,8 @@ const ROLES = [
     ),
     title: "Paciente",
     desc: "Accedé a tu historial médico, documentos y recetas.",
-    accent: "#6366f1",
-    bg: "#f5f3ff",
+    accent: palette.indigo500,
+    bg: palette.indigoSoft,
   },
   {
     key: "doctor",
@@ -28,8 +29,8 @@ const ROLES = [
     ),
     title: "Médico / Profesional",
     desc: "Emitís recetas y registrás diagnósticos para tus pacientes.",
-    accent: "#0ea5e9",
-    bg: "#f0f9ff",
+    accent: palette.sky500,
+    bg: palette.sky50,
   },
   {
     key: "lab",
@@ -40,8 +41,8 @@ const ROLES = [
     ),
     title: "Laboratorio",
     desc: "Cargás resultados y estudios verificados en blockchain.",
-    accent: "#10b981",
-    bg: "#f0fdf4",
+    accent: palette.emerald500,
+    bg: palette.emerald50,
   },
 ];
 
@@ -96,7 +97,7 @@ export default function Home() {
         {/* Header */}
         <div style={styles.header}>
           <div style={styles.logoWrap}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
             </svg>
           </div>
@@ -107,7 +108,7 @@ export default function Home() {
         {isAdminWallet ? (
           <div style={styles.adminCard}>
             <div style={styles.adminIconWrap}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
@@ -142,13 +143,13 @@ export default function Home() {
                   <div style={{ ...styles.iconCircle, background: r.bg, color: r.accent }}>
                     {r.icon}
                   </div>
-                  <h2 style={{ ...styles.cardTitle, color: "#0f172a" }}>{r.title}</h2>
+                  <h2 style={{ ...styles.cardTitle, color: palette.slate900 }}>{r.title}</h2>
                   <p style={styles.cardDesc}>{r.desc}</p>
                   <button
                     style={{
                       ...styles.btn,
                       background: isHovered ? r.accent : "transparent",
-                      color: isHovered ? "white" : r.accent,
+                      color: isHovered ? palette.white : r.accent,
                       borderColor: r.accent,
                     }}
                     onClick={() => handleConnect(r.key)}
@@ -182,8 +183,8 @@ export default function Home() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #eef2ff 0%, #f8faff 40%, #f0fdf8 100%)",
-    fontFamily: "'DM Sans', sans-serif",
+    background: gradients.app,
+    fontFamily: fontFamily.sans,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -231,19 +232,19 @@ const styles: Record<string, React.CSSProperties> = {
     width: 56,
     height: 56,
     borderRadius: 16,
-    background: "#f5f3ff",
+    background: palette.indigoSoft,
     marginBottom: 16,
   },
   title: {
     fontSize: 42,
     fontWeight: 700,
-    color: "#0f172a",
+    color: palette.slate900,
     margin: "0 0 10px",
     letterSpacing: "-1.5px",
   },
   subtitle: {
     fontSize: 16,
-    color: "#94a3b8",
+    color: palette.slate400,
     fontWeight: 400,
     margin: 0,
   },
@@ -255,7 +256,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
   },
   card: {
-    background: "white",
+    background: palette.white,
     borderRadius: 20,
     padding: "36px 28px",
     width: 252,
@@ -263,7 +264,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column" as const,
     alignItems: "flex-start",
     gap: 12,
-    border: "1px solid #f1f5f9",
+    border: `1px solid ${palette.slate100}`,
     boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
     transition: "transform 0.2s ease, box-shadow 0.2s ease",
     cursor: "default",
@@ -284,7 +285,7 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: "-0.3px",
   },
   cardDesc: {
-    color: "#94a3b8",
+    color: palette.slate400,
     fontSize: 13.5,
     lineHeight: 1.6,
     margin: 0,
@@ -299,7 +300,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
     transition: "background 0.18s, color 0.18s",
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fontFamily.sans,
     alignSelf: "stretch",
     textAlign: "center" as const,
   },
@@ -308,9 +309,9 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    background: "#fef2f2",
-    color: "#dc2626",
-    border: "1px solid #fecaca",
+    background: palette.red50,
+    color: palette.red600,
+    border: `1px solid ${palette.red200}`,
     borderRadius: 10,
     padding: "10px 16px",
     fontSize: 13,
@@ -320,7 +321,7 @@ const styles: Record<string, React.CSSProperties> = {
   footer: {
     marginTop: 52,
     fontSize: 12,
-    color: "#cbd5e1",
+    color: palette.slate300,
     display: "flex",
     alignItems: "center",
     gap: 6,
@@ -330,17 +331,17 @@ const styles: Record<string, React.CSSProperties> = {
     width: 6,
     height: 6,
     borderRadius: "50%",
-    background: "#10b981",
+    background: palette.emerald500,
     display: "inline-block",
   },
   // Admin
   adminCard: {
-    background: "white",
+    background: palette.white,
     borderRadius: 20,
     padding: "40px 36px",
     maxWidth: 340,
     width: "100%",
-    border: "1px solid #ede9fe",
+    border: `1px solid ${palette.violet100}`,
     boxShadow: "0 4px 16px rgba(99,102,241,0.08)",
     display: "flex",
     flexDirection: "column" as const,
@@ -351,7 +352,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: 52,
     height: 52,
     borderRadius: 14,
-    background: "#f5f3ff",
+    background: palette.indigoSoft,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -360,27 +361,27 @@ const styles: Record<string, React.CSSProperties> = {
   adminLabel: {
     fontSize: 18,
     fontWeight: 600,
-    color: "#0f172a",
+    color: palette.slate900,
     margin: 0,
     letterSpacing: "-0.3px",
   },
   adminAddr: {
     fontSize: 13,
-    color: "#94a3b8",
-    fontFamily: "monospace",
+    color: palette.slate400,
+    fontFamily: fontFamily.mono,
     margin: 0,
   },
   adminBtn: {
     marginTop: 16,
     width: "100%",
-    background: "#6366f1",
-    color: "white",
+    background: palette.indigo500,
+    color: palette.white,
     border: "none",
     borderRadius: 10,
     padding: "12px",
     fontSize: 14,
     fontWeight: 600,
     cursor: "pointer",
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fontFamily.sans,
   },
 };

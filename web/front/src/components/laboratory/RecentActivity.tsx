@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { type DocumentMetadata } from "../../lib/api";
 import { LaboratoryCard } from "./LaboratoryCard";
+import { palette, fontFamily } from "../../styles";
 
 type RecentActivityProps = {
   documents: DocumentMetadata[];
@@ -68,12 +69,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dot: {
     width: 8, height: 8, borderRadius: "50%",
-    background: "#10b981", flexShrink: 0,
+    background: palette.emerald500, flexShrink: 0,
   },
   info: { minWidth: 0 },
-  itemTitle: { display: "block", fontSize: 12, fontWeight: 600, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  itemSub: { fontSize: 11, color: "#94a3b8", margin: "2px 0 0", fontFamily: "monospace" },
-  time: { fontSize: 10, color: "#94a3b8", whiteSpace: "nowrap" },
-  state: { color: "#94a3b8", fontSize: 12, lineHeight: 1.5, margin: 0 },
-  errorText: { color: "#ef4444", fontSize: 12, lineHeight: 1.5, margin: 0 },
+  itemTitle: { display: "block", fontSize: 12, fontWeight: 600, color: palette.slate900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  itemSub: { fontSize: 11, color: palette.slate400, margin: "2px 0 0", fontFamily: fontFamily.mono },
+  time: { fontSize: 10, color: palette.slate400, whiteSpace: "nowrap" },
+  state: { color: palette.slate400, fontSize: 12, lineHeight: 1.5, margin: 0 },
+  errorText: { color: palette.red500, fontSize: 12, lineHeight: 1.5, margin: 0 },
 };

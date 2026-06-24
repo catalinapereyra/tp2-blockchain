@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useToast } from "../common/Toast";
+import { palette, fontFamily } from "../../styles";
 
 export interface Estudio {
   id: number;
@@ -60,10 +61,10 @@ export default function EstudioCard({ estudio, onSaveDiagnosis }: Props) {
   }
 
   const CATEGORY_STYLE: Record<string, { bg: string; color: string }> = {
-    analisis: { bg: "#f0f9ff", color: "#0ea5e9" },
-    imagen:   { bg: "#f5f3ff", color: "#6366f1" },
-    receta:   { bg: "#f0fdf4", color: "#10b981" },
-    otro:     { bg: "#f8fafc", color: "#64748b" },
+    analisis: { bg: palette.sky50, color: palette.sky500 },
+    imagen:   { bg: palette.indigoSoft, color: palette.indigo500 },
+    receta:   { bg: palette.emerald50, color: palette.emerald500 },
+    otro:     { bg: palette.slate50, color: palette.slate500 },
   };
   const cs = CATEGORY_STYLE[estudio.category] ?? CATEGORY_STYLE.otro;
 
@@ -95,7 +96,7 @@ export default function EstudioCard({ estudio, onSaveDiagnosis }: Props) {
             <span style={s.diagMissing}>Sin diagnóstico</span>
           )}
           <svg
-            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2"
+            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={palette.slate300} strokeWidth="2"
             style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
           >
             <polyline points="6 9 12 15 18 9"/>
@@ -169,8 +170,8 @@ export default function EstudioCard({ estudio, onSaveDiagnosis }: Props) {
 
 const s: Record<string, React.CSSProperties> = {
   card: {
-    background: "white",
-    border: "1px solid #f1f5f9",
+    background: palette.white,
+    border: `1px solid ${palette.slate100}`,
     borderRadius: 14,
     overflow: "hidden",
   },
@@ -184,55 +185,55 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
   titleGroup: { display: "flex", flexDirection: "column" as const, gap: 4, minWidth: 0 },
-  specificType: { fontSize: 14, fontWeight: 600, color: "#0f172a" },
+  specificType: { fontSize: 14, fontWeight: 600, color: palette.slate900 },
   meta: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const },
   pill: { fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20 },
-  metaText: { fontSize: 11, color: "#94a3b8" },
+  metaText: { fontSize: 11, color: palette.slate400 },
   headerRight: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 },
-  diagDone: { fontSize: 11, fontWeight: 600, color: "#16a34a" },
-  diagMissing: { fontSize: 11, color: "#d97706" },
+  diagDone: { fontSize: 11, fontWeight: 600, color: palette.emerald600 },
+  diagMissing: { fontSize: 11, color: palette.amber600 },
   body: {
-    borderTop: "1px solid #f8fafc",
+    borderTop: `1px solid ${palette.slate50}`,
     padding: "14px 16px",
     display: "flex", flexDirection: "column" as const, gap: 12,
   },
   fileLink: {
     display: "inline-flex", alignItems: "center", gap: 6,
-    fontSize: 12, color: "#6366f1", fontWeight: 600, textDecoration: "none",
+    fontSize: 12, color: palette.indigo500, fontWeight: 600, textDecoration: "none",
   },
   diagSection: { display: "flex", flexDirection: "column" as const, gap: 8 },
   diagLabel: {
     display: "flex", alignItems: "center", gap: 5,
-    fontSize: 12, fontWeight: 600, color: "#475569",
+    fontSize: 12, fontWeight: 600, color: palette.slate600,
   },
   textarea: {
-    border: "1.5px solid #e2e8f0", borderRadius: 10, padding: "10px 12px",
-    fontSize: 13, fontFamily: "'DM Sans', sans-serif", outline: "none",
-    resize: "vertical" as const, color: "#1e293b", lineHeight: 1.5,
+    border: `1.5px solid ${palette.slate200}`, borderRadius: 10, padding: "10px 12px",
+    fontSize: 13, fontFamily: fontFamily.sans, outline: "none",
+    resize: "vertical" as const, color: palette.slate800, lineHeight: 1.5,
   },
   diagFooter: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 },
   btnRow: { display: "flex", alignItems: "center", gap: 8 },
   savedText: {
-    fontSize: 13, color: "#1e293b", lineHeight: 1.5, margin: 0,
-    background: "#f8fafc", border: "1px solid #f1f5f9", borderRadius: 10,
+    fontSize: 13, color: palette.slate800, lineHeight: 1.5, margin: 0,
+    background: palette.slate50, border: `1px solid ${palette.slate100}`, borderRadius: 10,
     padding: "10px 12px", whiteSpace: "pre-wrap" as const,
   },
   editBtn: {
     display: "inline-flex", alignItems: "center",
-    background: "white", color: "#6366f1", border: "1.5px solid #e0e7ff",
+    background: palette.white, color: palette.indigo500, border: `1.5px solid ${palette.indigo100}`,
     padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-    cursor: "pointer", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap" as const,
+    cursor: "pointer", fontFamily: fontFamily.sans, whiteSpace: "nowrap" as const,
   },
   cancelBtn: {
-    background: "white", color: "#64748b", border: "1.5px solid #e2e8f0",
+    background: palette.white, color: palette.slate500, border: `1.5px solid ${palette.slate200}`,
     padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    cursor: "pointer", fontFamily: fontFamily.sans,
   },
-  diagNote: { fontSize: 11, color: "#cbd5e1" },
-  warnText: { fontSize: 11, color: "#dc2626" },
+  diagNote: { fontSize: 11, color: palette.slate300 },
+  warnText: { fontSize: 11, color: palette.red600 },
   saveBtn: {
-    background: "#6366f1", color: "white", border: "none",
+    background: palette.indigo500, color: palette.white, border: "none",
     padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    cursor: "pointer", fontFamily: fontFamily.sans,
   },
 };

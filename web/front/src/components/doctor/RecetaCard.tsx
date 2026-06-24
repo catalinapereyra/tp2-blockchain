@@ -1,4 +1,5 @@
 import React from "react";
+import { palette, fontFamily } from "../../styles";
 
 export type RecetaStatus = "pending" | "accepted" | "rejected" | "issued";
 
@@ -12,10 +13,10 @@ export interface Receta {
 }
 
 const STATUS_CONFIG: Record<RecetaStatus, { label: string; bg: string; color: string }> = {
-  pending:  { label: "Pendiente",  bg: "#fffbeb", color: "#d97706" },
-  accepted: { label: "Aceptada",   bg: "#f0fdf4", color: "#16a34a" },
-  rejected: { label: "Rechazada",  bg: "#fef2f2", color: "#dc2626" },
-  issued:   { label: "Emitida",    bg: "#eff6ff", color: "#2563eb" },
+  pending:  { label: "Pendiente",  bg: palette.amber50, color: palette.amber600 },
+  accepted: { label: "Aceptada",   bg: palette.emerald50, color: palette.emerald600 },
+  rejected: { label: "Rechazada",  bg: palette.red50, color: palette.red600 },
+  issued:   { label: "Emitida",    bg: palette.blue50, color: palette.blue600 },
 };
 
 interface Props {
@@ -65,8 +66,8 @@ export default function RecetaCard({ receta, onAccept, onReject }: Props) {
 
 const s: Record<string, React.CSSProperties> = {
   card: {
-    background: "white",
-    border: "1px solid #f1f5f9",
+    background: palette.white,
+    border: `1px solid ${palette.slate100}`,
     borderRadius: 14,
     padding: "16px 18px",
     display: "flex",
@@ -84,25 +85,25 @@ const s: Record<string, React.CSSProperties> = {
   patientRow: { display: "flex", alignItems: "center", gap: 6 },
   avatar: {
     width: 26, height: 26, borderRadius: 8,
-    background: "#f5f3ff", color: "#6366f1",
+    background: palette.indigoSoft, color: palette.indigo500,
     display: "flex", alignItems: "center", justifyContent: "center",
   },
-  addr: { fontFamily: "monospace", fontSize: 12, color: "#334155", fontWeight: 500 },
-  desc: { fontSize: 13, color: "#475569", margin: 0, fontStyle: "italic" },
+  addr: { fontFamily: fontFamily.mono, fontSize: 12, color: palette.slate700, fontWeight: 500 },
+  desc: { fontSize: 13, color: palette.slate600, margin: 0, fontStyle: "italic" },
   statusPill: { fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 },
-  date: { fontSize: 11, color: "#94a3b8" },
-  actions: { display: "flex", gap: 8, paddingTop: 4, borderTop: "1px solid #f8fafc" },
+  date: { fontSize: 11, color: palette.slate400 },
+  actions: { display: "flex", gap: 8, paddingTop: 4, borderTop: `1px solid ${palette.slate50}` },
   btnAccept: {
     display: "flex", alignItems: "center", gap: 6,
-    background: "#16a34a", color: "white", border: "none",
+    background: palette.emerald600, color: palette.white, border: "none",
     padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    cursor: "pointer", fontFamily: fontFamily.sans,
   },
   btnReject: {
     display: "flex", alignItems: "center", gap: 6,
-    background: "none", color: "#dc2626",
-    border: "1.5px solid #fca5a5",
+    background: "none", color: palette.red600,
+    border: `1.5px solid ${palette.red300}`,
     padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    cursor: "pointer", fontFamily: fontFamily.sans,
   },
 };

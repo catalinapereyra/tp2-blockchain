@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
 import { api } from "../../lib/api";
 import PacienteCard, { Paciente } from "../../components/doctor/PacienteCard";
+import { palette, fontFamily, gradients } from "../../styles";
 
 interface DocMeta {
   documentIdOnChain: number;
@@ -73,7 +74,7 @@ export default function PacientesPage() {
 
         <div style={s.pageHeader}>
           <div style={s.pageIconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
               <circle cx="9" cy="7" r="4"/>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -90,7 +91,7 @@ export default function PacientesPage() {
 
         {!loading && pacientes.length > 0 && (
           <div style={s.searchWrap}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={palette.slate400} strokeWidth="2" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input
@@ -108,7 +109,7 @@ export default function PacientesPage() {
 
         {!loading && pacientes.length === 0 && (
           <div style={s.empty}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" strokeWidth="1.5">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={palette.slate200} strokeWidth="1.5">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
             </svg>
             <p style={s.emptyText}>Ningún paciente te dio acceso a sus estudios todavía.</p>
@@ -134,45 +135,45 @@ export default function PacientesPage() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "calc(100vh - 56px)",
-    background: "linear-gradient(135deg, #eef2ff 0%, #f8faff 40%, #f0fdf8 100%)",
-    fontFamily: "'DM Sans', sans-serif", paddingBottom: 60,
+    background: gradients.app,
+    fontFamily: fontFamily.sans, paddingBottom: 60,
   },
   container: { maxWidth: 680, margin: "0 auto", padding: "28px 20px" },
   topBar: { marginBottom: 20 },
   backBtn: {
     display: "inline-flex", alignItems: "center", gap: 5,
-    background: "none", border: "none", color: "#64748b",
+    background: "none", border: "none", color: palette.slate500,
     fontSize: 13, fontWeight: 500, cursor: "pointer", padding: 0,
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fontFamily.sans,
   },
   pageHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 24 },
   pageIconWrap: {
-    width: 44, height: 44, borderRadius: 12, background: "#f5f3ff",
+    width: 44, height: 44, borderRadius: 12, background: palette.indigoSoft,
     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  pageTitle: { fontSize: 20, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "-0.4px" },
-  pageSubtitle: { fontSize: 13, color: "#94a3b8", margin: "2px 0 0" },
+  pageTitle: { fontSize: 20, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.4px" },
+  pageSubtitle: { fontSize: 13, color: palette.slate400, margin: "2px 0 0" },
   searchWrap: { position: "relative", marginBottom: 16 },
   searchInput: {
     width: "100%", padding: "10px 12px 10px 36px",
-    border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 13,
-    fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" as const,
-    background: "white",
+    border: `1.5px solid ${palette.slate200}`, borderRadius: 10, fontSize: 13,
+    fontFamily: fontFamily.sans, outline: "none", boxSizing: "border-box" as const,
+    background: palette.white,
   },
   center: { display: "flex", justifyContent: "center", padding: "48px 0" },
   spinner: {
-    width: 28, height: 28, border: "3px solid #e2e8f0",
-    borderTopColor: "#6366f1", borderRadius: "50%",
+    width: 28, height: 28, border: `3px solid ${palette.slate200}`,
+    borderTopColor: palette.indigo500, borderRadius: "50%",
     animation: "spin 0.8s linear infinite",
   },
   errorBox: {
-    background: "#fef2f2", border: "1px solid #fecaca",
-    borderRadius: 10, padding: "12px 16px", fontSize: 13, color: "#dc2626",
+    background: palette.red50, border: `1px solid ${palette.red200}`,
+    borderRadius: 10, padding: "12px 16px", fontSize: 13, color: palette.red600,
   },
   list: { display: "flex", flexDirection: "column" as const, gap: 8 },
   empty: {
     display: "flex", flexDirection: "column" as const, alignItems: "center",
     gap: 12, padding: "60px 0", textAlign: "center" as const,
   },
-  emptyText: { fontSize: 14, color: "#94a3b8", margin: 0 },
+  emptyText: { fontSize: 14, color: palette.slate400, margin: 0 },
 };

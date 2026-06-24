@@ -1,46 +1,47 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
+import { palette, fontFamily, gradients } from "../../styles";
 
 export default function DoctorDashboard() {
   const { address } = useWallet();
   const navigate = useNavigate();
-  const info = { label: "Médico", color: "#0ea5e9" };
+  const info = { label: "Médico", color: palette.sky500 };
 
   const ACTIONS = [
     {
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.sky500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
           <rect x="9" y="3" width="6" height="4" rx="1"/>
           <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
         </svg>
       ),
-      bg: "#f0f9ff",
-      border: "#bae6fd",
+      bg: palette.sky50,
+      border: palette.sky200,
       title: "Solicitudes de recetas",
       desc: "Revisá y respondé las solicitudes de tus pacientes.",
       badge: "2 pendientes",
-      badgeColor: "#0ea5e9",
-      badgeBg: "#e0f2fe",
+      badgeColor: palette.sky500,
+      badgeBg: palette.sky100,
       path: "/doctor/recetas",
     },
     {
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
           <circle cx="9" cy="7" r="4"/>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
           <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
       ),
-      bg: "#f5f3ff",
-      border: "#ddd6fe",
+      bg: palette.indigoSoft,
+      border: palette.indigo200,
       title: "Mis pacientes",
       desc: "Mirá los estudios compartidos y dejá diagnósticos.",
       badge: "3 estudios sin diagnóstico",
-      badgeColor: "#6366f1",
-      badgeBg: "#ede9fe",
+      badgeColor: palette.indigo500,
+      badgeBg: palette.violet100,
       path: "/doctor/pacientes",
     },
   ];
@@ -96,8 +97,8 @@ export default function DoctorDashboard() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "calc(100vh - 56px)",
-    background: "linear-gradient(135deg, #eef2ff 0%, #f8faff 40%, #f0fdf8 100%)",
-    fontFamily: "'DM Sans', sans-serif",
+    background: gradients.app,
+    fontFamily: fontFamily.sans,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -111,12 +112,12 @@ const s: Record<string, React.CSSProperties> = {
   headerLeft: { display: "flex", alignItems: "center", gap: 14 },
   avatar: {
     width: 52, height: 52, borderRadius: 16,
-    background: "white", border: "1px solid #f1f5f9",
+    background: palette.white, border: `1px solid ${palette.slate100}`,
     boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
-  greeting: { fontSize: 22, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" },
-  addr: { fontFamily: "monospace", fontSize: 12, color: "#94a3b8", margin: "3px 0 0" },
+  greeting: { fontSize: 22, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.5px" },
+  addr: { fontFamily: fontFamily.mono, fontSize: 12, color: palette.slate400, margin: "3px 0 0" },
   actions: { display: "flex", flexDirection: "column" as const, gap: 14 },
   actionCard: {
     border: "1.5px solid",
@@ -129,7 +130,7 @@ const s: Record<string, React.CSSProperties> = {
   actionTop: { display: "flex", alignItems: "flex-start", justifyContent: "space-between" },
   actionIcon: {
     width: 48, height: 48, borderRadius: 14,
-    background: "white",
+    background: palette.white,
     display: "flex", alignItems: "center", justifyContent: "center",
     boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
   },
@@ -137,10 +138,10 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 11, fontWeight: 700,
     padding: "4px 10px", borderRadius: 20,
   },
-  actionTitle: { fontSize: 17, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "-0.3px" },
-  actionDesc: { fontSize: 13, color: "#64748b", margin: 0, lineHeight: 1.5 },
+  actionTitle: { fontSize: 17, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.3px" },
+  actionDesc: { fontSize: 13, color: palette.slate500, margin: 0, lineHeight: 1.5 },
   actionArrow: {
     display: "inline-flex", alignItems: "center", gap: 4,
-    fontSize: 13, fontWeight: 600, color: "#94a3b8", marginTop: 4,
+    fontSize: 13, fontWeight: 600, color: palette.slate400, marginTop: 4,
   },
 };

@@ -1,5 +1,6 @@
 import { quickActions } from "./laboratoryData";
 import { LaboratoryCard } from "./LaboratoryCard";
+import { palette } from "../../styles";
 
 export function QuickActions() {
   return (
@@ -23,10 +24,10 @@ const styles: Record<string, React.CSSProperties> = {
   grid: { display: "grid", gap: 10, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", padding: "16px 20px 20px" },
   action: {
     alignItems: "center",
-    background: "#f8fafc",
-    border: "1.5px solid #f1f5f9",
+    background: palette.slate50,
+    border: `1.5px solid ${palette.slate100}`,
     borderRadius: 12,
-    color: "#0f172a",
+    color: palette.slate900,
     cursor: "pointer",
     display: "flex",
     gap: 10,
@@ -36,9 +37,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   icon: {
     alignItems: "center",
-    background: "#f0fdf4",
+    background: palette.emerald50,
     borderRadius: 10,
-    color: "#10b981",
+    color: palette.emerald500,
     display: "flex",
     fontSize: 14,
     height: 34,
@@ -47,6 +48,6 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   texts: { display: "flex", flexDirection: "column" as const, gap: 2, minWidth: 0 },
-  title: { display: "block", fontSize: 11, fontWeight: 600, color: "#0f172a" },
-  text: { color: "#94a3b8", display: "block", fontSize: 10, fontWeight: 400 },
+  title: { display: "block", fontSize: 11, fontWeight: 600, color: palette.slate900 },
+  text: { color: palette.slate400, display: "block", fontSize: 10, fontWeight: 400 },
 };

@@ -5,6 +5,7 @@ import { LaboratoryStats } from "../components/laboratory/LaboratoryStats";
 import { RecentActivity } from "../components/laboratory/RecentActivity";
 import { StudyUploadForm } from "../components/laboratory/StudyUploadForm";
 import { QuickActions } from "../components/laboratory/QuickActions";
+import { palette, fontFamily, gradients } from "../styles";
 
 export default function LaboratoryDashboard() {
   const { address, roleLabel } = useWallet();
@@ -41,7 +42,7 @@ export default function LaboratoryDashboard() {
 
         <div style={s.header}>
           <div style={s.avatarWrap}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={palette.emerald500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0a5 5 0 0 0 10 0M9 14H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-4"/>
             </svg>
           </div>
@@ -70,8 +71,8 @@ export default function LaboratoryDashboard() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "calc(100vh - 56px)",
-    background: "linear-gradient(135deg, #eef2ff 0%, #f8faff 40%, #f0fdf8 100%)",
-    fontFamily: "'DM Sans', sans-serif",
+    background: gradients.app,
+    fontFamily: fontFamily.sans,
     padding: "40px 20px 60px",
   },
   container: { width: "100%", maxWidth: 1040, margin: "0 auto" },
@@ -83,13 +84,13 @@ const s: Record<string, React.CSSProperties> = {
   },
   avatarWrap: {
     width: 52, height: 52, borderRadius: 16,
-    background: "white", border: "1px solid #f1f5f9",
+    background: palette.white, border: `1px solid ${palette.slate100}`,
     boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
     display: "flex", alignItems: "center", justifyContent: "center",
     flexShrink: 0,
   },
-  greeting: { fontSize: 22, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" },
-  addr: { fontFamily: "monospace", fontSize: 12, color: "#94a3b8", margin: "3px 0 0" },
+  greeting: { fontSize: 22, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.5px" },
+  addr: { fontFamily: fontFamily.mono, fontSize: 12, color: palette.slate400, margin: "3px 0 0" },
   layout: {
     display: "grid",
     gap: 20,

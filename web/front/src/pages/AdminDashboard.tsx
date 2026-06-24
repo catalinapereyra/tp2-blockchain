@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 import { getUserRegistry, getUserRegistryReadOnly, ADDRESSES, ROLE_LABELS, STATUS_LABELS } from "../lib/contracts";
 import { api } from "../lib/api";
 import { useLoader } from "../components/common/Loader";
+import { palette, fontFamily, gradients } from "../styles";
 
 interface UserInfo {
   address: string;
@@ -52,17 +53,17 @@ async function fetchPendingFromEtherscan(): Promise<UserInfo[]> {
 }
 
 const ROLE_COLORS: Record<number, { bg: string; color: string }> = {
-  0: { bg: "#f5f3ff", color: "#6366f1" },
-  1: { bg: "#f0f9ff", color: "#0ea5e9" },
-  2: { bg: "#f0fdf4", color: "#10b981" },
-  3: { bg: "#fff7ed", color: "#f59e0b" },
+  0: { bg: palette.indigoSoft, color: palette.indigo500 },
+  1: { bg: palette.sky50, color: palette.sky500 },
+  2: { bg: palette.emerald50, color: palette.emerald500 },
+  3: { bg: palette.amber100, color: palette.amber500 },
 };
 
 const STATUS_CONFIG: Record<number, { color: string; bg: string; label: string }> = {
-  0: { color: "#d97706", bg: "#fffbeb", label: "Pendiente" },
-  1: { color: "#16a34a", bg: "#f0fdf4", label: "Aprobado" },
-  2: { color: "#dc2626", bg: "#fef2f2", label: "Rechazado" },
-  3: { color: "#94a3b8", bg: "#f8fafc", label: "Revocado" },
+  0: { color: palette.amber600, bg: palette.amber50, label: "Pendiente" },
+  1: { color: palette.emerald600, bg: palette.emerald50, label: "Aprobado" },
+  2: { color: palette.red600, bg: palette.red50, label: "Rechazado" },
+  3: { color: palette.slate400, bg: palette.slate50, label: "Revocado" },
 };
 
 export default function AdminDashboard() {
@@ -146,7 +147,7 @@ export default function AdminDashboard() {
         {/* Page title */}
         <div style={s.pageHeader}>
           <div style={s.pageIconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
           </div>
@@ -175,7 +176,7 @@ export default function AdminDashboard() {
           <div style={s.cardHeader}>
             <div style={s.cardHeaderLeft}>
               <span style={s.cardTitle}>Solicitudes pendientes</span>
-              <span style={{ ...s.badge, background: pending.length > 0 ? "#fffbeb" : "#f1f5f9", color: pending.length > 0 ? "#d97706" : "#94a3b8" }}>
+              <span style={{ ...s.badge, background: pending.length > 0 ? palette.amber50 : palette.slate100, color: pending.length > 0 ? palette.amber600 : palette.slate400 }}>
                 {pending.length}
               </span>
             </div>
@@ -195,8 +196,8 @@ export default function AdminDashboard() {
             </div>
           ) : pending.length === 0 ? (
             <div style={s.emptyState}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
-              <span style={{ color: "#94a3b8", fontSize: 14 }}>No hay solicitudes pendientes</span>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={palette.slate300} strokeWidth="1.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+              <span style={{ color: palette.slate400, fontSize: 14 }}>No hay solicitudes pendientes</span>
             </div>
           ) : (
             <div style={s.list}>
@@ -211,7 +212,7 @@ export default function AdminDashboard() {
             <div style={s.cardHeader}>
               <div style={s.cardHeaderLeft}>
                 <span style={s.cardTitle}>Profesionales aprobados</span>
-                <span style={{ ...s.badge, background: "#f0fdf4", color: "#16a34a" }}>{approved.length}</span>
+                <span style={{ ...s.badge, background: palette.emerald50, color: palette.emerald600 }}>{approved.length}</span>
               </div>
             </div>
             <div style={s.list}>
@@ -226,7 +227,7 @@ export default function AdminDashboard() {
             <div style={s.cardHeader}>
               <div style={s.cardHeaderLeft}>
                 <span style={s.cardTitle}>Historial</span>
-                <span style={{ ...s.badge, background: "#fef2f2", color: "#dc2626" }}>{rejected.length}</span>
+                <span style={{ ...s.badge, background: palette.red50, color: palette.red600 }}>{rejected.length}</span>
               </div>
             </div>
             <div style={s.list}>
@@ -349,7 +350,7 @@ function UserRow({ user, onAction, actionLoading, showAddress }: {
         )}
         {user.status === 3 && (
           <button
-            style={{ ...s.btnRevoke, background: "#16a34a", opacity: actionLoading !== null ? 0.6 : 1 }}
+            style={{ ...s.btnRevoke, background: palette.emerald600, opacity: actionLoading !== null ? 0.6 : 1 }}
             disabled={actionLoading !== null}
             onClick={() => onAction("approveUser", user.address)}
           >
@@ -364,8 +365,8 @@ function UserRow({ user, onAction, actionLoading, showAddress }: {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #eef2ff 0%, #f8faff 40%, #f0fdf8 100%)",
-    fontFamily: "'DM Sans', sans-serif",
+    background: gradients.app,
+    fontFamily: fontFamily.sans,
     paddingBottom: 60,
   },
   container: {
@@ -383,7 +384,7 @@ const s: Record<string, React.CSSProperties> = {
     width: 44,
     height: 44,
     borderRadius: 12,
-    background: "#f5f3ff",
+    background: palette.indigoSoft,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -392,33 +393,33 @@ const s: Record<string, React.CSSProperties> = {
   pageTitle: {
     fontSize: 22,
     fontWeight: 700,
-    color: "#0f172a",
+    color: palette.slate900,
     margin: 0,
     letterSpacing: "-0.5px",
   },
   pageSubtitle: {
     fontSize: 13,
-    color: "#94a3b8",
+    color: palette.slate400,
     margin: "2px 0 0",
   },
   alertError: {
     display: "flex", alignItems: "center", gap: 8,
-    background: "#fef2f2", color: "#dc2626",
-    border: "1px solid #fecaca",
+    background: palette.red50, color: palette.red600,
+    border: `1px solid ${palette.red200}`,
     padding: "10px 14px", borderRadius: 10, marginBottom: 16, fontSize: 13,
   },
   alertSuccess: {
     display: "flex", alignItems: "center", gap: 8,
-    background: "#f0fdf4", color: "#16a34a",
-    border: "1px solid #bbf7d0",
+    background: palette.emerald50, color: palette.emerald600,
+    border: `1px solid ${palette.emerald200}`,
     padding: "10px 14px", borderRadius: 10, marginBottom: 16, fontSize: 13,
   },
   card: {
-    background: "white",
+    background: palette.white,
     borderRadius: 16,
     padding: "20px 24px",
     boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
-    border: "1px solid #f1f5f9",
+    border: `1px solid ${palette.slate100}`,
     marginBottom: 16,
   },
   cardHeader: {
@@ -435,7 +436,7 @@ const s: Record<string, React.CSSProperties> = {
   cardTitle: {
     fontSize: 14,
     fontWeight: 600,
-    color: "#0f172a",
+    color: palette.slate900,
     letterSpacing: "-0.2px",
   },
   badge: {
@@ -446,13 +447,13 @@ const s: Record<string, React.CSSProperties> = {
   },
   refreshBtn: {
     background: "none",
-    border: "1px solid #e2e8f0",
+    border: `1px solid ${palette.slate200}`,
     borderRadius: 8,
     cursor: "pointer",
     padding: "6px 8px",
     display: "flex",
     alignItems: "center",
-    color: "#64748b",
+    color: palette.slate500,
   },
   emptyState: {
     display: "flex",
@@ -460,14 +461,14 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 8,
     padding: "24px 0",
-    color: "#94a3b8",
+    color: palette.slate400,
     fontSize: 13,
   },
   spinner: {
     width: 20,
     height: 20,
-    border: "2px solid #e2e8f0",
-    borderTop: "2px solid #6366f1",
+    border: `2px solid ${palette.slate200}`,
+    borderTop: `2px solid ${palette.indigo500}`,
     borderRadius: "50%",
     animation: "spin 0.8s linear infinite",
   },
@@ -481,10 +482,10 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    border: "1px solid #fde68a",
+    border: `1px solid ${palette.amber200}`,
     borderRadius: 12,
     padding: "14px 16px",
-    background: "#fffdf5",
+    background: palette.amberSoft,
   },
   pendingLeft: {
     display: "flex",
@@ -494,16 +495,16 @@ const s: Record<string, React.CSSProperties> = {
   pendingName: {
     fontSize: 14,
     fontWeight: 600,
-    color: "#0f172a",
+    color: palette.slate900,
   },
   pendingAddr: {
-    fontFamily: "monospace",
+    fontFamily: fontFamily.mono,
     fontSize: 12,
-    color: "#64748b",
+    color: palette.slate500,
   },
   pendingDate: {
     fontSize: 11,
-    color: "#94a3b8",
+    color: palette.slate400,
   },
   pendingActions: {
     display: "flex",
@@ -512,8 +513,8 @@ const s: Record<string, React.CSSProperties> = {
   btnApprove: {
     width: 40,
     height: 40,
-    background: "#16a34a",
-    color: "white",
+    background: palette.emerald600,
+    color: palette.white,
     border: "none",
     borderRadius: 10,
     cursor: "pointer",
@@ -524,8 +525,8 @@ const s: Record<string, React.CSSProperties> = {
   btnReject: {
     width: 40,
     height: 40,
-    background: "#dc2626",
-    color: "white",
+    background: palette.red600,
+    color: palette.white,
     border: "none",
     borderRadius: 10,
     cursor: "pointer",
@@ -542,10 +543,10 @@ const s: Record<string, React.CSSProperties> = {
   },
   // User row
   userRow: {
-    border: "1px solid #f1f5f9",
+    border: `1px solid ${palette.slate100}`,
     borderRadius: 12,
     padding: "14px 16px",
-    background: "#fafafa",
+    background: palette.neutral50,
   },
   userRowInner: {
     display: "flex",
@@ -562,12 +563,12 @@ const s: Record<string, React.CSSProperties> = {
   userName: {
     fontSize: 14,
     fontWeight: 600,
-    color: "#0f172a",
+    color: palette.slate900,
   },
   userAddr: {
-    fontFamily: "monospace",
+    fontFamily: fontFamily.mono,
     fontSize: 13,
-    color: "#1e293b",
+    color: palette.slate800,
     fontWeight: 500,
   },
   userRowTags: {
@@ -584,18 +585,18 @@ const s: Record<string, React.CSSProperties> = {
   },
   metaDate: {
     fontSize: 11,
-    color: "#94a3b8",
+    color: palette.slate400,
   },
   btnRevoke: {
-    background: "#dc2626",
+    background: palette.red600,
     border: "none",
-    color: "white",
+    color: palette.white,
     borderRadius: 8,
     padding: "8px 16px",
     fontSize: 12,
     fontWeight: 600,
     cursor: "pointer",
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fontFamily.sans,
     whiteSpace: "nowrap" as const,
     flexShrink: 0,
   },
@@ -608,22 +609,22 @@ const s: Record<string, React.CSSProperties> = {
   input: {
     flex: 1,
     padding: "10px 14px",
-    border: "1.5px solid #e2e8f0",
+    border: `1.5px solid ${palette.slate200}`,
     borderRadius: 10,
     fontSize: 13,
-    fontFamily: "monospace",
+    fontFamily: fontFamily.mono,
     outline: "none",
   },
   btnPrimary: {
-    background: "#6366f1",
-    color: "white",
+    background: palette.indigo500,
+    color: palette.white,
     border: "none",
     padding: "10px 20px",
     borderRadius: 10,
     cursor: "pointer",
     fontWeight: 600,
     fontSize: 14,
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fontFamily.sans,
     whiteSpace: "nowrap" as const,
   },
 };

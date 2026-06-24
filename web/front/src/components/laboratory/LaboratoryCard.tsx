@@ -1,4 +1,5 @@
 import React from "react";
+import { palette } from "../../styles";
 
 type LaboratoryCardProps = {
   children: React.ReactNode;
@@ -10,7 +11,7 @@ type LaboratoryCardProps = {
   subtle?: boolean;
 };
 
-export function LaboratoryCard({ children, title, action, onAction, bg = "white", border = "#bbf7d0" }: LaboratoryCardProps) {
+export function LaboratoryCard({ children, title, action, onAction, bg = palette.white, border = palette.emerald200 }: LaboratoryCardProps) {
   return (
     <section style={{ ...styles.card, background: bg, borderColor: border }}>
       {title ? (
@@ -26,7 +27,7 @@ export function LaboratoryCard({ children, title, action, onAction, bg = "white"
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "white",
+    background: palette.white,
     border: "1.5px solid",
     borderRadius: 18,
     minWidth: 0,
@@ -38,20 +39,20 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "space-between",
     padding: "18px 22px",
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: `1px solid ${palette.slate100}`,
   },
   title: {
-    color: "#0f172a",
+    color: palette.slate900,
     fontSize: 15,
     fontWeight: 700,
     margin: 0,
     letterSpacing: "-0.3px",
   },
   action: {
-    background: "#f0fdf4",
-    border: "1px solid #bbf7d0",
+    background: palette.emerald50,
+    border: `1px solid ${palette.emerald200}`,
     borderRadius: 8,
-    color: "#10b981",
+    color: palette.emerald500,
     cursor: "pointer",
     fontSize: 12,
     fontWeight: 600,
