@@ -4,7 +4,7 @@ import { useWallet } from "../../context/WalletContext";
 import { palette, fontFamily, gradients } from "../../styles";
 
 export default function DoctorDashboard() {
-  const { address } = useWallet();
+  const { address, name } = useWallet();
   const navigate = useNavigate();
   const info = { label: "Médico", color: palette.sky500 };
 
@@ -74,7 +74,10 @@ export default function DoctorDashboard() {
               </svg>
             </div>
             <div>
-              <h1 style={s.greeting}>Hola, {info.label}</h1>
+              <div style={s.greetingRow}>
+                <h1 style={s.greeting}>Hola, {name || "👋"}</h1>
+                <span style={s.roleTag}>Médico</span>
+              </div>
               <p style={s.addr}>{address?.slice(0, 10)}…{address?.slice(-6)}</p>
             </div>
           </div>
@@ -131,7 +134,9 @@ const s: Record<string, React.CSSProperties> = {
     boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
+  greetingRow: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const },
   greeting: { fontSize: 22, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.5px" },
+  roleTag: { fontSize: 11, fontWeight: 700, color: palette.sky500, background: palette.sky50, padding: "3px 10px", borderRadius: 20 },
   addr: { fontFamily: fontFamily.mono, fontSize: 12, color: palette.slate400, margin: "3px 0 0" },
   actions: { display: "flex", flexDirection: "column" as const, gap: 14 },
   actionCard: {

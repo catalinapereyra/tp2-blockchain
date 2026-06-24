@@ -8,8 +8,8 @@ import { QuickActions } from "../components/laboratory/QuickActions";
 import { palette, fontFamily, gradients } from "../styles";
 
 export default function LaboratoryDashboard() {
-  const { address, roleLabel } = useWallet();
-  const name = roleLabel === "Institución" ? "Institución Central" : "Laboratorio Central";
+  const { address, name, roleLabel } = useWallet();
+  const roleTag = roleLabel === "Institución" ? "Institución" : "Laboratorio";
   const [documents, setDocuments] = useState<DocumentMetadata[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
@@ -47,7 +47,10 @@ export default function LaboratoryDashboard() {
             </svg>
           </div>
           <div>
-            <h1 style={s.greeting}>Hola, {name}</h1>
+            <div style={s.greetingRow}>
+              <h1 style={s.greeting}>Hola, {name || "👋"}</h1>
+              <span style={s.roleTag}>{roleTag}</span>
+            </div>
             <p style={s.addr}>{address?.slice(0, 10)}…{address?.slice(-6)}</p>
           </div>
           <LaboratoryStats totalStudies={documents.length} loading={documentsLoading} />
@@ -89,7 +92,9 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex", alignItems: "center", justifyContent: "center",
     flexShrink: 0,
   },
+  greetingRow: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const },
   greeting: { fontSize: 22, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.5px" },
+  roleTag: { fontSize: 11, fontWeight: 700, color: palette.emerald600, background: palette.emerald50, padding: "3px 10px", borderRadius: 20 },
   addr: { fontFamily: fontFamily.mono, fontSize: 12, color: palette.slate400, margin: "3px 0 0" },
   layout: {
     display: "grid",

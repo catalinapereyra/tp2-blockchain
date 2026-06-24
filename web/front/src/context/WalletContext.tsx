@@ -5,6 +5,7 @@ import { getUserRegistry, ROLE_LABELS } from "../lib/contracts";
 
 interface WalletContextType {
   address: string | null;
+  name: string | null;
   role: number | null;
   roleLabel: string | null;
   isRegistered: boolean;
@@ -22,6 +23,7 @@ const ADMIN_ADDRESS = (import.meta.env.VITE_ADMIN_ADDRESS as string | undefined)
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const [role, setRole] = useState<number | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
@@ -51,6 +53,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setRole(null);
         setUserStatus(null);
       }
+      // Nombre off-chain del perfil (para "Hola, {nombre}")
+      try {
+        const me = await api.getMe();
+        setName(me?.name || null);
+      } catch { /* sin sesión de backend */ }
     } catch (e) {
       console.error("Error cargando datos del contrato", e);
     }
@@ -93,6 +100,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("wallet");
     localStorage.removeItem("intended_role");
     setAddress(null);
+    setName(null);
     setRole(null);
     setIsRegistered(false);
     setIsApproved(false);
@@ -138,6 +146,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     <WalletContext.Provider
       value={{
         address,
+        name,
         role,
         roleLabel: role !== null ? ROLE_LABELS[role] : null,
         isRegistered,
