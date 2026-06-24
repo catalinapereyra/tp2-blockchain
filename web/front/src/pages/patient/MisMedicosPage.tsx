@@ -7,6 +7,7 @@ import { getPermissionManager, getUserRegistryReadOnly } from "../../lib/contrac
 import { getErrorMessage } from "../../lib/error";
 import UserSelect from "../../components/common/UserSelect";
 import { useToast } from "../../components/common/Toast";
+import { useLoader } from "../../components/common/Loader";
 
 interface DocMeta {
   id: number;
@@ -34,6 +35,7 @@ export default function MisMedicosPage() {
   const navigate = useNavigate();
   const { address } = useWallet();
   const toast = useToast();
+  const loader = useLoader();
 
   const [doctors, setDoctors] = useState<DoctorEntry[]>([]);
   const [myDocs, setMyDocs] = useState<DocMeta[]>([]);
@@ -102,9 +104,16 @@ export default function MisMedicosPage() {
   async function grantDocs(targetDoctor: string, docIds: number[], onError: (m: string) => void) {
     if (!address || docIds.length === 0) return;
     const pm = await getPermissionManager();
-    for (const docId of docIds) {
+    for (let i = 0; i < docIds.length; i++) {
+      const docId = docIds[i];
+      loader.show(
+        docIds.length > 1
+          ? `Confirmá en MetaMask (${i + 1}/${docIds.length})…`
+          : "Confirmá en MetaMask…",
+      );
       try {
         const tx = await pm.grantDocumentAccess(docId, targetDoctor);
+        loader.show("Procesando transacción…");
         await tx.wait();
       } catch (contractErr: unknown) {
         const msg = getErrorMessage(contractErr);
@@ -130,6 +139,7 @@ export default function MisMedicosPage() {
       setGrantError(getErrorMessage(e));
       toast.show("No se pudo otorgar el acceso", "error");
     } finally {
+      loader.hide();
       setGranting(false);
     }
   }
@@ -149,6 +159,7 @@ export default function MisMedicosPage() {
       setAddDocError(getErrorMessage(e));
       toast.show("No se pudo otorgar el acceso", "error");
     } finally {
+      loader.hide();
       setAddingDocs(false);
     }
   }
@@ -158,10 +169,12 @@ export default function MisMedicosPage() {
     const key = `${doctorAddress}-${docId}`;
     setRevoking(key);
     setRevokeError("");
+    loader.show("Confirmá en MetaMask…");
     try {
       const pm = await getPermissionManager();
       try {
         const tx = await pm.revokeDocumentAccess(docId, doctorAddress);
+        loader.show("Procesando transacción…");
         await tx.wait();
       } catch (contractErr: unknown) {
         const msg = getErrorMessage(contractErr);
@@ -183,6 +196,7 @@ export default function MisMedicosPage() {
       setRevokeError(getErrorMessage(e));
       toast.show("No se pudo revocar el acceso", "error");
     } finally {
+      loader.hide();
       setRevoking(null);
     }
   }

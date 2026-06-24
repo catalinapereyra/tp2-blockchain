@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useWallet } from "../context/WalletContext";
 import { getUserRegistry } from "../lib/contracts";
 import { api } from "../lib/api";
+import { useLoader } from "../components/common/Loader";
 
 type OptionKey = "patient" | "doctor" | "lab" | "institution";
 
@@ -23,6 +24,7 @@ function intendedToKey(s: string | null): OptionKey {
 export default function Register() {
   const { refresh } = useWallet();
   const navigate = useNavigate();
+  const loader = useLoader();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<OptionKey>(() =>
@@ -51,12 +53,14 @@ export default function Register() {
       const contract = await getUserRegistry();
       const opt = OPTIONS.find((o) => o.key === selected)!;
       const roleNumber = selected === "patient" ? 0 : opt.role!;
+      loader.show("Confirmá en MetaMask…");
       let tx;
       if (selected === "patient") {
         tx = await contract.registerAsPatient();
       } else {
         tx = await contract.registerAsProfessional(opt.role!);
       }
+      loader.show("Registrando en la blockchain…");
       await tx.wait();
 
       // El nombre (y apellido si es persona) se guardan off-chain en la base de datos
@@ -77,6 +81,7 @@ export default function Register() {
     } catch (e: any) {
       setError(e.reason || e.message || "Error en la transacción");
     } finally {
+      loader.hide();
       setLoading(false);
     }
   }

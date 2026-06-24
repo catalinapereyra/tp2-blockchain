@@ -5,6 +5,7 @@ import { getDocumentRegistry, getUserRegistryReadOnly } from "../../lib/contract
 import { useWallet } from "../../context/WalletContext";
 import { LaboratoryCard } from "./LaboratoryCard";
 import UserSelect from "../common/UserSelect";
+import Spinner from "../common/Spinner";
 
 type StudyUploadFormProps = {
   onStudyCreated?: () => void;
@@ -350,10 +351,19 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
             Confirmo que los datos ingresados son correctos y el estudio pertenece al paciente.
           </label>
           <button type="button" style={styles.submit} onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Subiendo..." : "Subir estudio"}
+            {isSubmitting ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <Spinner size={15} color="#ffffff" /> Subiendo…
+              </span>
+            ) : "Subir estudio"}
           </button>
         </div>
-        {message ? <div style={styles.message}>{message}</div> : null}
+        {message ? (
+          <div style={{ ...styles.message, display: "flex", alignItems: "center", gap: 8 }}>
+            {isSubmitting && <Spinner size={15} color="#10b981" />}
+            {message}
+          </div>
+        ) : null}
         {error ? <div style={styles.error}>{error}</div> : null}
       </div>
     </LaboratoryCard>

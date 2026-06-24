@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { WalletProvider } from "./context/WalletContext";
 import { ToastProvider } from "./components/common/Toast";
+import { LoaderProvider } from "./components/common/Loader";
 import App from "./App";
 import "./index.css";
 
@@ -10,9 +11,11 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <WalletProvider>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
+        <LoaderProvider>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </LoaderProvider>
       </WalletProvider>
     </BrowserRouter>
   </StrictMode>

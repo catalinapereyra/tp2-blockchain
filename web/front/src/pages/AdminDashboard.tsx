@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { getUserRegistry, getUserRegistryReadOnly, ADDRESSES, ROLE_LABELS, STATUS_LABELS } from "../lib/contracts";
 import { api } from "../lib/api";
+import { useLoader } from "../components/common/Loader";
 
 interface UserInfo {
   address: string;
@@ -65,6 +66,7 @@ const STATUS_CONFIG: Record<number, { color: string; bg: string; label: string }
 };
 
 export default function AdminDashboard() {
+  const loader = useLoader();
   const [pendingUsers, setPendingUsers] = useState<UserInfo[]>([]);
   const [loadingPending, setLoadingPending] = useState(true);
   const [searchAddr, setSearchAddr] = useState("");
@@ -110,9 +112,11 @@ export default function AdminDashboard() {
   async function action(fn: "approveUser" | "rejectUser" | "revokeUser", addr: string) {
     setError(""); setSuccess("");
     setActionLoading(addr + fn);
+    loader.show("Confirmá en MetaMask…");
     try {
       const contract = await getUserRegistry();
       const tx = await (contract as any)[fn](addr);
+      loader.show("Procesando transacción…");
       await tx.wait();
       const labels: Record<string, string> = { approveUser: "aprobado", rejectUser: "rechazado", revokeUser: "revocado" };
       setSuccess(`Usuario ${labels[fn]} correctamente`);
@@ -126,6 +130,7 @@ export default function AdminDashboard() {
       const err = e as { reason?: string; message?: string };
       setError(err.reason || err.message || "Error desconocido");
     } finally {
+      loader.hide();
       setActionLoading(null);
     }
   }
