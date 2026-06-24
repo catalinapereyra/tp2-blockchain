@@ -1,4 +1,3 @@
-// ── Design System · Tipografía ───────────────────────────────────────────
 import { colors } from "./colors";
 
 export const fontFamily = {
@@ -6,7 +5,7 @@ export const fontFamily = {
   mono: "monospace",
 } as const;
 
-// Escala de tamaños (px) usada en la app
+
 export const fontSize = {
   xs: 11,
   sm: 12,
@@ -27,7 +26,7 @@ export const fontWeight = {
   bold: 700,
 } as const;
 
-// Estilos de texto listos para usar (spread en un style)
+
 export const text = {
   pageTitle: {
     fontFamily: fontFamily.sans,

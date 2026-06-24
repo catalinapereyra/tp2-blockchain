@@ -1,6 +1,3 @@
-// ── Design System · Espaciado, bordes y sombras ──────────────────────────
-
-// Radios de borde (px)
 export const radius = {
   sm: 8,
   md: 10,
@@ -11,7 +8,6 @@ export const radius = {
   full: 9999,
 } as const;
 
-// Sombras
 export const shadow = {
   sm: "0 2px 12px rgba(0,0,0,0.05)",
   md: "0 8px 28px rgba(15,23,42,0.12)",
@@ -19,7 +15,7 @@ export const shadow = {
   card: "0 4px 16px rgba(0,0,0,0.05)",
 } as const;
 
-// Escala de espaciado (px)
+
 export const space = {
   1: 4,
   2: 8,
