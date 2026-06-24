@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { palette } from "../../styles";
+import { palette, fontFamily } from "../../styles";
+import { useDocViewer } from "../common/DocViewer";
 
 export interface EstudioItem {
   id: number;
@@ -8,6 +9,7 @@ export interface EstudioItem {
   labName?: string;
   uploadedBy: "lab" | "patient" | "doctor";
   fileUrl?: string;
+  fileName?: string;
   diagnoses?: { doctorName?: string | null; text: string }[];
 }
 
@@ -31,6 +33,7 @@ function fmtDate(d: string): string {
 }
 
 export default function EstudioGrupoCard({ studyType, category, estudios }: Props) {
+  const viewer = useDocViewer();
   const [expanded, setExpanded] = useState(false);
   const cs = CATEGORY_STYLE[category] ?? CATEGORY_STYLE.otro;
   const sorted = [...estudios].sort(
@@ -105,10 +108,13 @@ export default function EstudioGrupoCard({ studyType, category, estudios }: Prop
                 </div>
               </div>
               {e.fileUrl && (
-                <a href={e.fileUrl} target="_blank" rel="noreferrer" style={s.viewBtn}>
+                <button
+                  style={s.viewBtn}
+                  onClick={() => viewer.open({ url: e.fileUrl!, fileName: e.fileName, title: e.title })}
+                >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   Ver
-                </a>
+                </button>
               )}
             </div>
           ))}
@@ -162,6 +168,7 @@ const s: Record<string, React.CSSProperties> = {
   viewBtn: {
     display: "inline-flex", alignItems: "center", gap: 4,
     fontSize: 12, color: palette.indigo500, fontWeight: 600,
-    textDecoration: "none", flexShrink: 0, paddingTop: 2,
+    flexShrink: 0, background: "none", border: "none", cursor: "pointer",
+    fontFamily: fontFamily.sans, padding: 0,
   },
 };

@@ -5,6 +5,7 @@ import { WalletProvider } from "./context/WalletContext";
 import { ToastProvider } from "./components/common/Toast";
 import { LoaderProvider } from "./components/common/Loader";
 import { ConfirmProvider } from "./components/common/Confirm";
+import { DocViewerProvider } from "./components/common/DocViewer";
 import App from "./App";
 import "./index.css";
 
@@ -15,7 +16,9 @@ createRoot(document.getElementById("root")!).render(
         <LoaderProvider>
           <ToastProvider>
             <ConfirmProvider>
-              <App />
+              <DocViewerProvider>
+                <App />
+              </DocViewerProvider>
             </ConfirmProvider>
           </ToastProvider>
         </LoaderProvider>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
 import { api, type DocumentMetadata, type PrescriptionMeta } from "../../lib/api";
 import { getPrescriptionManager } from "../../lib/contracts";
+import { useDocViewer } from "../../components/common/DocViewer";
 import { palette, colors, fontFamily, fontSize, fontWeight, radius, shadow, gradients } from "../../styles";
 
 type Solicitud = { id: number; doctorName: string; description: string; status: number };
@@ -22,6 +23,7 @@ function fmtDate(d?: string): string {
 export default function MisRecetasPage() {
   const navigate = useNavigate();
   const { address } = useWallet();
+  const viewer = useDocViewer();
   const [emitidas, setEmitidas] = useState<DocumentMetadata[]>([]);
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,10 +92,13 @@ export default function MisRecetasPage() {
                   {d.emitterName ? `Dr. ${d.emitterName}` : d.emitterAddress.slice(0, 8) + "…"} · {fmtDate(d.studyDate ?? d.createdAt)}
                 </span>
               </div>
-              <a href={api.fileUrl(d.documentIdOnChain)} target="_blank" rel="noreferrer" style={s.viewBtn}>
+              <button
+                style={s.viewBtn}
+                onClick={() => viewer.open({ url: api.fileUrl(d.documentIdOnChain), fileName: d.fileName, title: d.title })}
+              >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 Ver receta
-              </a>
+              </button>
             </div>
           ))}
         </div>
@@ -139,7 +144,7 @@ const s: Record<string, React.CSSProperties> = {
   cardTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text },
   cardDesc: { fontSize: fontSize.base, color: colors.text, fontStyle: "italic" },
   cardMeta: { fontSize: fontSize.sm, color: colors.textFaint },
-  viewBtn: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: fontSize.base, color: colors.primary, fontWeight: fontWeight.semibold, textDecoration: "none", flexShrink: 0 },
+  viewBtn: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: fontSize.base, color: colors.primary, fontWeight: fontWeight.semibold, flexShrink: 0, background: "none", border: "none", cursor: "pointer", fontFamily: fontFamily.sans, padding: 0 },
   statusPill: { fontSize: fontSize.xs, fontWeight: fontWeight.bold, padding: "3px 10px", borderRadius: radius.full, flexShrink: 0 },
   emptyText: { fontSize: fontSize.base, color: colors.textFaint, margin: "0 0 16px" },
 };
