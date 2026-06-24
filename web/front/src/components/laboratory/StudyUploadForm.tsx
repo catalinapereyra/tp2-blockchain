@@ -5,7 +5,10 @@ import { getDocumentRegistry, getUserRegistryReadOnly } from "../../lib/contract
 import { useWallet } from "../../context/WalletContext";
 import { LaboratoryCard } from "./LaboratoryCard";
 import UserSelect from "../common/UserSelect";
+import Select from "../common/Select";
 import Spinner from "../common/Spinner";
+import { useToast } from "../common/Toast";
+import { STUDY_CATEGORIES } from "../../lib/categories";
 import { palette, gradients } from "../../styles";
 
 type StudyUploadFormProps = {
@@ -19,12 +22,12 @@ function formatFileSize(size: number) {
 
 export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
   const { address } = useWallet();
+  const toast = useToast();
   const [studyFile, setStudyFile] = useState<File | null>(null);
   const [patientAddress, setPatientAddress] = useState("");
   const [patients, setPatients] = useState<AppUser[]>([]);
   const [documentType, setDocumentType] = useState("");
   const [title, setTitle] = useState("");
-  const [labName, setLabName] = useState("");
   const [studyType, setStudyType] = useState("");
   const [notes, setNotes] = useState("");
   const [confirmed, setConfirmed] = useState(true);
@@ -35,7 +38,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Carga todos los pacientes registrados (nombre + apellido off-chain) para el desplegable
+  //carga todos los pacientes registrados (nombre + apellido off-chain) para el desplegable
   useEffect(() => {
     api.getUsers(0).then(setPatients).catch(() => setPatients([]));
   }, []);
@@ -112,8 +115,8 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
       setError("Ingresa una address de paciente valida");
       return;
     }
-    if (!documentType.trim() || !title.trim() || !labName.trim() || !studyType.trim()) {
-      setError("Completa paciente, categoria, titulo, laboratorio y tipo especifico");
+    if (!documentType.trim() || !title.trim() || !studyType.trim()) {
+      setError("Completa paciente, categoria, titulo y tipo especifico");
       return;
     }
     if (!studyFile) {
@@ -133,6 +136,14 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
       setMessage("Validando sesion del laboratorio...");
       await ensureBackendSession(address);
 
+      //nombre del laboratorio sale de su perfil (se cargó al registrarse),
+      //el lab no lo escribe. va off-chain y el paciente lo ve.
+      let labName = "";
+      try {
+        const me = await api.getMe();
+        labName = me?.name?.trim() || "";
+      } catch { /* si falla, queda vacío y el paciente igual ve emitterName */ }
+
       setMessage("Procesando archivo...");
       const upload = await api.uploadFile(studyFile);
       const bytes = new Uint8Array(await studyFile.arrayBuffer());
@@ -141,7 +152,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
       setMessage("Registrando documento en blockchain...");
       const documentRegistry = await getDocumentRegistry();
 
-      // El hash es único on-chain: avisamos en vez de dejar que reviente la tx
+
       if (await documentRegistry.isHashRegistered(documentHash)) {
         throw new Error(
           "Este archivo ya fue registrado anteriormente en la blockchain. Subí un archivo distinto.",
@@ -152,7 +163,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
         ethers.getAddress(patientAddress),
         documentHash,
         documentType.trim(),
-        "", // el documento se guarda en la base de datos, no hay referencia IPFS
+        "",
       );
       const receipt = await tx.wait();
 
@@ -177,19 +188,19 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
         title: title.trim(),
         documentType: documentType.trim(),
         studyType: studyType.trim(),
-        labName: labName.trim(),
+        labName: labName || undefined,
         notes: notes.trim() || undefined,
         fileBase64: upload.fileBase64,
         fileName: upload.fileName,
         mimeType: upload.mimeType,
       });
 
-      setMessage("Estudio subido correctamente");
+      setMessage(null);
+      toast.show("Estudio subido correctamente");
       onStudyCreated?.();
       setPatientAddress("");
       setDocumentType("");
       setTitle("");
-      setLabName("");
       setStudyType("");
       setNotes("");
       setStudyFile(null);
@@ -231,11 +242,12 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
 
           <label style={styles.field}>
             <span style={styles.label}>Categoría genérica <em style={styles.tag}>On-chain</em></span>
-            <input
-              style={styles.input}
-              placeholder="analisis, imagen, patologia..."
+            <Select
+              options={STUDY_CATEGORIES}
               value={documentType}
-              onChange={(event) => setDocumentType(event.target.value)}
+              onChange={setDocumentType}
+              placeholder="Seleccioná una categoría…"
+              accent={palette.emerald500}
             />
             <small style={styles.small}>Categoría general visible para todos</small>
           </label>
@@ -254,19 +266,6 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
           </label>
 
           <label style={styles.field}>
-            <span style={styles.label}>Nombre del laboratorio <em style={styles.tag}>Off-chain</em></span>
-            <input
-              style={styles.input}
-              placeholder="Laboratorio Central"
-              value={labName}
-              onChange={(event) => setLabName(event.target.value)}
-            />
-            <small style={styles.small}>Texto visible, no solo la wallet emisora</small>
-          </label>
-        </div>
-
-        <div style={styles.twoColumns}>
-          <label style={styles.field}>
             <span style={styles.label}>Tipo específico <em style={styles.tag}>Off-chain</em></span>
             <input
               style={styles.input}
@@ -276,18 +275,18 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
             />
             <small style={styles.small}>Tipo de análisis realizado, sin diagnóstico</small>
           </label>
-
-          <label style={styles.field}>
-            <span style={styles.label}>Notas <em style={styles.tag}>Opcional</em></span>
-            <input
-              style={styles.input}
-              placeholder="Muestra recibida en ayunas, observaciones..."
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-            />
-            <small style={styles.small}>Observaciones internas visibles solo donde corresponda</small>
-          </label>
         </div>
+
+        <label style={styles.field}>
+          <span style={styles.label}>Notas <em style={styles.tag}>Opcional</em></span>
+          <input
+            style={styles.input}
+            placeholder="Muestra recibida en ayunas, observaciones..."
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
+          <small style={styles.small}>Observaciones internas visibles solo donde corresponda</small>
+        </label>
 
         <div style={styles.dropzone}>
           <input

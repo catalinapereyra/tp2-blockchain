@@ -16,6 +16,9 @@ import RecetasPage from "./pages/doctor/RecetasPage";
 import PacientesPage from "./pages/doctor/PacientesPage";
 import PacienteDetailPage from "./pages/doctor/PacienteDetailPage";
 import LaboratoryDashboard from "./pages/LaboratoryDashboard";
+import LabPacientesPage from "./pages/lab/LabPacientesPage";
+import LabPacienteDetailPage from "./pages/lab/LabPacienteDetailPage";
+import LabCategoriasPage from "./pages/lab/LabCategoriasPage";
 
 function ProtectedRoute({ children, condition }: { children: React.ReactElement; condition: boolean }) {
   const { address, loading } = useWallet();
@@ -96,6 +99,21 @@ export default function App() {
         <Route path="/lab" element={
           <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0 && role !== 1}>
             <LaboratoryDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/lab/pacientes" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0 && role !== 1}>
+            <LabPacientesPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/lab/pacientes/:address" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0 && role !== 1}>
+            <LabPacienteDetailPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/lab/categorias" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0 && role !== 1}>
+            <LabCategoriasPage />
           </ProtectedRoute>
         } />
         <Route path="/laboratory" element={<Navigate to="/lab" />} />

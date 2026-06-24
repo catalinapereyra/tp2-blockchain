@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { WalletProvider } from "./context/WalletContext";
 import { ToastProvider } from "./components/common/Toast";
 import { LoaderProvider } from "./components/common/Loader";
+import { ConfirmProvider } from "./components/common/Confirm";
 import App from "./App";
 import "./index.css";
 
@@ -13,7 +14,9 @@ createRoot(document.getElementById("root")!).render(
       <WalletProvider>
         <LoaderProvider>
           <ToastProvider>
-            <App />
+            <ConfirmProvider>
+              <App />
+            </ConfirmProvider>
           </ToastProvider>
         </LoaderProvider>
       </WalletProvider>

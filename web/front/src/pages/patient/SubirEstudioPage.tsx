@@ -5,14 +5,8 @@ import { api } from "../../lib/api";
 import { ethers } from "ethers";
 import { getDocumentRegistry, DOCUMENT_REGISTRY_ABI } from "../../lib/contracts";
 import { palette, fontFamily, gradients } from "../../styles";
-
-const CATEGORIES = ["analisis", "imagen", "patologia", "otro"];
-const CATEGORY_LABELS: Record<string, string> = {
-  analisis: "Análisis de laboratorio",
-  imagen: "Imagen (Rx, eco, resonancia…)",
-  patologia: "Anatomía patológica",
-  otro: "Otro",
-};
+import { STUDY_CATEGORIES } from "../../lib/categories";
+import Select from "../../components/common/Select";
 
 type Step = "idle" | "uploading" | "signing" | "saving" | "done" | "error";
 
@@ -40,18 +34,15 @@ export default function SubirEstudioPage() {
     setErrorMsg("");
 
     try {
-      // 1. Procesar archivo (se guarda en la base de datos, no en IPFS)
       setStep("uploading");
       const uploaded = await api.uploadFile(file);
       if (uploaded.error) throw new Error(uploaded.message || "Error subiendo archivo");
       const { fileBase64, fileName, mimeType, fileHash } = uploaded;
 
-      // 2. Firmar y enviar tx on-chain (MetaMask)
       setStep("signing");
       const registry = await getDocumentRegistry();
 
-      // Evitar el revert crudo "hash ya registrado": el hash es único on-chain
-      // y queda registrado aunque después falle el guardado de metadata.
+
       if (await registry.isHashRegistered(fileHash)) {
         throw new Error(
           "Este archivo ya fue registrado anteriormente en la blockchain. Subí un archivo distinto.",
@@ -61,7 +52,7 @@ export default function SubirEstudioPage() {
       const tx = await registry.uploadOwnDocument(fileHash, category, "");
       const receipt = await tx.wait();
 
-      // Parsear documentId del evento DocumentRegistered
+
       const iface = new ethers.Interface(DOCUMENT_REGISTRY_ABI);
       let documentIdOnChain = 0;
       for (const log of receipt.logs) {
@@ -74,7 +65,7 @@ export default function SubirEstudioPage() {
         } catch { /* log de otro contrato, ignorar */ }
       }
 
-      // 3. Guardar metadata off-chain en el backend
+
       setStep("saving");
       await api.createDocument({
         documentIdOnChain,
@@ -204,15 +195,12 @@ export default function SubirEstudioPage() {
               Categoría <span style={s.req}>*</span>
               <span style={s.labelNote}>— esto va on-chain (genérico)</span>
             </label>
-            <div style={s.radioGroup}>
-              {CATEGORIES.map((c) => (
-                <label key={c} style={{ ...s.radioBtn, ...(category === c ? s.radioBtnActive : {}) }}>
-                  <input type="radio" name="category" value={c} checked={category === c}
-                    onChange={() => setCategory(c)} style={{ display: "none" }} />
-                  {CATEGORY_LABELS[c]}
-                </label>
-              ))}
-            </div>
+            <Select
+              options={STUDY_CATEGORIES}
+              value={category}
+              onChange={setCategory}
+              accent={palette.emerald500}
+            />
           </div>
 
           <div style={s.field}>

@@ -8,7 +8,8 @@ import { getErrorMessage } from "../../lib/error";
 import UserSelect from "../../components/common/UserSelect";
 import { useToast } from "../../components/common/Toast";
 import { useLoader } from "../../components/common/Loader";
-import { palette, fontFamily, gradients } from "../../styles";
+import { useConfirm } from "../../components/common/Confirm";
+import { palette, colors, fontFamily, gradients } from "../../styles";
 
 interface DocMeta {
   id: number;
@@ -37,13 +38,13 @@ export default function MisMedicosPage() {
   const { address } = useWallet();
   const toast = useToast();
   const loader = useLoader();
+  const confirm = useConfirm();
 
   const [doctors, setDoctors] = useState<DoctorEntry[]>([]);
   const [myDocs, setMyDocs] = useState<DocMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Flujo "nuevo médico"
   const [showGrant, setShowGrant] = useState(false);
   const [medicos, setMedicos] = useState<AppUser[]>([]);
   const [newDoctorAddr, setNewDoctorAddr] = useState("");
@@ -51,19 +52,31 @@ export default function MisMedicosPage() {
   const [granting, setGranting] = useState(false);
   const [grantError, setGrantError] = useState("");
 
-  // Flujo "agregar doc a médico existente"
+
   const [addingToDoctor, setAddingToDoctor] = useState<string | null>(null);
   const [addDocIds, setAddDocIds] = useState<number[]>([]);
   const [addingDocs, setAddingDocs] = useState(false);
   const [addDocError, setAddDocError] = useState("");
 
-  // Revocación
   const [revoking, setRevoking] = useState<string | null>(null);
   const [revokeError, setRevokeError] = useState("");
 
+  const [grantingAllTo, setGrantingAllTo] = useState<string | null>(null);
+
+  const [doctorNames, setDoctorNames] = useState<Map<string, string>>(new Map());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggleExpanded(addr: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(addr) ? next.delete(addr) : next.add(addr);
+      return next;
+    });
+  }
+
   useEffect(() => { if (address) load(); }, [address]);
 
-  // Carga los médicos registrados y aprobados on-chain para el desplegable
+
   useEffect(() => {
     (async () => {
       try {
@@ -95,6 +108,17 @@ export default function MisMedicosPage() {
       ]);
       setDoctors(perms);
       setMyDocs(docs);
+
+      const names = new Map<string, string>();
+      await Promise.all(
+        perms.map(async (d: DoctorEntry) => {
+          try {
+            const p = await api.getProfileByWallet(d.doctorAddress);
+            if (p?.name) names.set(d.doctorAddress, `${p.name} ${p.lastName ?? ""}`.trim());
+          } catch { /* sin perfil */ }
+        }),
+      );
+      setDoctorNames(names);
     } catch (e: any) {
       setError(e.message || "Error cargando datos");
     } finally {
@@ -124,7 +148,6 @@ export default function MisMedicosPage() {
     }
   }
 
-  // Nuevo médico
   async function handleGrantNew() {
     if (!newDoctorAddr.startsWith("0x") || newSelectedIds.length === 0) return;
     setGranting(true);
@@ -145,9 +168,7 @@ export default function MisMedicosPage() {
     }
   }
 
-  // Acceso total: una sola tx (grantGlobalAccess) que cubre todos los documentos
-  // —presentes y futuros— en el contrato. Además reflejamos en la DB el acceso a
-  // los documentos actuales para que el médico los vea en su panel.
+
   async function handleGrantAll() {
     if (!address || !newDoctorAddr.startsWith("0x")) return;
     setGranting(true);
@@ -180,7 +201,41 @@ export default function MisMedicosPage() {
     }
   }
 
-  // Agregar más docs a médico existente
+  async function handleGrantAllToDoctor(doctorAddress: string) {
+    if (!address) return;
+    const ok = await confirm({
+      title: "Dar acceso a todos tus documentos",
+      message: "Este médico va a poder ver todos tus estudios actuales ¿Confirmás?",
+      confirmText: "Sí, dar acceso",
+      cancelText: "Cancelar",
+    });
+    if (!ok) return;
+    setGrantingAllTo(doctorAddress);
+    loader.show("Confirmá en MetaMask…");
+    try {
+      const pm = await getPermissionManager();
+      try {
+        const tx = await pm.grantGlobalAccess(doctorAddress);
+        loader.show("Procesando transacción…");
+        await tx.wait();
+      } catch (contractErr: unknown) {
+        const msg = getErrorMessage(contractErr);
+        if (!msg.includes("acceso ya otorgado")) throw contractErr;
+      }
+      for (const doc of myDocs) {
+        await api.grantPermission({ patientAddress: address, doctorAddress, documentIdOnChain: doc.documentIdOnChain });
+      }
+      setAddingToDoctor(null);
+      await load();
+      toast.show("Acceso total otorgado");
+    } catch (e: unknown) {
+      toast.show("No se pudo otorgar el acceso", "error");
+    } finally {
+      loader.hide();
+      setGrantingAllTo(null);
+    }
+  }
+
   async function handleAddDocs(doctorAddress: string) {
     if (addDocIds.length === 0) return;
     setAddingDocs(true);
@@ -341,32 +396,51 @@ export default function MisMedicosPage() {
           const sharedIds = unavailableIds(doctor);
           const unsharedDocs = myDocs.filter((d) => !sharedIds.has(d.documentIdOnChain));
           const isAddingHere = addingToDoctor === doctor.doctorAddress;
+          const isOpen = expanded.has(doctor.doctorAddress);
+          const name = doctorNames.get(doctor.doctorAddress);
 
           return (
             <div key={doctor.doctorAddress} style={s.doctorCard}>
-              <div style={s.doctorHeader}>
+              <div style={s.doctorHeader} onClick={() => toggleExpanded(doctor.doctorAddress)}>
                 <div style={s.doctorIcon}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={palette.sky500} strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                 </div>
-                <div>
-                  <p style={s.doctorAddr}>{fmtAddr(doctor.doctorAddress)}</p>
-                  <p style={s.doctorFull}>{doctor.doctorAddress}</p>
+                <div style={{ minWidth: 0 }}>
+                  {name && <p style={s.doctorName}>{name}</p>}
+                  <p style={name ? s.doctorAddrSmall : s.doctorAddr}>{fmtAddr(doctor.doctorAddress)}</p>
                 </div>
-                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={s.docCount}>{doctor.documents.length} doc{doctor.documents.length !== 1 ? "s" : ""}</span>
-                  {unsharedDocs.length > 0 && (
-                    <button
-                      style={s.addDocBtn}
-                      onClick={() => {
-                        if (isAddingHere) { setAddingToDoctor(null); setAddDocIds([]); setAddDocError(""); }
-                        else { setAddingToDoctor(doctor.doctorAddress); setAddDocIds([]); setAddDocError(""); }
-                      }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                      {isAddingHere ? "Cerrar" : "Agregar doc"}
-                    </button>
-                  )}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={palette.slate300} strokeWidth="2"
+                    style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
                 </div>
+              </div>
+
+              {isOpen && (
+              <>
+              <div style={s.addDocBar}>
+                {unsharedDocs.length > 0 && (
+                  <button
+                    style={s.addDocBtn}
+                    onClick={() => {
+                      if (isAddingHere) { setAddingToDoctor(null); setAddDocIds([]); setAddDocError(""); }
+                      else { setAddingToDoctor(doctor.doctorAddress); setAddDocIds([]); setAddDocError(""); }
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    {isAddingHere ? "Cerrar" : "Agregar doc"}
+                  </button>
+                )}
+                <button
+                  style={{ ...s.grantAllInlineBtn, opacity: grantingAllTo === doctor.doctorAddress ? 0.5 : 1 }}
+                  disabled={grantingAllTo === doctor.doctorAddress}
+                  onClick={() => handleGrantAllToDoctor(doctor.doctorAddress)}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  {grantingAllTo === doctor.doctorAddress ? "Otorgando…" : "Dar acceso a todos mis docs"}
+                </button>
               </div>
 
               {/* Picker inline para agregar más docs */}
@@ -420,6 +494,8 @@ export default function MisMedicosPage() {
                   );
                 })}
               </div>
+              </>
+              )}
             </div>
           );
         })}
@@ -497,7 +573,16 @@ const s: Record<string, React.CSSProperties> = {
   empty: { display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 12, padding: "60px 0", textAlign: "center" as const },
   emptyText: { fontSize: 14, color: palette.slate400, margin: 0 },
   doctorCard: { background: palette.white, border: `1px solid ${palette.slate100}`, borderRadius: 14, marginBottom: 12, overflow: "hidden" },
-  doctorHeader: { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: `1px solid ${palette.slate50}` },
+  doctorHeader: { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer", userSelect: "none" as const },
+  doctorName: { fontSize: 14, fontWeight: 600, color: palette.slate900, margin: 0 },
+  doctorAddrSmall: { fontFamily: fontFamily.mono, fontSize: 11, color: palette.slate400, margin: "2px 0 0" },
+  addDocBar: { padding: "10px 16px 0", display: "flex", gap: 8, flexWrap: "wrap" as const },
+  grantAllInlineBtn: {
+    background: colors.labSoft, color: colors.lab, border: `1px solid ${palette.emerald200}`,
+    padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+    cursor: "pointer", fontFamily: fontFamily.sans,
+    display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
+  },
   doctorIcon: { width: 36, height: 36, borderRadius: 10, background: palette.sky50, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
   doctorAddr: { fontSize: 14, fontWeight: 600, color: palette.slate900, margin: 0 },
   doctorFull: { fontFamily: fontFamily.mono, fontSize: 10, color: palette.slate400, margin: "2px 0 0" },
