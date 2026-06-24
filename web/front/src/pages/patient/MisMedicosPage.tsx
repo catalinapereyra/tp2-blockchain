@@ -144,6 +144,41 @@ export default function MisMedicosPage() {
     }
   }
 
+  // Acceso total: una sola tx (grantGlobalAccess) que cubre todos los documentos
+  // —presentes y futuros— en el contrato. Además reflejamos en la DB el acceso a
+  // los documentos actuales para que el médico los vea en su panel.
+  async function handleGrantAll() {
+    if (!address || !newDoctorAddr.startsWith("0x")) return;
+    setGranting(true);
+    setGrantError("");
+    loader.show("Confirmá en MetaMask…");
+    try {
+      const pm = await getPermissionManager();
+      try {
+        const tx = await pm.grantGlobalAccess(newDoctorAddr);
+        loader.show("Procesando transacción…");
+        await tx.wait();
+      } catch (contractErr: unknown) {
+        const msg = getErrorMessage(contractErr);
+        if (!msg.includes("acceso ya otorgado")) throw contractErr;
+      }
+      for (const doc of myDocs) {
+        await api.grantPermission({ patientAddress: address, doctorAddress: newDoctorAddr, documentIdOnChain: doc.documentIdOnChain });
+      }
+      setShowGrant(false);
+      setNewDoctorAddr("");
+      setNewSelectedIds([]);
+      await load();
+      toast.show("Acceso total otorgado");
+    } catch (e: unknown) {
+      setGrantError(getErrorMessage(e));
+      toast.show("No se pudo otorgar el acceso", "error");
+    } finally {
+      loader.hide();
+      setGranting(false);
+    }
+  }
+
   // Agregar más docs a médico existente
   async function handleAddDocs(doctorAddress: string) {
     if (addDocIds.length === 0) return;
@@ -251,11 +286,25 @@ export default function MisMedicosPage() {
             {myDocs.length === 0 ? (
               <p style={s.emptySmall}>No tenés estudios para compartir aún.</p>
             ) : (
-              <DocPicker
-                docs={myDocs}
-                selectedIds={newSelectedIds}
-                onToggle={(id) => setNewSelectedIds((prev) => prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id])}
-              />
+              <>
+                <span style={s.pickerHint}>Elegí documentos puntuales:</span>
+                <DocPicker
+                  docs={myDocs}
+                  selectedIds={newSelectedIds}
+                  onToggle={(id) => setNewSelectedIds((prev) => prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id])}
+                />
+                <div style={s.orRow}>
+                  <span style={s.orLine} /><span style={s.orText}>o</span><span style={s.orLine} />
+                </div>
+                <button
+                  style={{ ...s.grantAllBtn, opacity: newDoctorAddr.startsWith("0x") && !granting ? 1 : 0.5 }}
+                  disabled={!newDoctorAddr.startsWith("0x") || granting}
+                  onClick={handleGrantAll}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Dar acceso a TODOS mis documentos
+                </button>
+              </>
             )}
             {grantError && <p style={s.errorMsg}>{grantError}</p>}
             <div style={s.grantActions}>
@@ -431,6 +480,16 @@ const s: Record<string, React.CSSProperties> = {
   grantNote: { fontSize: 11, color: "#94a3b8", margin: 0 },
   errorMsg: { fontSize: 12, color: "#dc2626", margin: 0 },
   emptySmall: { fontSize: 13, color: "#94a3b8", margin: 0 },
+  pickerHint: { fontSize: 12, fontWeight: 600, color: "#64748b" },
+  orRow: { display: "flex", alignItems: "center", gap: 10, margin: "2px 0" },
+  orLine: { flex: 1, height: 1, background: "#e2e8f0" },
+  orText: { fontSize: 11, color: "#94a3b8", fontWeight: 600 },
+  grantAllBtn: {
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    background: "#fffbeb", color: "#d97706", border: "1.5px solid #fde68a",
+    padding: "11px 16px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+    cursor: "pointer", fontFamily: "'DM Sans', sans-serif", width: "100%",
+  },
   errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "12px 16px", fontSize: 13, color: "#dc2626", marginBottom: 16 },
   center: { display: "flex", justifyContent: "center", padding: "48px 0" },
   spinner: { width: 28, height: 28, border: "3px solid #e2e8f0", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
