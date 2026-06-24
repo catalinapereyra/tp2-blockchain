@@ -15,8 +15,10 @@ interface DocRecord {
   studyType?: string;
   studyDate?: string;
   labName?: string;
-  ipfsCid: string;
-  ipfsUrl: string;
+  emitterName?: string | null;
+  fileName: string;
+  mimeType: string;
+  diagnoses?: { doctorName?: string | null; text: string }[];
   createdAt: string;
 }
 
@@ -38,10 +40,10 @@ function groupDocuments(docs: DocRecord[], myAddress: string): Grupo[] {
       id: doc.id,
       studyDate: doc.studyDate ?? doc.createdAt,
       title: doc.title,
-      labName: doc.labName ?? undefined,
+      labName: doc.labName ?? doc.emitterName ?? undefined,
       uploadedBy: doc.emitterAddress.toLowerCase() === myAddress.toLowerCase() ? "patient" : "lab",
-      ipfsUrl: doc.ipfsUrl || undefined,
-      diagnosis: undefined, // diagnóstico viene on top luego
+      fileUrl: api.fileUrl(doc.documentIdOnChain),
+      diagnoses: doc.diagnoses ?? [],
     });
   }
 

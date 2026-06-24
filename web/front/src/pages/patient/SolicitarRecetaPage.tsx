@@ -1,21 +1,40 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-// Mock de médicos que el paciente ya tiene como contacto
-const MOCK_MEDICOS = [
-  { address: "0x29515ab33fccc23280c6638fdc02f8265db11262", label: "Médico 1" },
-  { address: "0xa05317a6208826d4f9c71b3e1234567890abcdef", label: "Médico 2" },
-];
+import { ethers } from "ethers";
+import { api, AppUser } from "../../lib/api";
+import { getUserRegistryReadOnly } from "../../lib/contracts";
+import UserSelect from "../../components/common/UserSelect";
 
 export default function SolicitarRecetaPage() {
   const navigate = useNavigate();
   const [doctorAddress, setDoctorAddress] = useState("");
-  const [customAddress, setCustomAddress] = useState("");
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [medicos, setMedicos] = useState<AppUser[]>([]);
 
-  const finalAddress = doctorAddress === "custom" ? customAddress : doctorAddress;
-  const canSubmit = finalAddress.startsWith("0x") && description.trim().length > 0;
+  // Carga los médicos registrados (nombre off-chain) y deja solo los aprobados on-chain
+  useEffect(() => {
+    (async () => {
+      try {
+        const doctors = await api.getUsers(1);
+        const registry = getUserRegistryReadOnly();
+        const verified = await Promise.all(
+          doctors.map(async (d) => {
+            try {
+              return (await registry.isVerifiedEmitter(ethers.getAddress(d.walletAddress))) ? d : null;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        setMedicos(verified.filter((d): d is AppUser => d !== null));
+      } catch {
+        setMedicos([]);
+      }
+    })();
+  }, []);
+
+  const canSubmit = doctorAddress.startsWith("0x") && description.trim().length > 0;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,42 +85,14 @@ export default function SolicitarRecetaPage() {
 
           <div style={s.field}>
             <label style={s.label}>Médico <span style={s.req}>*</span></label>
-            <div style={s.medicosGrid}>
-              {MOCK_MEDICOS.map((m) => (
-                <label
-                  key={m.address}
-                  style={{ ...s.medicoBtn, ...(doctorAddress === m.address ? s.medicoBtnActive : {}) }}
-                >
-                  <input type="radio" name="doctor" value={m.address}
-                    checked={doctorAddress === m.address}
-                    onChange={() => setDoctorAddress(m.address)}
-                    style={{ display: "none" }} />
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600 }}>{m.label}</div>
-                    <div style={{ fontFamily: "monospace", fontSize: 10, color: "#94a3b8" }}>
-                      {m.address.slice(0, 10)}…{m.address.slice(-6)}
-                    </div>
-                  </div>
-                </label>
-              ))}
-              <label style={{ ...s.medicoBtn, ...(doctorAddress === "custom" ? s.medicoBtnActive : {}) }}>
-                <input type="radio" name="doctor" value="custom"
-                  checked={doctorAddress === "custom"}
-                  onChange={() => setDoctorAddress("custom")}
-                  style={{ display: "none" }} />
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                <div style={{ fontSize: 12, fontWeight: 600 }}>Otro médico</div>
-              </label>
-            </div>
-            {doctorAddress === "custom" && (
-              <input
-                style={{ ...s.input, marginTop: 8 }}
-                placeholder="0x... wallet del médico"
-                value={customAddress}
-                onChange={(e) => setCustomAddress(e.target.value)}
-              />
-            )}
+            <UserSelect
+              users={medicos}
+              value={doctorAddress}
+              onChange={setDoctorAddress}
+              placeholder="Seleccioná un médico…"
+              emptyText="No hay médicos aprobados disponibles todavía."
+              accent="#0ea5e9"
+            />
           </div>
 
           <div style={s.field}>

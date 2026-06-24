@@ -34,21 +34,32 @@ export default function PacientesPage() {
   useEffect(() => {
     if (!address) return;
     api.getDoctorPatients(address)
-      .then((entries: PatientEntry[]) => {
-        setPacientes(entries.map((e) => ({
-          address: e.patientAddress,
-          studyCount: e.documents.length,
-          lastStudyDate: toLastDate(e.documents),
-          pendingDiagnosis: 0,
-        })));
+      .then(async (entries: PatientEntry[]) => {
+        // Enriquece cada paciente con su nombre off-chain (de la base de datos)
+        const withNames = await Promise.all(entries.map(async (e) => {
+          let name: string | undefined;
+          try {
+            const p = await api.getProfileByWallet(e.patientAddress);
+            if (p?.name) name = `${p.name} ${p.lastName ?? ""}`.trim();
+          } catch { /* sin perfil cargado */ }
+          return {
+            address: e.patientAddress,
+            name,
+            studyCount: e.documents.length,
+            lastStudyDate: toLastDate(e.documents),
+            pendingDiagnosis: 0,
+          };
+        }));
+        setPacientes(withNames);
       })
       .catch((e: any) => setError(e.message || "Error cargando pacientes"))
       .finally(() => setLoading(false));
   }, [address]);
 
-  const filtered = pacientes.filter((p) =>
-    p.address.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = pacientes.filter((p) => {
+    const q = search.toLowerCase();
+    return p.address.toLowerCase().includes(q) || (p.name?.toLowerCase().includes(q) ?? false);
+  });
 
   return (
     <div style={s.page}>
@@ -84,7 +95,7 @@ export default function PacientesPage() {
             </svg>
             <input
               style={s.searchInput}
-              placeholder="Buscar por dirección…"
+              placeholder="Buscar por nombre o dirección…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />

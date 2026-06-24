@@ -28,11 +28,9 @@ function ProtectedRoute({ children, condition }: { children: React.ReactElement;
 export default function App() {
   const { address, isAdmin, isRegistered, isApproved, role } = useWallet();
   const location = useLocation();
-  const hideGlobalNavbar = location.pathname === "/lab" || location.pathname === "/laboratory";
-
   return (
     <>
-      {address && !hideGlobalNavbar && <Navbar />}
+      {address && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/register" element={

@@ -39,16 +39,25 @@ export default function SubirEstudioPage() {
     setErrorMsg("");
 
     try {
-      // 1. Subir archivo a IPFS vía Pinata
+      // 1. Procesar archivo (se guarda en la base de datos, no en IPFS)
       setStep("uploading");
       const uploaded = await api.uploadFile(file);
       if (uploaded.error) throw new Error(uploaded.message || "Error subiendo archivo");
-      const { cid, url, fileHash } = uploaded;
+      const { fileBase64, fileName, mimeType, fileHash } = uploaded;
 
       // 2. Firmar y enviar tx on-chain (MetaMask)
       setStep("signing");
       const registry = await getDocumentRegistry();
-      const tx = await registry.uploadOwnDocument(fileHash, category, cid);
+
+      // Evitar el revert crudo "hash ya registrado": el hash es único on-chain
+      // y queda registrado aunque después falle el guardado de metadata.
+      if (await registry.isHashRegistered(fileHash)) {
+        throw new Error(
+          "Este archivo ya fue registrado anteriormente en la blockchain. Subí un archivo distinto.",
+        );
+      }
+
+      const tx = await registry.uploadOwnDocument(fileHash, category, "");
       const receipt = await tx.wait();
 
       // Parsear documentId del evento DocumentRegistered
@@ -76,8 +85,9 @@ export default function SubirEstudioPage() {
         studyType,
         studyDate,
         labName: labName || undefined,
-        ipfsCid: cid,
-        ipfsUrl: url,
+        fileBase64,
+        fileName,
+        mimeType,
       });
 
       setStep("done");
@@ -124,7 +134,7 @@ export default function SubirEstudioPage() {
   const isLoading = step === "uploading" || step === "signing" || step === "saving";
 
   const stepLabel: Record<string, string> = {
-    uploading: "Subiendo archivo a IPFS…",
+    uploading: "Procesando archivo…",
     signing: "Confirmá la transacción en MetaMask…",
     saving: "Guardando metadata…",
   };

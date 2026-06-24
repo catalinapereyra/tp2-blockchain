@@ -1,6 +1,24 @@
 import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
+// No incluye fileData (los bytes del archivo) en los listados.
+const METADATA_SELECT = {
+  id: true,
+  documentIdOnChain: true,
+  patientAddress: true,
+  emitterAddress: true,
+  title: true,
+  description: true,
+  documentType: true,
+  studyType: true,
+  labName: true,
+  notes: true,
+  studyDate: true,
+  fileName: true,
+  mimeType: true,
+  createdAt: true,
+} as const;
+
 @Injectable()
 export class PermissionsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -25,6 +43,7 @@ export class PermissionsService {
       const documents = await this.prisma.documentMetadata.findMany({
         where: { documentIdOnChain: { in: docIds } },
         orderBy: { createdAt: "desc" },
+        select: METADATA_SELECT,
       });
       result.push({ doctorAddress, documents });
     }
@@ -50,6 +69,7 @@ export class PermissionsService {
       const documents = await this.prisma.documentMetadata.findMany({
         where: { documentIdOnChain: { in: docIds } },
         orderBy: { createdAt: "desc" },
+        select: METADATA_SELECT,
       });
       result.push({ patientAddress, documents });
     }
@@ -69,10 +89,19 @@ export class PermissionsService {
     const docIds = accesses.map((a) => a.documentIdOnChain);
     if (docIds.length === 0) return [];
 
-    return this.prisma.documentMetadata.findMany({
+    const documents = await this.prisma.documentMetadata.findMany({
       where: { documentIdOnChain: { in: docIds } },
       orderBy: { createdAt: "desc" },
+      select: METADATA_SELECT,
     });
+
+    // Adjunta el diagnóstico propio de este médico (si ya escribió uno) por documento
+    const diags = await this.prisma.diagnosis.findMany({
+      where: { doctorAddress: doctorAddress.toLowerCase(), documentIdOnChain: { in: docIds } },
+    });
+    const textByDoc = new Map(diags.map((d) => [d.documentIdOnChain, d.text]));
+
+    return documents.map((d) => ({ ...d, diagnosis: textByDoc.get(d.documentIdOnChain) ?? null }));
   }
 
   async grant(patientAddress: string, doctorAddress: string, documentIdOnChain: number) {

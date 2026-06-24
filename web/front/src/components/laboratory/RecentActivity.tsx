@@ -32,24 +32,22 @@ export function RecentActivity({ documents, loading = false, error = null }: Rec
 
   return (
     <LaboratoryCard
-      title="Actividad Reciente"
+      title="Actividad reciente"
       action={documents.length > 5 ? (showAll ? "Ver menos" : "Ver todo") : undefined}
       onAction={() => setShowAll((current) => !current)}
     >
       <div style={styles.list}>
         {loading ? <p style={styles.state}>Cargando actividad...</p> : null}
-        {error ? <p style={styles.error}>{error}</p> : null}
+        {error ? <p style={styles.errorText}>{error}</p> : null}
         {!loading && !error && visibleDocuments.length === 0 ? (
-          <p style={styles.state}>Todavia no hay estudios subidos por este laboratorio.</p>
+          <p style={styles.state}>Todavía no hay estudios subidos.</p>
         ) : null}
         {visibleDocuments.map((document) => (
           <div key={document.id} style={styles.item}>
-            <span style={{ ...styles.icon, ...toneStyles.green }}>OK</span>
-            <div>
-              <strong style={styles.title}>Estudio subido</strong>
-              <p style={styles.text}>
-                {document.title || document.documentType} - {shortAddress(document.patientAddress)}
-              </p>
+            <div style={styles.dot} />
+            <div style={styles.info}>
+              <strong style={styles.itemTitle}>{document.title || document.documentType}</strong>
+              <p style={styles.itemSub}>{shortAddress(document.patientAddress)}</p>
             </div>
             <time style={styles.time}>{formatDate(document.createdAt)}</time>
           </div>
@@ -59,32 +57,23 @@ export function RecentActivity({ documents, loading = false, error = null }: Rec
   );
 }
 
-const toneStyles: Record<string, React.CSSProperties> = {
-  green: { background: "#dcfce7", color: "#16a34a" },
-};
-
 const styles: Record<string, React.CSSProperties> = {
-  list: { display: "grid", gap: 20, padding: "20px 22px 22px" },
+  list: { display: "grid", gap: 12, padding: "16px 20px 20px" },
   item: {
     alignItems: "center",
     display: "grid",
-    gap: 14,
-    gridTemplateColumns: "32px minmax(0, 1fr) auto",
+    gap: 10,
+    gridTemplateColumns: "8px minmax(0, 1fr) auto",
     minWidth: 0,
   },
-  icon: {
-    alignItems: "center",
-    borderRadius: "50%",
-    display: "flex",
-    fontSize: 9,
-    fontWeight: 900,
-    height: 28,
-    justifyContent: "center",
-    width: 28,
+  dot: {
+    width: 8, height: 8, borderRadius: "50%",
+    background: "#10b981", flexShrink: 0,
   },
-  title: { color: "#2b3b59", display: "block", fontSize: 12, fontWeight: 900 },
-  text: { color: "#61708d", fontSize: 11, fontWeight: 800, marginTop: 5, overflowWrap: "anywhere" },
-  time: { color: "#61708d", fontSize: 11, fontWeight: 900, whiteSpace: "nowrap" },
-  state: { color: "#64748b", fontSize: 12, fontWeight: 800, lineHeight: 1.5 },
-  error: { color: "#dc2626", fontSize: 12, fontWeight: 800, lineHeight: 1.5 },
+  info: { minWidth: 0 },
+  itemTitle: { display: "block", fontSize: 12, fontWeight: 600, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  itemSub: { fontSize: 11, color: "#94a3b8", margin: "2px 0 0", fontFamily: "monospace" },
+  time: { fontSize: 10, color: "#94a3b8", whiteSpace: "nowrap" },
+  state: { color: "#94a3b8", fontSize: 12, lineHeight: 1.5, margin: 0 },
+  errorText: { color: "#ef4444", fontSize: 12, lineHeight: 1.5, margin: 0 },
 };

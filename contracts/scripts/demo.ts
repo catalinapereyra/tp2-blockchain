@@ -45,7 +45,6 @@ async function main() {
     const addresses = JSON.parse(fs.readFileSync(deployedPath, "utf8"));
 
     // Conectar contratos
-    const medicalRegistry = await ethers.getContractAt("MedicalRegistry", addresses.medicalRegistry);
     const userRegistry = await ethers.getContractAt("UserRegistry", addresses.userRegistry);
     const docRegistry = await ethers.getContractAt("MedicalDocumentRegistry", addresses.docRegistry);
     const permissionManager = await ethers.getContractAt("PermissionManager", addresses.permissionManager);
@@ -77,12 +76,12 @@ async function main() {
 
     paso("🧑‍💼", "El admin aprueba al médico...");
     await userRegistry.connect(admin).approveUser(doctor.address);
-    const esVerificado = await medicalRegistry.isVerifiedEmitter(doctor.address);
+    const esVerificado = await userRegistry.isVerifiedEmitter(doctor.address);
     dato("Médico verificado:", esVerificado ? "✔  sí" : "✘  no");
 
     paso("🧑‍💼", "El admin aprueba al especialista...");
     await userRegistry.connect(admin).approveUser(specialist.address);
-    dato("Especialista verificado:", (await medicalRegistry.isVerifiedEmitter(specialist.address)) ? "✔  sí" : "✘  no");
+    dato("Especialista verificado:", (await userRegistry.isVerifiedEmitter(specialist.address)) ? "✔  sí" : "✘  no");
 
     paso("🙋", "El paciente se registra (sin aprobación necesaria)...");
     await userRegistry.connect(patient).registerAsPatient();

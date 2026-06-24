@@ -5,12 +5,14 @@ type LaboratoryCardProps = {
   title?: string;
   action?: string;
   onAction?: () => void;
+  bg?: string;
+  border?: string;
   subtle?: boolean;
 };
 
-export function LaboratoryCard({ children, title, action, onAction, subtle = false }: LaboratoryCardProps) {
+export function LaboratoryCard({ children, title, action, onAction, bg = "white", border = "#bbf7d0" }: LaboratoryCardProps) {
   return (
-    <section style={{ ...styles.card, ...(subtle ? styles.subtle : {}) }}>
+    <section style={{ ...styles.card, background: bg, borderColor: border }}>
       {title ? (
         <div style={styles.header}>
           <h2 style={styles.title}>{title}</h2>
@@ -24,37 +26,35 @@ export function LaboratoryCard({ children, title, action, onAction, subtle = fal
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "#ffffff",
-    border: "1px solid #e4eaf4",
-    borderRadius: 8,
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.04)",
+    background: "white",
+    border: "1.5px solid",
+    borderRadius: 18,
     minWidth: 0,
     overflow: "hidden",
-  },
-  subtle: {
-    background: "linear-gradient(135deg, #eff6ff, #f8fafc)",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
   },
   header: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    minHeight: 64,
-    padding: "20px 24px",
-    borderBottom: "1px solid #eef2f7",
+    padding: "18px 22px",
+    borderBottom: "1px solid #f1f5f9",
   },
   title: {
-    color: "#12224a",
-    fontSize: 17,
-    fontWeight: 800,
+    color: "#0f172a",
+    fontSize: 15,
+    fontWeight: 700,
+    margin: 0,
+    letterSpacing: "-0.3px",
   },
   action: {
-    background: "#f3efff",
-    border: "1px solid #e4dcff",
-    borderRadius: 6,
-    color: "#7357e8",
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    borderRadius: 8,
+    color: "#10b981",
     cursor: "pointer",
     fontSize: 12,
-    fontWeight: 800,
-    padding: "8px 12px",
+    fontWeight: 600,
+    padding: "6px 12px",
   },
 };

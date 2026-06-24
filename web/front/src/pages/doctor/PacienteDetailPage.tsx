@@ -13,7 +13,9 @@ interface DocMeta {
   studyDate?: string;
   createdAt: string;
   emitterAddress: string;
-  ipfsUrl: string;
+  emitterName?: string | null;
+  labName?: string;
+  diagnosis?: string | null; // diagnóstico propio de este médico
 }
 
 function fmtDate(d?: string): string {
@@ -29,9 +31,10 @@ function toEstudio(doc: DocMeta): Estudio {
     category: doc.documentType,
     specificType: doc.studyType || doc.title,
     uploadedBy: doc.emitterAddress,
+    labName: doc.labName || doc.emitterName || undefined,
     date: fmtDate(doc.studyDate ?? doc.createdAt),
-    ipfsUrl: doc.ipfsUrl || undefined,
-    diagnosis: undefined,
+    fileUrl: api.fileUrl(doc.documentIdOnChain),
+    diagnosis: doc.diagnosis ?? undefined,
   };
 }
 
@@ -41,6 +44,7 @@ export default function PacienteDetailPage() {
   const { address: myAddress } = useWallet();
 
   const [estudios, setEstudios] = useState<Estudio[]>([]);
+  const [patientName, setPatientName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -52,7 +56,17 @@ export default function PacienteDetailPage() {
       .finally(() => setLoading(false));
   }, [myAddress, patientAddress]);
 
-  function handleSaveDiagnosis(studyId: number, text: string) {
+  // Nombre off-chain del paciente (de la base de datos)
+  useEffect(() => {
+    if (!patientAddress) return;
+    api.getProfileByWallet(patientAddress)
+      .then((p) => { if (p?.name) setPatientName(`${p.name} ${p.lastName ?? ""}`.trim()); })
+      .catch(() => { /* sin perfil cargado */ });
+  }, [patientAddress]);
+
+  async function handleSaveDiagnosis(studyId: number, text: string) {
+    // Persiste el diagnóstico en la base de datos (off-chain) antes de actualizar la UI
+    await api.saveDiagnosis(studyId, text);
     setEstudios((prev) =>
       prev.map((e) => (e.id === studyId ? { ...e, diagnosis: text } : e))
     );
@@ -78,7 +92,14 @@ export default function PacienteDetailPage() {
             </svg>
           </div>
           <div>
-            <h1 style={s.pageTitle}>{patientAddress?.slice(0, 12)}…{patientAddress?.slice(-8)}</h1>
+            {patientName ? (
+              <>
+                <h1 style={s.nameTitle}>{patientName}</h1>
+                <p style={s.pageAddr}>{patientAddress?.slice(0, 12)}…{patientAddress?.slice(-8)}</p>
+              </>
+            ) : (
+              <h1 style={s.pageTitle}>{patientAddress?.slice(0, 12)}…{patientAddress?.slice(-8)}</h1>
+            )}
             <p style={s.pageSubtitle}>
               {loading ? "Cargando…" : `${estudios.length} estudios · ${done} diagnosticados · ${pending} pendientes`}
             </p>
@@ -171,6 +192,8 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
   pageTitle: { fontSize: 18, fontWeight: 700, color: "#0f172a", margin: 0, fontFamily: "monospace" },
+  nameTitle: { fontSize: 20, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "-0.4px" },
+  pageAddr: { fontSize: 12, fontFamily: "monospace", color: "#94a3b8", margin: "2px 0 0" },
   pageSubtitle: { fontSize: 13, color: "#94a3b8", margin: "3px 0 0" },
   stats: { display: "flex", gap: 10, marginBottom: 24 },
   statCard: {

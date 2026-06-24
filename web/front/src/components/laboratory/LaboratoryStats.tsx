@@ -5,31 +5,25 @@ type LaboratoryStatsProps = {
 
 export function LaboratoryStats({ totalStudies, loading = false }: LaboratoryStatsProps) {
   return (
-    <div style={styles.grid}>
-      <article style={styles.stat}>
-        <div style={styles.label}>Estudios Subidos</div>
-        <strong style={styles.value}>{loading ? "..." : totalStudies}</strong>
-        <span style={styles.success}>Total registrados</span>
-      </article>
+    <div style={styles.chip}>
+      <span style={styles.value}>{loading ? "..." : totalStudies}</span>
+      <span style={styles.label}>estudios subidos</span>
     </div>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  grid: {
-    display: "grid",
-    gap: 20,
-    gridTemplateColumns: "minmax(190px, 260px)",
+  chip: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    borderRadius: 20,
+    padding: "6px 14px",
+    marginLeft: "auto",
+    flexShrink: 0,
   },
-  stat: {
-    background: "#ffffff",
-    border: "1px solid #e4eaf4",
-    borderRadius: 8,
-    minHeight: 126,
-    padding: "22px 20px",
-  },
-  label: { color: "#5c6b89", fontSize: 12, fontWeight: 900, marginBottom: 14 },
-  value: { color: "#12224a", display: "block", fontSize: 28, fontWeight: 900, marginBottom: 10 },
-  success: { color: "#16a34a", fontSize: 12, fontWeight: 900 },
-  warning: { color: "#7c3aed", fontSize: 12, fontWeight: 900 },
+  value: { fontSize: 16, fontWeight: 700, color: "#10b981" },
+  label: { fontSize: 12, fontWeight: 500, color: "#64748b" },
 };

@@ -1,12 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { getUserRegistry, getUserRegistryReadOnly, ADDRESSES, ROLE_LABELS, STATUS_LABELS } from "../lib/contracts";
+import { api } from "../lib/api";
 
 interface UserInfo {
   address: string;
   role: number;
   status: number;
   registeredAt: number;
+  name?: string;
+  lastName?: string;
+}
+
+// Nombre y apellido off-chain (de la DB) para mostrar junto a la address
+async function withName(u: UserInfo): Promise<UserInfo> {
+  try {
+    const p = await api.getProfileByWallet(u.address);
+    return { ...u, name: p?.name || undefined, lastName: p?.lastName || undefined };
+  } catch {
+    return u;
+  }
+}
+
+function fullName(u: UserInfo): string | null {
+  if (!u.name) return null;
+  return `${u.name} ${u.lastName ?? ""}`.trim();
 }
 
 const ETHERSCAN_KEY = import.meta.env.VITE_ETHERSCAN_API_KEY as string;
@@ -62,7 +80,8 @@ export default function AdminDashboard() {
     setLoadingPending(true);
     setError("");
     try {
-      setPendingUsers(await fetchPendingFromEtherscan());
+      const users = await fetchPendingFromEtherscan();
+      setPendingUsers(await Promise.all(users.map(withName)));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error cargando solicitudes");
     } finally {
@@ -79,7 +98,7 @@ export default function AdminDashboard() {
       const reg = await contract.isRegistered(searchAddr);
       if (!reg) { setError("Wallet no registrada"); return; }
       const u = await contract.getUser(searchAddr);
-      setSearchData({ address: searchAddr, role: Number(u.role), status: Number(u.status), registeredAt: Number(u.registeredAt) });
+      setSearchData(await withName({ address: searchAddr, role: Number(u.role), status: Number(u.status), registeredAt: Number(u.registeredAt) }));
     } catch (e: unknown) {
       const err = e as { reason?: string; message?: string };
       setError(err.reason || err.message || "Error desconocido");
@@ -101,7 +120,7 @@ export default function AdminDashboard() {
       if (searchData?.address.toLowerCase() === addr.toLowerCase()) {
         const c = getUserRegistryReadOnly();
         const u = await c.getUser(addr);
-        setSearchData({ address: addr, role: Number(u.role), status: Number(u.status), registeredAt: Number(u.registeredAt) });
+        setSearchData(await withName({ address: addr, role: Number(u.role), status: Number(u.status), registeredAt: Number(u.registeredAt) }));
       }
     } catch (e: unknown) {
       const err = e as { reason?: string; message?: string };
@@ -256,6 +275,7 @@ function PendingCard({ user, onAction, actionLoading }: {
         <span style={{ ...s.rolePill, background: roleStyle.bg, color: roleStyle.color }}>
           {ROLE_LABELS[user.role]}
         </span>
+        {fullName(user) && <span style={s.pendingName}>{fullName(user)}</span>}
         <span style={s.pendingAddr}>{user.address.slice(0, 10)}…{user.address.slice(-8)}</span>
         <span style={s.pendingDate}>{new Date(user.registeredAt * 1000).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}</span>
       </div>
@@ -297,6 +317,7 @@ function UserRow({ user, onAction, actionLoading, showAddress }: {
     <div style={s.userRow}>
       <div style={s.userRowInner}>
         <div style={s.userRowLeft}>
+          {fullName(user) && <span style={s.userName}>{fullName(user)}</span>}
           <span style={s.userAddr}>
             {showAddress ? user.address : `${user.address.slice(0, 10)}…${user.address.slice(-8)}`}
           </span>
@@ -465,6 +486,11 @@ const s: Record<string, React.CSSProperties> = {
     flexDirection: "column" as const,
     gap: 4,
   },
+  pendingName: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: "#0f172a",
+  },
   pendingAddr: {
     fontFamily: "monospace",
     fontSize: 12,
@@ -527,6 +553,11 @@ const s: Record<string, React.CSSProperties> = {
     flexDirection: "column" as const,
     gap: 6,
     minWidth: 0,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: "#0f172a",
   },
   userAddr: {
     fontFamily: "monospace",

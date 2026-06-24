@@ -20,7 +20,14 @@ export default function PacienteCard({ paciente }: { paciente: Paciente }) {
         </svg>
       </div>
       <div style={s.info}>
-        <span style={s.addr}>{paciente.address.slice(0, 10)}…{paciente.address.slice(-6)}</span>
+        {paciente.name ? (
+          <>
+            <span style={s.name}>{paciente.name}</span>
+            <span style={s.addrSmall}>{paciente.address.slice(0, 10)}…{paciente.address.slice(-6)}</span>
+          </>
+        ) : (
+          <span style={s.addr}>{paciente.address.slice(0, 10)}…{paciente.address.slice(-6)}</span>
+        )}
         <div style={s.meta}>
           <span style={s.metaItem}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
@@ -59,7 +66,9 @@ const s: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   info: { display: "flex", flexDirection: "column" as const, gap: 4, flex: 1, minWidth: 0 },
+  name: { fontSize: 14, fontWeight: 600, color: "#0f172a" },
   addr: { fontFamily: "monospace", fontSize: 13, color: "#1e293b", fontWeight: 500 },
+  addrSmall: { fontFamily: "monospace", fontSize: 11, color: "#94a3b8" },
   meta: { display: "flex", alignItems: "center", gap: 6 },
   metaItem: { fontSize: 12, color: "#94a3b8", display: "flex", alignItems: "center", gap: 3 },
   dot: { fontSize: 12, color: "#cbd5e1" },

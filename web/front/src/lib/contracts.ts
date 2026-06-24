@@ -2,7 +2,6 @@ import { ethers } from "ethers";
 
 export const ADDRESSES = {
   userRegistry: import.meta.env.VITE_USER_REGISTRY_ADDRESS as string,
-  medicalRegistry: import.meta.env.VITE_MEDICAL_REGISTRY_ADDRESS as string,
   documentRegistry: import.meta.env.VITE_DOCUMENT_REGISTRY_ADDRESS as string,
   permissionManager: import.meta.env.VITE_PERMISSION_MANAGER_ADDRESS as string,
   prescriptionManager: import.meta.env.VITE_PRESCRIPTION_MANAGER_ADDRESS as string,
@@ -16,6 +15,7 @@ export const USER_REGISTRY_ABI = [
   "function revokeUser(address user) external",
   "function isRegistered(address user) external view returns (bool)",
   "function isApproved(address user) external view returns (bool)",
+  "function isVerifiedEmitter(address user) external view returns (bool)",
   "function getRole(address user) external view returns (uint8)",
   "function getUser(address user) external view returns (tuple(uint8 role, uint8 status, uint256 registeredAt, uint256 updatedAt))",
   "function getStatus(address user) external view returns (uint8)",
@@ -27,11 +27,6 @@ export const USER_REGISTRY_ABI = [
   "event UserRevoked(address indexed user)",
 ];
 
-export const MEDICAL_REGISTRY_ABI = [
-  "function isVerifiedEmitter(address emitter) external view returns (bool)",
-  "function getEmitter(address emitter) external view returns (tuple(uint8 emitterType, bool isActive, uint256 registeredAt))",
-];
-
 export const DOCUMENT_REGISTRY_ABI = [
   "function uploadOwnDocument(bytes32 documentHash, string calldata documentType, string calldata offChainRef) external returns (uint256)",
   "function registerDocument(address patient, bytes32 documentHash, string calldata documentType, string calldata offChainRef) external returns (uint256)",
@@ -40,6 +35,7 @@ export const DOCUMENT_REGISTRY_ABI = [
   "function verifyDocument(uint256 documentId, bytes32 hashToVerify) external view returns (bool)",
   "function revokeDocument(uint256 documentId) external",
   "function documentExists(uint256 documentId) external view returns (bool)",
+  "function isHashRegistered(bytes32 documentHash) external view returns (bool)",
   "event DocumentRegistered(uint256 indexed documentId, address indexed patient, address indexed issuer, uint8 status)",
 ];
 
@@ -81,11 +77,6 @@ export async function getUserRegistry() {
 
 export function getUserRegistryReadOnly() {
   return new ethers.Contract(ADDRESSES.userRegistry, USER_REGISTRY_ABI, getProvider());
-}
-
-export async function getMedicalRegistry() {
-  const provider = getProvider();
-  return new ethers.Contract(ADDRESSES.medicalRegistry, MEDICAL_REGISTRY_ABI, provider);
 }
 
 export async function getDocumentRegistry() {

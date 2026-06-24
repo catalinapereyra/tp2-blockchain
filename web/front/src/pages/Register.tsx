@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../context/WalletContext";
 import { getUserRegistry } from "../lib/contracts";
+import { api } from "../lib/api";
 
 type OptionKey = "patient" | "doctor" | "lab" | "institution";
 
@@ -28,17 +29,28 @@ export default function Register() {
     intendedToKey(localStorage.getItem("intended_role"))
   );
   const [fromHome] = useState<boolean>(() => !!localStorage.getItem("intended_role"));
+  const [name, setName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   useEffect(() => {
     localStorage.removeItem("intended_role");
   }, []);
 
+  // Laboratorios e instituciones son entidades: solo piden el nombre de la entidad,
+  // no apellido. Pacientes y médicos son personas: nombre + apellido.
+  const isOrg = selected === "lab" || selected === "institution";
+
   async function register() {
+    if (!name.trim() || (!isOrg && !lastName.trim())) {
+      setError(isOrg ? "Completá el nombre" : "Completá tu nombre y apellido");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const contract = await getUserRegistry();
       const opt = OPTIONS.find((o) => o.key === selected)!;
+      const roleNumber = selected === "patient" ? 0 : opt.role!;
       let tx;
       if (selected === "patient") {
         tx = await contract.registerAsPatient();
@@ -46,6 +58,19 @@ export default function Register() {
         tx = await contract.registerAsProfessional(opt.role!);
       }
       await tx.wait();
+
+      // El nombre (y apellido si es persona) se guardan off-chain en la base de datos
+      // (la blockchain solo guarda la address y el rol).
+      try {
+        await api.updateProfile({
+          name: name.trim(),
+          lastName: isOrg ? undefined : lastName.trim(),
+          role: roleNumber,
+        });
+      } catch (profileErr) {
+        console.error("No se pudo guardar el perfil off-chain", profileErr);
+      }
+
       await refresh();
       if (selected === "patient") navigate("/patient");
       else navigate("/pending");
@@ -90,6 +115,46 @@ export default function Register() {
           </div>
         )}
 
+        <div style={styles.nameRow}>
+          {isOrg ? (
+            <div style={styles.nameField}>
+              <label style={styles.nameLabel}>
+                {selected === "lab" ? "Nombre del laboratorio" : "Nombre de la institución"}
+              </label>
+              <input
+                style={styles.nameInput}
+                placeholder={selected === "lab" ? "Laboratorio Central" : "Hospital Italiano"}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+          ) : (
+            <>
+              <div style={styles.nameField}>
+                <label style={styles.nameLabel}>Nombre</label>
+                <input
+                  style={styles.nameInput}
+                  placeholder="Juan"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+              <div style={styles.nameField}>
+                <label style={styles.nameLabel}>Apellido</label>
+                <input
+                  style={styles.nameInput}
+                  placeholder="Pérez"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
         {selected !== "patient" && (
           <div style={styles.approvalBanner}>
             <span style={styles.bannerIcon}>⏳</span>
@@ -102,7 +167,11 @@ export default function Register() {
           </div>
         )}
 
-        <button style={styles.btnRegister} onClick={register} disabled={loading}>
+        <button
+          style={{ ...styles.btnRegister, opacity: !name.trim() || (!isOrg && !lastName.trim()) ? 0.5 : 1 }}
+          onClick={register}
+          disabled={loading || !name.trim() || (!isOrg && !lastName.trim())}
+        >
           {loading
             ? "Confirmá en MetaMask..."
             : `Registrarme como ${selectedOpt.label}`}
@@ -157,4 +226,12 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#78350f",
   },
   bannerIcon: { fontSize: 22, flexShrink: 0 },
+  nameRow: { display: "flex", gap: 10, marginBottom: 16 },
+  nameField: { display: "flex", flexDirection: "column" as const, gap: 6, flex: 1 },
+  nameLabel: { fontSize: 13, fontWeight: 600, color: "#475569" },
+  nameInput: {
+    border: "1.5px solid #e2e8f0", borderRadius: 10, padding: "10px 12px",
+    fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: "none",
+    width: "100%", boxSizing: "border-box" as const,
+  },
 };

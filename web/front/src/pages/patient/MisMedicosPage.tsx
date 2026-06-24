@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ethers } from "ethers";
 import { useWallet } from "../../context/WalletContext";
-import { api } from "../../lib/api";
-import { getPermissionManager } from "../../lib/contracts";
+import { api, AppUser } from "../../lib/api";
+import { getPermissionManager, getUserRegistryReadOnly } from "../../lib/contracts";
 import { getErrorMessage } from "../../lib/error";
+import UserSelect from "../../components/common/UserSelect";
+import { useToast } from "../../components/common/Toast";
 
 interface DocMeta {
   id: number;
@@ -12,7 +15,6 @@ interface DocMeta {
   documentType: string;
   studyType?: string;
   studyDate?: string;
-  ipfsUrl: string;
 }
 
 interface DoctorEntry {
@@ -31,6 +33,7 @@ function fmtDate(d?: string) {
 export default function MisMedicosPage() {
   const navigate = useNavigate();
   const { address } = useWallet();
+  const toast = useToast();
 
   const [doctors, setDoctors] = useState<DoctorEntry[]>([]);
   const [myDocs, setMyDocs] = useState<DocMeta[]>([]);
@@ -39,6 +42,7 @@ export default function MisMedicosPage() {
 
   // Flujo "nuevo médico"
   const [showGrant, setShowGrant] = useState(false);
+  const [medicos, setMedicos] = useState<AppUser[]>([]);
   const [newDoctorAddr, setNewDoctorAddr] = useState("");
   const [newSelectedIds, setNewSelectedIds] = useState<number[]>([]);
   const [granting, setGranting] = useState(false);
@@ -55,6 +59,28 @@ export default function MisMedicosPage() {
   const [revokeError, setRevokeError] = useState("");
 
   useEffect(() => { if (address) load(); }, [address]);
+
+  // Carga los médicos registrados y aprobados on-chain para el desplegable
+  useEffect(() => {
+    (async () => {
+      try {
+        const doctors = await api.getUsers(1);
+        const registry = getUserRegistryReadOnly();
+        const verified = await Promise.all(
+          doctors.map(async (d) => {
+            try {
+              return (await registry.isVerifiedEmitter(ethers.getAddress(d.walletAddress))) ? d : null;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        setMedicos(verified.filter((d): d is AppUser => d !== null));
+      } catch {
+        setMedicos([]);
+      }
+    })();
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -99,8 +125,10 @@ export default function MisMedicosPage() {
       setNewDoctorAddr("");
       setNewSelectedIds([]);
       await load();
+      toast.show("Acceso otorgado");
     } catch (e: unknown) {
       setGrantError(getErrorMessage(e));
+      toast.show("No se pudo otorgar el acceso", "error");
     } finally {
       setGranting(false);
     }
@@ -116,8 +144,10 @@ export default function MisMedicosPage() {
       setAddingToDoctor(null);
       setAddDocIds([]);
       await load();
+      toast.show("Acceso otorgado");
     } catch (e: unknown) {
       setAddDocError(getErrorMessage(e));
+      toast.show("No se pudo otorgar el acceso", "error");
     } finally {
       setAddingDocs(false);
     }
@@ -148,8 +178,10 @@ export default function MisMedicosPage() {
           )
           .filter((d) => d.documents.length > 0)
       );
+      toast.show("Acceso revocado");
     } catch (e: unknown) {
       setRevokeError(getErrorMessage(e));
+      toast.show("No se pudo revocar el acceso", "error");
     } finally {
       setRevoking(null);
     }
@@ -192,8 +224,15 @@ export default function MisMedicosPage() {
           <div style={s.grantPanel}>
             <h3 style={s.grantTitle}>Dar acceso a un médico nuevo</h3>
             <div style={s.field}>
-              <label style={s.label}>Wallet del médico <span style={s.req}>*</span></label>
-              <input style={s.input} placeholder="0x..." value={newDoctorAddr} onChange={(e) => setNewDoctorAddr(e.target.value)} />
+              <label style={s.label}>Médico <span style={s.req}>*</span></label>
+              <UserSelect
+                users={medicos}
+                value={newDoctorAddr}
+                onChange={setNewDoctorAddr}
+                placeholder="Seleccioná un médico…"
+                emptyText="No hay médicos aprobados disponibles todavía."
+                accent="#f59e0b"
+              />
             </div>
             {myDocs.length === 0 ? (
               <p style={s.emptySmall}>No tenés estudios para compartir aún.</p>

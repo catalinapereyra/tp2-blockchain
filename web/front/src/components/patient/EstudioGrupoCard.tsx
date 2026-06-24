@@ -6,8 +6,8 @@ export interface EstudioItem {
   title: string;
   labName?: string;
   uploadedBy: "lab" | "patient";
-  ipfsUrl?: string;
-  diagnosis?: string;
+  fileUrl?: string;
+  diagnoses?: { doctorName?: string | null; text: string }[];
 }
 
 interface Props {
@@ -86,13 +86,20 @@ export default function EstudioGrupoCard({ studyType, category, estudios }: Prop
                       {e.uploadedBy === "lab" ? "✓ Lab" : "Subido por vos"}
                     </span>
                   </div>
-                  {e.diagnosis && (
-                    <p style={s.diagnosis}>💬 {e.diagnosis}</p>
+                  {e.diagnoses && e.diagnoses.length > 0 && (
+                    <div style={s.diagList}>
+                      {e.diagnoses.map((d, i) => (
+                        <div key={i} style={s.diagItem}>
+                          <span style={s.diagDoctor}>🩺 {d.doctorName || "Médico"}</span>
+                          <span style={s.diagText}>{d.text}</span>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
-              {e.ipfsUrl && (
-                <a href={e.ipfsUrl} target="_blank" rel="noreferrer" style={s.viewBtn}>
+              {e.fileUrl && (
+                <a href={e.fileUrl} target="_blank" rel="noreferrer" style={s.viewBtn}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   Ver
                 </a>
@@ -138,7 +145,14 @@ const s: Record<string, React.CSSProperties> = {
   itemTitle: { fontSize: 13, fontWeight: 500, color: "#1e293b" },
   itemMeta: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const },
   uploadedPill: { fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 20 },
-  diagnosis: { fontSize: 12, color: "#475569", margin: 0, fontStyle: "italic", lineHeight: 1.4 },
+  diagList: { display: "flex", flexDirection: "column" as const, gap: 6, marginTop: 4 },
+  diagItem: {
+    display: "flex", flexDirection: "column" as const, gap: 2,
+    background: "#f8fafc", borderRadius: 8, padding: "6px 10px",
+    borderLeft: "2px solid #6366f1",
+  },
+  diagDoctor: { fontSize: 11, fontWeight: 700, color: "#6366f1" },
+  diagText: { fontSize: 12, color: "#475569", lineHeight: 1.4 },
   viewBtn: {
     display: "inline-flex", alignItems: "center", gap: 4,
     fontSize: 12, color: "#6366f1", fontWeight: 600,
