@@ -1,4 +1,5 @@
 import React from "react";
+import { colors } from "../../styles";
 
 interface SpinnerProps {
   size?: number;
@@ -10,7 +11,7 @@ interface SpinnerProps {
 /**
  * Círculo de carga animado, reutilizable. Usa el @keyframes spin global (index.css).
  */
-export default function Spinner({ size = 18, color = "#6366f1", thickness = 2, style }: SpinnerProps) {
+export default function Spinner({ size = 18, color = colors.primary, thickness = 2, style }: SpinnerProps) {
   return (
     <span
       style={{

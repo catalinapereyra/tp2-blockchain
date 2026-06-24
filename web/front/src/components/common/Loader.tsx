@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import Spinner from "./Spinner";
+import { colors, fontFamily, fontSize, fontWeight, radius, shadow } from "../../styles";
 
 interface LoaderContextValue {
   show: (message?: string) => void;
@@ -58,18 +59,18 @@ const s: Record<string, React.CSSProperties> = {
     zIndex: 1100,
   },
   card: {
-    background: "white",
-    borderRadius: 16,
+    background: colors.surface,
+    borderRadius: radius["2xl"],
     padding: "28px 32px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     gap: 12,
-    boxShadow: "0 12px 40px rgba(15,23,42,0.25)",
-    fontFamily: "'DM Sans', sans-serif",
+    boxShadow: shadow.lg,
+    fontFamily: fontFamily.sans,
     maxWidth: 300,
     textAlign: "center",
   },
-  message: { fontSize: 15, fontWeight: 600, color: "#0f172a", lineHeight: 1.4 },
-  hint: { fontSize: 12, color: "#94a3b8" },
+  message: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text, lineHeight: 1.4 },
+  hint: { fontSize: fontSize.sm, color: colors.textFaint },
 };

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { colors, fontFamily, fontSize, fontWeight, radius, shadow } from "../../styles";
 
 type ToastType = "success" | "error" | "info";
 
@@ -25,9 +26,9 @@ export function useToast() {
 }
 
 const ACCENT: Record<ToastType, { color: string; bg: string; border: string }> = {
-  success: { color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
-  error: { color: "#dc2626", bg: "#fef2f2", border: "#fecaca" },
-  info: { color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe" },
+  success: { color: colors.success.fg, bg: colors.success.bg, border: colors.success.border },
+  error: { color: colors.error.fg, bg: colors.error.bg, border: colors.error.border },
+  info: { color: colors.info.fg, bg: colors.info.bg, border: colors.info.border },
 };
 
 function ToastCard({ item }: { item: ToastItem }) {
@@ -90,11 +91,11 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 10,
     padding: "11px 16px",
-    borderRadius: 12,
-    boxShadow: "0 8px 28px rgba(15,23,42,0.14)",
-    fontFamily: "'DM Sans', sans-serif",
-    fontSize: 14,
-    fontWeight: 600,
+    borderRadius: radius.lg,
+    boxShadow: shadow.md,
+    fontFamily: fontFamily.sans,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
     animation: "toastIn 0.18s ease-out",
     minWidth: 220,
   },

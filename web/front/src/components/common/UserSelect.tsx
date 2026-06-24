@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ethers } from "ethers";
 import { AppUser } from "../../lib/api";
+import { colors, fontFamily, fontSize, fontWeight, radius, shadow } from "../../styles";
 
 interface UserSelectProps {
   users: AppUser[];
@@ -31,7 +32,7 @@ export default function UserSelect({
   onChange,
   placeholder = "Seleccioná…",
   emptyText = "No hay opciones disponibles.",
-  accent = "#6366f1",
+  accent = colors.primary,
   disabled = false,
 }: UserSelectProps) {
   const [open, setOpen] = useState(false);
@@ -72,7 +73,7 @@ export default function UserSelect({
           <span style={s.placeholder}>{isEmpty ? emptyText : placeholder}</span>
         )}
         <svg
-          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"
+          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textFaint} strokeWidth="2"
           style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.15s", flexShrink: 0 }}
         >
           <polyline points="6 9 12 15 18 9" />
@@ -115,29 +116,29 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "space-between",
     gap: 10,
-    border: "1.5px solid #e2e8f0",
-    borderRadius: 10,
+    border: `1.5px solid ${colors.border}`,
+    borderRadius: radius.md,
     padding: "10px 12px",
-    background: "white",
+    background: colors.surface,
     cursor: "pointer",
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fontFamily.sans,
     textAlign: "left" as const,
     transition: "border-color 0.15s, box-shadow 0.15s",
   },
-  triggerDisabled: { background: "#f8fafc", cursor: "not-allowed", color: "#94a3b8" },
+  triggerDisabled: { background: colors.bgApp, cursor: "not-allowed", color: colors.textFaint },
   selectedRow: { display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 },
-  name: { fontSize: 13, fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" },
-  addr: { fontFamily: "monospace", fontSize: 11, color: "#94a3b8", flexShrink: 0 },
-  placeholder: { fontSize: 13, color: "#94a3b8" },
+  name: { fontSize: fontSize.base, fontWeight: fontWeight.semibold, color: colors.text, whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" },
+  addr: { fontFamily: fontFamily.mono, fontSize: fontSize.xs, color: colors.textFaint, flexShrink: 0 },
+  placeholder: { fontSize: fontSize.base, color: colors.textFaint },
   menu: {
     position: "absolute",
     top: "calc(100% + 6px)",
     left: 0,
     right: 0,
-    background: "white",
-    border: "1px solid #e2e8f0",
-    borderRadius: 12,
-    boxShadow: "0 8px 28px rgba(15,23,42,0.12)",
+    background: colors.surface,
+    border: `1px solid ${colors.border}`,
+    borderRadius: radius.lg,
+    boxShadow: shadow.md,
     padding: 6,
     zIndex: 30,
     maxHeight: 240,
@@ -150,14 +151,14 @@ const s: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     gap: 10,
     border: "none",
-    borderRadius: 8,
+    borderRadius: radius.sm,
     padding: "9px 10px",
     background: "transparent",
     cursor: "pointer",
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fontFamily.sans,
     textAlign: "left" as const,
     transition: "background 0.12s",
   },
-  itemName: { fontSize: 13, fontWeight: 600, color: "#0f172a" },
-  itemAddr: { fontFamily: "monospace", fontSize: 11, color: "#94a3b8", flexShrink: 0 },
+  itemName: { fontSize: fontSize.base, fontWeight: fontWeight.semibold, color: colors.text },
+  itemAddr: { fontFamily: fontFamily.mono, fontSize: fontSize.xs, color: colors.textFaint, flexShrink: 0 },
 };

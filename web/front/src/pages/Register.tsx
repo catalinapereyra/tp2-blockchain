@@ -22,7 +22,7 @@ function intendedToKey(s: string | null): OptionKey {
 }
 
 export default function Register() {
-  const { refresh } = useWallet();
+  const { refresh, address } = useWallet();
   const navigate = useNavigate();
   const loader = useLoader();
   const [loading, setLoading] = useState(false);
@@ -75,9 +75,27 @@ export default function Register() {
         console.error("No se pudo guardar el perfil off-chain", profileErr);
       }
 
+      // El RPC a veces tarda un bloque en reflejar el registro recién minado.
+      // Esperamos a que la wallet figure registrada antes de redirigir, así no
+      // caemos en una pantalla en blanco que obligaba a recargar a mano.
+      loader.show("Cargando tu cuenta…");
+      if (address) {
+        // Mismo provider (MetaMask) que usa loadChainData, para que cuando esto
+        // dé true, el refresh() siguiente también lea el estado actualizado.
+        const reg = await getUserRegistry();
+        for (let i = 0; i < 10; i++) {
+          try {
+            if (await reg.isRegistered(address)) break;
+          } catch { /* reintentar */ }
+          await new Promise((r) => setTimeout(r, 700));
+        }
+      }
+
       await refresh();
-      if (selected === "patient") navigate("/patient");
-      else navigate("/pending");
+      // Pequeño respiro para que el contexto propague el nuevo estado antes de rutear
+      await new Promise((r) => setTimeout(r, 0));
+      if (selected === "patient") navigate("/patient", { replace: true });
+      else navigate("/pending", { replace: true });
     } catch (e: any) {
       setError(e.reason || e.message || "Error en la transacción");
     } finally {
