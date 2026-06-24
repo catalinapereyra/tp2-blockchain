@@ -46,6 +46,7 @@ export const PERMISSION_MANAGER_ABI = [
   "function grantGlobalAccess(address grantee) external",
   "function revokeGlobalAccess(address grantee) external",
   "function hasAccess(address patient, uint256 documentId, address grantee) external view returns (bool)",
+  "function hasGlobalAccess(address patient, address grantee) external view returns (bool)",
   "function hasDocumentAccess(address patient, uint256 documentId, address grantee) external view returns (bool)",
   "event DocumentAccessGranted(address indexed patient, uint256 indexed documentId, address indexed grantee)",
   "event DocumentAccessRevoked(address indexed patient, uint256 indexed documentId, address indexed grantee)",

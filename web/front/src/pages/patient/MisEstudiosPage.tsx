@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
 import { api } from "../../lib/api";
 import EstudioGrupoCard, { EstudioItem } from "../../components/patient/EstudioGrupoCard";
+import { categoryLabel } from "../../lib/categories";
+import Icon from "../../components/common/Icon";
 import { palette, fontFamily, gradients } from "../../styles";
 
 interface DocRecord {
@@ -64,6 +66,7 @@ export default function MisEstudiosPage() {
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedCat, setSelectedCat] = useState<string | null>(null);
 
   useEffect(() => {
     if (!address) return;
@@ -79,6 +82,14 @@ export default function MisEstudiosPage() {
 
   const totalEstudios = grupos.reduce((sum, g) => sum + g.estudios.length, 0);
 
+  // Categorías con su cantidad de estudios (primer nivel)
+  const categorias = Array.from(
+    grupos.reduce((m, g) => m.set(g.category, (m.get(g.category) ?? 0) + g.estudios.length), new Map<string, number>()),
+  ).map(([value, count]) => ({ value, label: categoryLabel(value), count }));
+
+  // Estudios de la categoría seleccionada (segundo nivel)
+  const gruposDeCategoria = selectedCat ? grupos.filter((g) => g.category === selectedCat) : [];
+
   return (
     <div style={s.page}>
       <div style={s.container}>
@@ -90,16 +101,10 @@ export default function MisEstudiosPage() {
         </div>
 
         <div style={s.pageHeader}>
-          <div style={s.pageIconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-            </svg>
-          </div>
           <div>
             <h1 style={s.pageTitle}>Mis estudios</h1>
             <p style={s.pageSubtitle}>
-              {loading ? "Cargando…" : `${totalEstudios} estudios · ${grupos.length} tipos distintos`}
+              {loading ? "Cargando…" : `${totalEstudios} estudios · ${grupos.length} categoría${grupos.length !== 1 ? "s" : ""}`}
             </p>
           </div>
           <button style={s.uploadBtn} onClick={() => navigate("/patient/subir")}>
@@ -129,15 +134,38 @@ export default function MisEstudiosPage() {
           </div>
         )}
 
-        {!loading && grupos.length > 0 && (
+        {/* Nivel 1: categorías clickeables */}
+        {!loading && grupos.length > 0 && !selectedCat && (
+          <div style={s.catGrid}>
+            {categorias.map((c) => (
+              <button key={c.value} style={s.catCard} onClick={() => setSelectedCat(c.value)}>
+                <div style={s.catIcon}>
+                  <Icon name={c.value} size={18} color={palette.indigo500} />
+                </div>
+                <div style={s.catInfo}>
+                  <span style={s.catLabel}>{c.label}</span>
+                  <span style={s.catCount}>{c.count} {c.count === 1 ? "estudio" : "estudios"}</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={palette.slate300} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Nivel 2: estudios de la categoría elegida */}
+        {!loading && selectedCat && (
           <>
+            <button style={s.catBack} onClick={() => setSelectedCat(null)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+              Categorías
+            </button>
             <div style={s.legend}>
               <span style={s.legendItem}><span style={{ ...s.dot, background: palette.emerald500 }} />Más reciente del tipo</span>
               <span style={s.legendItem}><span style={{ ...s.dot, background: palette.indigo500 }} />Subido por vos</span>
               <span style={s.legendItem}><span style={{ ...s.dot, background: palette.emerald600 }} />Verificado por lab</span>
             </div>
             <div style={s.list}>
-              {grupos.map((g) => (
+              {gruposDeCategoria.map((g) => (
                 <EstudioGrupoCard
                   key={g.studyType}
                   studyType={g.studyType}
@@ -194,6 +222,25 @@ const s: Record<string, React.CSSProperties> = {
   legendItem: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: palette.slate400 },
   dot: { width: 7, height: 7, borderRadius: "50%", display: "inline-block" },
   list: { display: "flex", flexDirection: "column" as const, gap: 10 },
+  catGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 },
+  catCard: {
+    display: "flex", alignItems: "center", gap: 12,
+    background: palette.white, border: `1px solid ${palette.slate100}`, borderRadius: 14,
+    padding: "14px 16px", cursor: "pointer", textAlign: "left" as const,
+    fontFamily: fontFamily.sans, boxShadow: "0 2px 12px rgba(0,0,0,0.05)", transition: "border-color 0.15s",
+  },
+  catIcon: {
+    width: 40, height: 40, borderRadius: 12, background: palette.indigoSoft,
+    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+  },
+  catInfo: { display: "flex", flexDirection: "column" as const, gap: 2, flex: 1, minWidth: 0 },
+  catLabel: { fontSize: 14, fontWeight: 600, color: palette.slate900 },
+  catCount: { fontSize: 12, color: palette.slate400 },
+  catBack: {
+    display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none",
+    color: palette.indigo500, fontSize: 13, fontWeight: 600, cursor: "pointer", padding: 0,
+    fontFamily: fontFamily.sans, marginBottom: 16,
+  },
   empty: {
     display: "flex", flexDirection: "column" as const, alignItems: "center",
     gap: 12, padding: "60px 0", textAlign: "center" as const,

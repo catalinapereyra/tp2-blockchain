@@ -9,6 +9,7 @@ import UserSelect from "../../components/common/UserSelect";
 import { useToast } from "../../components/common/Toast";
 import { useLoader } from "../../components/common/Loader";
 import { useConfirm } from "../../components/common/Confirm";
+import Icon from "../../components/common/Icon";
 import { palette, colors, fontFamily, gradients } from "../../styles";
 
 interface DocMeta {
@@ -258,31 +259,46 @@ export default function MisMedicosPage() {
   async function handleRevoke(doctorAddress: string, docId: number) {
     if (!address) return;
     const key = `${doctorAddress}-${docId}`;
-    setRevoking(key);
     setRevokeError("");
-    loader.show("Confirmá en MetaMask…");
     try {
       const pm = await getPermissionManager();
-      try {
-        const tx = await pm.revokeDocumentAccess(docId, doctorAddress);
+      const me = ethers.getAddress(address);
+      const doctor = ethers.getAddress(doctorAddress);
+
+      // Si el acceso es GLOBAL (otorgado con "Dar acceso a todo"), no existe un
+      // permiso por-documento que revocar: hay que revocar el acceso global.
+      const isGlobal = await pm.hasGlobalAccess(me, doctor);
+
+      if (isGlobal) {
+        const ok = await confirm({
+          title: "Revocar acceso total",
+          message: "Este médico tiene acceso a todos tus documentos. Al revocar le quitás el acceso a todos. ¿Confirmás?",
+          confirmText: "Sí, revocar todo",
+          cancelText: "Cancelar",
+        });
+        if (!ok) return;
+        setRevoking(key);
+        loader.show("Confirmá en MetaMask…");
+        const tx = await pm.revokeGlobalAccess(doctor);
         loader.show("Procesando transacción…");
         await tx.wait();
-      } catch (contractErr: unknown) {
-        const msg = getErrorMessage(contractErr);
-        // Si ya fue revocado on-chain, igual limpiamos la DB
-        if (!msg.includes("no tiene acceso")) throw contractErr;
+        // Limpiamos en la DB todos los accesos de ese médico
+        const entry = doctors.find((d) => d.doctorAddress === doctorAddress);
+        for (const doc of entry?.documents ?? []) {
+          await api.revokePermission({ patientAddress: address, doctorAddress, documentIdOnChain: doc.documentIdOnChain });
+        }
+        toast.show("Acceso total revocado");
+      } else {
+        setRevoking(key);
+        loader.show("Confirmá en MetaMask…");
+        const tx = await pm.revokeDocumentAccess(docId, doctor);
+        loader.show("Procesando transacción…");
+        await tx.wait();
+        await api.revokePermission({ patientAddress: address, doctorAddress, documentIdOnChain: docId });
+        toast.show("Acceso revocado");
       }
-      await api.revokePermission({ patientAddress: address, doctorAddress, documentIdOnChain: docId });
-      setDoctors((prev) =>
-        prev
-          .map((d) =>
-            d.doctorAddress !== doctorAddress
-              ? d
-              : { ...d, documents: d.documents.filter((doc) => doc.documentIdOnChain !== docId) }
-          )
-          .filter((d) => d.documents.length > 0)
-      );
-      toast.show("Acceso revocado");
+
+      await load();
     } catch (e: unknown) {
       setRevokeError(getErrorMessage(e));
       toast.show("No se pudo revocar el acceso", "error");
@@ -307,13 +323,6 @@ export default function MisMedicosPage() {
         </div>
 
         <div style={s.pageHeader}>
-          <div style={s.pageIconWrap}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={palette.amber500} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </div>
           <div>
             <h1 style={s.pageTitle}>Mis médicos</h1>
             <p style={s.pageSubtitle}>{loading ? "Cargando…" : `${doctors.length} médico${doctors.length !== 1 ? "s" : ""} con acceso`}</p>
@@ -403,7 +412,7 @@ export default function MisMedicosPage() {
             <div key={doctor.doctorAddress} style={s.doctorCard}>
               <div style={s.doctorHeader} onClick={() => toggleExpanded(doctor.doctorAddress)}>
                 <div style={s.doctorIcon}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={palette.sky500} strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                  <Icon name="doctor" size={17} color={palette.sky500} />
                 </div>
                 <div style={{ minWidth: 0 }}>
                   {name && <p style={s.doctorName}>{name}</p>}
