@@ -2,48 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../context/WalletContext";
 import { getErrorMessage } from "../lib/error";
-import { palette, fontFamily, gradients } from "../styles";
+import { Brand } from "../components/landing/Brand";
+import { Icon, type IconName } from "../components/landing/Icon";
+import "../components/landing/Landing.css";
 
 const ADMIN_ADDRESS = (import.meta.env.VITE_ADMIN_ADDRESS as string).toLowerCase();
 
-const ROLES = [
-  {
-    key: "patient",
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg>
-    ),
-    title: "Paciente",
-    desc: "Accedé a tu historial médico, documentos y recetas.",
-    accent: palette.indigo500,
-    bg: palette.indigoSoft,
-  },
-  {
-    key: "doctor",
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-      </svg>
-    ),
-    title: "Médico / Profesional",
-    desc: "Emitís recetas y registrás diagnósticos para tus pacientes.",
-    accent: palette.sky500,
-    bg: palette.sky50,
-  },
-  {
-    key: "lab",
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0a5 5 0 0 0 10 0M9 14H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-4"/>
-      </svg>
-    ),
-    title: "Laboratorio",
-    desc: "Cargás resultados y estudios verificados en blockchain.",
-    accent: palette.emerald500,
-    bg: palette.emerald50,
-  },
+const ROLES: { key: string; icon: IconName; title: string; desc: string }[] = [
+  { key: "patient", icon: "user", title: "Paciente", desc: "Accedé a tu historial médico, documentos y recetas." },
+  { key: "doctor", icon: "doctor", title: "Médico / Profesional", desc: "Emitís recetas y registrás diagnósticos para tus pacientes." },
+  { key: "lab", icon: "lab", title: "Laboratorio", desc: "Cargás resultados y estudios verificados en blockchain." },
 ];
 
 export default function Home() {
@@ -51,17 +19,13 @@ export default function Home() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
   const [currentAccount, setCurrentAccount] = useState<string | null>(null);
-  const [hovered, setHovered] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
 
   useEffect(() => {
     const eth = (window as any).ethereum;
     if (!eth) return;
-    const addr = eth.selectedAddress;
-    if (addr) setCurrentAccount(addr);
-    eth.on("accountsChanged", (accounts: string[]) => {
-      setCurrentAccount(accounts[0] || null);
-    });
+    if (eth.selectedAddress) setCurrentAccount(eth.selectedAddress);
+    eth.on("accountsChanged", (accounts: string[]) => setCurrentAccount(accounts[0] || null));
   }, []);
 
   useEffect(() => {
@@ -88,300 +52,108 @@ export default function Home() {
   const isAdminWallet = currentAccount?.toLowerCase() === ADMIN_ADDRESS;
 
   return (
-    <div style={styles.page}>
-      {/* Fondo decorativo */}
-      <div style={styles.bgBlob1} />
-      <div style={styles.bgBlob2} />
+    <main className="landing">
+      <header className="landing-header">
+        <Brand ariaLabel="MediChain, inicio" />
+        <button type="button" style={s.back} onClick={() => navigate("/")}>
+          <span style={{ transform: "scaleX(-1)", display: "inline-flex" }}><Icon name="arrow" size={16} /></span>
+          Volver a inicio
+        </button>
+      </header>
 
-      <div style={styles.inner}>
-        {/* Header */}
-        <div style={styles.header}>
-          <div style={styles.logoWrap}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-            </svg>
-          </div>
-          <h1 style={styles.title}>MediChain</h1>
-          <p style={styles.subtitle}>Documentos médicos firmados y verificados en blockchain</p>
-        </div>
+      <section style={s.section}>
+        <p style={s.eyebrow}>Iniciá sesión</p>
+        <h1 style={s.title}>Elegí cómo querés entrar</h1>
+        <p style={s.subtitle}>Conectá tu wallet con el rol que corresponda. Tu identidad queda on-chain; tus datos, privados.</p>
 
         {isAdminWallet ? (
-          <div style={styles.adminCard}>
-            <div style={styles.adminIconWrap}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
+          <div style={s.adminCard}>
+            <span style={s.adminIcon}><Icon name="shield" size={26} /></span>
+            <div style={s.adminInfo}>
+              <span style={s.adminLabel}>Panel de administración</span>
+              <span style={s.adminAddr}>{currentAccount!.slice(0, 6)}…{currentAccount!.slice(-4)}</span>
             </div>
-            <p style={styles.adminLabel}>Panel de administración</p>
-            <p style={styles.adminAddr}>
-              {currentAccount!.slice(0, 6)}...{currentAccount!.slice(-4)}
-            </p>
-            <button
-              style={styles.adminBtn}
-              onClick={() => handleConnect("admin")}
-              disabled={loading}
-            >
+            <button className="primary-button" style={s.adminBtn} onClick={() => handleConnect("admin")} disabled={loading}>
               {loading ? "Conectando…" : "Acceder"}
             </button>
           </div>
         ) : (
-          <div style={styles.cards}>
-            {ROLES.map((r) => {
-              const isHovered = hovered === r.key;
-              const isLoading = loading && selected === r.key;
-              return (
-                <div
-                  key={r.key}
-                  style={{
-                    ...styles.card,
-                    ...(isHovered ? { transform: "translateY(-4px)", boxShadow: "0 16px 40px rgba(0,0,0,0.10)" } : {}),
-                  }}
-                  onMouseEnter={() => setHovered(r.key)}
-                  onMouseLeave={() => setHovered(null)}
-                >
-                  <div style={{ ...styles.iconCircle, background: r.bg, color: r.accent }}>
-                    {r.icon}
-                  </div>
-                  <h2 style={{ ...styles.cardTitle, color: palette.slate900 }}>{r.title}</h2>
-                  <p style={styles.cardDesc}>{r.desc}</p>
-                  <button
-                    style={{
-                      ...styles.btn,
-                      background: isHovered ? r.accent : "transparent",
-                      color: isHovered ? palette.white : r.accent,
-                      borderColor: r.accent,
-                    }}
-                    onClick={() => handleConnect(r.key)}
-                    disabled={loading}
-                  >
-                    {isLoading ? "Conectando…" : "Entrar"}
-                  </button>
-                </div>
-              );
-            })}
+          <div style={s.grid}>
+            {ROLES.map((r) => (
+              <button key={r.key} style={s.card} onClick={() => handleConnect(r.key)} disabled={loading}>
+                <span style={s.cardIcon}><Icon name={r.icon} size={28} /></span>
+                <h3 style={s.cardTitle}>{r.title}</h3>
+                <p style={s.cardDesc}>{r.desc}</p>
+                <span style={s.cardCta}>
+                  {loading && selected === r.key ? "Conectando…" : "Entrar"}
+                  <Icon name="arrow" size={16} />
+                </span>
+              </button>
+            ))}
           </div>
         )}
 
-        {connectError && (
-          <div style={styles.errorBanner}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            {connectError}
-          </div>
-        )}
-
-        <p style={styles.footer}>
-          <span style={styles.footerDot} />
-        </p>
-      </div>
-    </div>
+        {connectError && <p style={s.error}>{connectError}</p>}
+      </section>
+    </main>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    background: gradients.app,
-    fontFamily: fontFamily.sans,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-    overflow: "hidden",
+const NAVY = "#081f49";
+const TURQ = "#03bec3";
+const TEXT = "#53627c";
+const GRADIENT = "linear-gradient(100deg, #02c6bd 0%, #05aeea 48%, #7852ff 100%)";
+
+const s: Record<string, React.CSSProperties> = {
+  back: {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    background: "rgba(255,255,255,0.85)", border: "1px solid rgba(8,31,73,0.1)",
+    color: NAVY, fontWeight: 600, fontSize: 14, padding: "9px 16px", borderRadius: 999,
+    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
   },
-  bgBlob1: {
-    position: "absolute",
-    top: -80,
-    right: -80,
-    width: 600,
-    height: 600,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(99,102,241,0.13) 0%, transparent 65%)",
-    pointerEvents: "none",
+  section: {
+    maxWidth: 980, margin: "0 auto", padding: "40px 24px 80px",
+    display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
   },
-  bgBlob2: {
-    position: "absolute",
-    bottom: -80,
-    left: -80,
-    width: 500,
-    height: 500,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(16,185,129,0.11) 0%, transparent 65%)",
-    pointerEvents: "none",
-  },
-  inner: {
-    position: "relative",
-    zIndex: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "48px 24px",
-    width: "100%",
-    maxWidth: 900,
-  },
-  header: {
-    textAlign: "center",
-    marginBottom: 56,
-  },
-  logoWrap: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    background: palette.indigoSoft,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 42,
-    fontWeight: 700,
-    color: palette.slate900,
-    margin: "0 0 10px",
-    letterSpacing: "-1.5px",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: palette.slate400,
-    fontWeight: 400,
-    margin: 0,
-  },
-  cards: {
-    display: "flex",
-    gap: 20,
-    flexWrap: "wrap" as const,
-    justifyContent: "center",
-    width: "100%",
-  },
+  eyebrow: { color: TURQ, fontWeight: 700, fontSize: 14, letterSpacing: "0.04em", textTransform: "uppercase", margin: 0 },
+  title: { color: NAVY, fontSize: 38, fontWeight: 700, margin: "10px 0 12px", letterSpacing: "-0.02em" },
+  subtitle: { color: TEXT, fontSize: 16, maxWidth: 560, lineHeight: 1.6, margin: "0 0 40px" },
+  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, width: "100%" },
   card: {
-    background: palette.white,
-    borderRadius: 20,
-    padding: "36px 28px",
-    width: 252,
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "flex-start",
-    gap: 12,
-    border: `1px solid ${palette.slate100}`,
-    boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-    cursor: "default",
+    background: "rgba(255,255,255,0.92)", border: "1px solid rgba(8,31,73,0.08)",
+    borderRadius: 22, padding: "30px 26px", textAlign: "left",
+    display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10,
+    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    boxShadow: "0 18px 50px rgba(8,31,73,0.08)", transition: "transform 0.18s, box-shadow 0.18s",
   },
-  iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
+  cardIcon: {
+    width: 56, height: 56, borderRadius: 16,
+    background: "linear-gradient(135deg, rgba(3,190,195,0.16), rgba(120,82,255,0.14))",
+    color: TURQ, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6,
   },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: 600,
-    margin: 0,
-    letterSpacing: "-0.3px",
+  cardTitle: { color: NAVY, fontSize: 18, fontWeight: 700, margin: 0 },
+  cardDesc: { color: TEXT, fontSize: 14, lineHeight: 1.6, margin: 0, flexGrow: 1 },
+  cardCta: {
+    display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8,
+    color: "#fff", fontWeight: 700, fontSize: 14, padding: "10px 20px", borderRadius: 999,
+    background: GRADIENT,
   },
-  cardDesc: {
-    color: palette.slate400,
-    fontSize: 13.5,
-    lineHeight: 1.6,
-    margin: 0,
-    flexGrow: 1,
-  },
-  btn: {
-    marginTop: 8,
-    border: "1.5px solid",
-    padding: "9px 22px",
-    borderRadius: 10,
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "background 0.18s, color 0.18s",
-    fontFamily: fontFamily.sans,
-    alignSelf: "stretch",
-    textAlign: "center" as const,
-  },
-  errorBanner: {
-    marginTop: 20,
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    background: palette.red50,
-    color: palette.red600,
-    border: `1px solid ${palette.red200}`,
-    borderRadius: 10,
-    padding: "10px 16px",
-    fontSize: 13,
-    maxWidth: 480,
-    width: "100%",
-  },
-  footer: {
-    marginTop: 52,
-    fontSize: 12,
-    color: palette.slate300,
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    fontWeight: 400,
-  },
-  footerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: "50%",
-    background: palette.emerald500,
-    display: "inline-block",
-  },
-  // Admin
   adminCard: {
-    background: palette.white,
-    borderRadius: 20,
-    padding: "40px 36px",
-    maxWidth: 340,
-    width: "100%",
-    border: `1px solid ${palette.violet100}`,
-    boxShadow: "0 4px 16px rgba(99,102,241,0.08)",
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "center",
-    gap: 8,
+    display: "flex", alignItems: "center", gap: 16, width: "100%", maxWidth: 460,
+    background: "rgba(255,255,255,0.92)", border: "1px solid rgba(8,31,73,0.08)",
+    borderRadius: 22, padding: "22px 24px", boxShadow: "0 18px 50px rgba(8,31,73,0.08)",
   },
-  adminIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    background: palette.indigoSoft,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
+  adminIcon: {
+    width: 52, height: 52, borderRadius: 14, flexShrink: 0,
+    background: "linear-gradient(135deg, rgba(3,190,195,0.16), rgba(120,82,255,0.14))",
+    color: TURQ, display: "flex", alignItems: "center", justifyContent: "center",
   },
-  adminLabel: {
-    fontSize: 18,
-    fontWeight: 600,
-    color: palette.slate900,
-    margin: 0,
-    letterSpacing: "-0.3px",
-  },
-  adminAddr: {
-    fontSize: 13,
-    color: palette.slate400,
-    fontFamily: fontFamily.mono,
-    margin: 0,
-  },
-  adminBtn: {
-    marginTop: 16,
-    width: "100%",
-    background: palette.indigo500,
-    color: palette.white,
-    border: "none",
-    borderRadius: 10,
-    padding: "12px",
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer",
-    fontFamily: fontFamily.sans,
+  adminInfo: { display: "flex", flexDirection: "column", alignItems: "flex-start", flex: 1 },
+  adminLabel: { color: NAVY, fontSize: 16, fontWeight: 700 },
+  adminAddr: { color: TEXT, fontFamily: "monospace", fontSize: 13 },
+  adminBtn: { padding: "10px 22px" },
+  error: {
+    marginTop: 22, background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca",
+    borderRadius: 12, padding: "10px 16px", fontSize: 14, maxWidth: 480,
   },
 };

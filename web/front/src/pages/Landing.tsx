@@ -16,7 +16,7 @@ export default function Landing() {
 
   return (
     <main className="landing">
-      <Header onConnect={handleLogin} loading={false} />
+      <Header />
       <Hero onConnect={handleLogin} loading={false} connectError={null} />
       <UsersSection />
       <StepsSection />
