@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ethers } from 'ethers';
 import { PrismaService } from '../prisma/prisma.service';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +27,7 @@ export class AuthService {
         data: {
           walletAddress: address,
           name: '',
-          nonce: uuidv4(),
+          nonce: randomUUID(),
         },
       });
     }
@@ -69,7 +69,7 @@ export class AuthService {
     // Regenerar el nonce para que la firma no pueda reutilizarse
     await this.prisma.userProfile.update({
       where: { walletAddress: address },
-      data: { nonce: uuidv4() },
+      data: { nonce: randomUUID() },
     });
 
     const token = this.jwtService.sign({ walletAddress: address });
