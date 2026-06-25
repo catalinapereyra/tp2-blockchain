@@ -11,7 +11,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  // Lo que devuelva validate() queda disponible como req.user en los controllers
   validate(payload: { walletAddress: string }) {
     return { walletAddress: payload.walletAddress };
   }

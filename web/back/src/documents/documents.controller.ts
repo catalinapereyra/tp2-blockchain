@@ -14,7 +14,6 @@ export class DocumentsController {
     return this.documentsService.findAll({ patientAddress: patient, emitterAddress: emitter });
   }
 
-  //Devuelve los metadatos de UN documento específico por su id on-chain
   @Get(":id")
   findOne(@Param("id", ParseIntPipe) id: number) {
     return this.documentsService.findOne(id);

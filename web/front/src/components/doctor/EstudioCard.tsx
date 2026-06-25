@@ -24,9 +24,7 @@ export default function EstudioCard({ estudio, onSaveDiagnosis }: Props) {
   const [diagText, setDiagText] = useState(estudio.diagnosis ?? "");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  // Diagnóstico ya guardado (lo muestra en modo lectura)
   const [savedDiagnosis, setSavedDiagnosis] = useState(estudio.diagnosis ?? "");
-  // Modo edición activo (textarea + Guardar). Si no hay diagnóstico, arranca editando.
   const [editing, setEditing] = useState(!estudio.diagnosis);
 
   const hasDiagnosis = savedDiagnosis.trim().length > 0;

@@ -38,9 +38,6 @@ export class AuthController {
     return this.authService.updateProfile(wallet, body);
   }
 
-  //Lista usuarios por rol (para los desplegables de elegir médico / paciente).
-  //Sin guard: solo devuelve nombre + address por rol, y se consume al armar los
-  //desplegables antes de que el usuario tenga sesión con el backend.
   @Get('users')
   getUsersByRole(@Query('role', ParseIntPipe) role: number) {
     return this.authService.getUsersByRole(role);

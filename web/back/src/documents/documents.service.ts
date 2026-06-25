@@ -23,8 +23,6 @@ export interface DocumentFilters {
   emitterAddress?: string;
 }
 
-// Campos que se devuelven en los listados: NO incluye fileData (los bytes del archivo)
-// para no cargar PDFs enteros al listar.
 const METADATA_SELECT = {
   id: true,
   documentIdOnChain: true,
@@ -46,9 +44,7 @@ const METADATA_SELECT = {
 export class DocumentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Agrega el nombre y apellido (off-chain) del paciente y del emisor a partir
-  // de su UserProfile. Las direcciones quedan on-chain; el nombre se muestra
-  // junto a la dirección sin exponerlo en la blockchain.
+
   private async enrichWithNames<T extends { patientAddress: string; emitterAddress: string }>(
     doc: T,
   ) {
@@ -63,14 +59,11 @@ export class DocumentsService {
       patientLastName: patient?.lastName ?? null,
       emitterName: emitter?.name ?? null,
       emitterLastName: emitter?.lastName ?? null,
-      // Rol del emisor (0=paciente, 1=médico, 2=lab, 3=institución) para mostrar
-      // "verificado por médico/laboratorio" según corresponda.
       emitterRole: emitter?.role ?? null,
     };
   }
 
-  // Adjunta a cada documento la lista de diagnósticos (uno por médico),
-  // con el nombre off-chain del médico que lo escribió.
+
   private async attachDiagnoses<T extends { documentIdOnChain: number }>(docs: T[]) {
     const ids = docs.map((d) => d.documentIdOnChain);
     if (ids.length === 0) return docs.map((d) => ({ ...d, diagnoses: [] as any[] }));
@@ -145,7 +138,6 @@ export class DocumentsService {
     return withDiagnoses;
   }
 
-  // Devuelve el archivo (bytes + nombre + tipo) para descargarlo.
   async getFile(documentIdOnChain: number) {
     const doc = await this.prisma.documentMetadata.findUnique({
       where: { documentIdOnChain },
