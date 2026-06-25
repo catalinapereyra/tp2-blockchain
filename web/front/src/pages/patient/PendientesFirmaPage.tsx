@@ -159,5 +159,5 @@ const s: Record<string, React.CSSProperties> = {
   notes: { fontSize: 14, color: landing.textBody, lineHeight: 1.5, margin: 0, background: "rgba(8,31,73,0.04)", borderRadius: 12, padding: "9px 13px" },
   actions: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 4, flexWrap: "wrap" as const },
   viewBtn: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, fontWeight: 700, textDecoration: "none" },
-  registerBtn: { color: "#fff", border: "none", padding: "11px 20px", borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: fontFamily.sans },
+  registerBtn: { color: landing.onBrand, border: "none", padding: "11px 20px", borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: fontFamily.sans },
 };

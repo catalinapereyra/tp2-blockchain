@@ -2,8 +2,6 @@ import React from "react";
 import { Icon, type IconName } from "../landing/Icon";
 import { landing, fontFamily, type SectionAccent } from "../../styles";
 
-// Estilos base del lenguaje landing (fondo radial, tarjeta blanca, sombras suaves,
-// título navy). El color de acento lo aporta cada sección vía la prop `accent`.
 export const lu: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "calc(100vh - 56px)",
@@ -33,7 +31,7 @@ export const iconBox = (accent: SectionAccent): React.CSSProperties => ({
 
 export const accentPill = (accent: SectionAccent): React.CSSProperties => ({
   marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, flexShrink: 0,
-  color: "#fff", fontWeight: 700, fontSize: 14, padding: "11px 20px", borderRadius: 999,
+  color: landing.onBrand, fontWeight: 700, fontSize: 14, padding: "11px 20px", borderRadius: 999,
   background: accent.main, border: "none", cursor: "pointer", fontFamily: fontFamily.sans,
 });
 

@@ -609,7 +609,7 @@ const s: Record<string, React.CSSProperties> = {
   label: { fontSize: 13, fontWeight: 600, color: landing.textBody },
   req: { color: palette.red600 },
   grantActions: { display: "flex", gap: 8 },
-  confirmBtn: { background: accent.main, color: "#fff", border: "none", padding: "11px 20px", borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT },
+  confirmBtn: { background: accent.main, color: landing.onBrand, border: "none", padding: "11px 20px", borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT },
   cancelBtn: { background: "none", color: landing.textBody, border: "1.5px solid rgba(8,31,73,0.12)", padding: "11px 18px", borderRadius: 999, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: FONT },
   grantNote: { fontSize: 11, color: landing.textFaint, margin: 0 },
   errorMsg: { fontSize: 12, color: palette.red600, margin: 0 },

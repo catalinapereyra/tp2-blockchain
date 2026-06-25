@@ -123,17 +123,22 @@ export const roleAccent = {
   admin: colors.primary,
 } as const;
 
-// Lenguaje visual del landing/home, reutilizado en el área logueada del paciente.
-// Mismo estilo (fondo radial, tarjetas blancas, sombras suaves, títulos navy),
-// pero el color de acento lo decide cada sección (ver `sectionAccent`).
+
 export const landing = {
   navy: palette.navy,
   textBody: palette.navySoft,
   textFaint: palette.navyFaint,
+  onBrand: palette.white,        // texto sobre acentos/gradiente
   cardBg: "rgba(255,255,255,0.92)",
   cardBorder: "1px solid rgba(8,31,73,0.08)",
   hairline: "rgba(8,31,73,0.06)",
   softShadow: "0 18px 50px rgba(8,31,73,0.08)",
+  // Superficies y bordes tintados en navy (el lenguaje del área logueada)
+  tint: "rgba(8,31,73,0.04)",
+  tintSoft: "rgba(8,31,73,0.02)",
+  trackBg: "rgba(8,31,73,0.05)",
+  inputBorder: "1px solid rgba(8,31,73,0.12)",
+  dashedBorder: "1.5px dashed rgba(8,31,73,0.16)",
   pageBg:
     "radial-gradient(circle at 78% 8%, rgba(80,194,255,0.16), transparent 26%), radial-gradient(circle at 95% 4%, rgba(109,99,255,0.14), transparent 30%), #fff",
 } as const;
@@ -172,6 +177,7 @@ export function categoryAccentOf(value: string): SectionAccent {
 export const gradients = {
   app: "linear-gradient(135deg, #eef2ff 0%, #f8faff 40%, #f0fdf8 100%)",
   brand: "linear-gradient(100deg, #02c6bd 0%, #05aeea 48%, #7852ff 100%)",
+  brandSoft: "linear-gradient(135deg, rgba(3,190,195,0.18), rgba(120,82,255,0.16))",
   labButton: "linear-gradient(135deg, #10b981, #059669)",
   labCard: "linear-gradient(135deg, #ecfdf5, #f8fafc)",
 } as const;

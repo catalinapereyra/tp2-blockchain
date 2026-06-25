@@ -5,7 +5,8 @@ import { LaboratoryStats } from "../components/laboratory/LaboratoryStats";
 import { RecentActivity } from "../components/laboratory/RecentActivity";
 import { StudyUploadForm } from "../components/laboratory/StudyUploadForm";
 import { QuickActions } from "../components/laboratory/QuickActions";
-import { palette, fontFamily, gradients } from "../styles";
+import { Icon } from "../components/landing/Icon";
+import { landing, colors, gradients, fontFamily, fontSize, fontWeight, radius } from "../styles";
 
 export default function LaboratoryDashboard() {
   const { address, name, roleLabel } = useWallet();
@@ -42,11 +43,10 @@ export default function LaboratoryDashboard() {
 
         <div style={s.header}>
           <div style={s.avatarWrap}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={palette.emerald500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0a5 5 0 0 0 10 0M9 14H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-4"/>
-            </svg>
+            <span style={s.avatarInner}><Icon name="lab" size={24} /></span>
           </div>
           <div>
+            <p style={s.eyebrow}>Tu espacio en MediChain</p>
             <div style={s.greetingRow}>
               <h1 style={s.greeting}>Hola, {name || "👋"}</h1>
               <span style={s.roleTag}>{roleTag}</span>
@@ -74,32 +74,38 @@ export default function LaboratoryDashboard() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "calc(100vh - 56px)",
-    background: gradients.app,
+    background: landing.pageBg,
     fontFamily: fontFamily.sans,
-    padding: "40px 20px 60px",
+    padding: "44px 40px 60px",
   },
-  container: { width: "100%", maxWidth: 1040, margin: "0 auto" },
+  container: { width: "100%", maxWidth: 1320, margin: "0 auto" },
   header: {
     display: "flex",
     alignItems: "center",
-    gap: 14,
+    gap: 16,
     marginBottom: 32,
   },
   avatarWrap: {
-    width: 52, height: 52, borderRadius: 16,
-    background: palette.white, border: `1px solid ${palette.slate100}`,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+    width: 60, height: 60, borderRadius: 18,
+    background: landing.cardBg, border: landing.cardBorder,
+    boxShadow: "0 14px 36px rgba(8,31,73,0.10)",
     display: "flex", alignItems: "center", justifyContent: "center",
     flexShrink: 0,
   },
-  greetingRow: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const },
-  greeting: { fontSize: 22, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.5px" },
-  roleTag: { fontSize: 11, fontWeight: 700, color: palette.emerald600, background: palette.emerald50, padding: "3px 10px", borderRadius: 20 },
-  addr: { fontFamily: fontFamily.mono, fontSize: 12, color: palette.slate400, margin: "3px 0 0" },
+  avatarInner: {
+    width: 44, height: 44, borderRadius: 13,
+    background: "linear-gradient(135deg, rgba(3,190,195,0.18), rgba(120,82,255,0.16))",
+    color: colors.lab, display: "flex", alignItems: "center", justifyContent: "center",
+  },
+  eyebrow: { color: colors.lab, fontWeight: fontWeight.bold, fontSize: fontSize.sm, letterSpacing: "0.05em", textTransform: "uppercase" as const, margin: 0 },
+  greetingRow: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const, margin: "5px 0 0" },
+  greeting: { fontSize: 28, fontWeight: fontWeight.bold, color: landing.navy, margin: 0, letterSpacing: "-0.03em" },
+  roleTag: { fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: landing.onBrand, background: gradients.brand, padding: "4px 12px", borderRadius: radius.full },
+  addr: { fontFamily: fontFamily.mono, fontSize: fontSize.sm, color: landing.textBody, margin: "5px 0 0" },
   layout: {
     display: "grid",
-    gap: 20,
-    gridTemplateColumns: "minmax(0, 1fr) 340px",
+    gap: 24,
+    gridTemplateColumns: "minmax(0, 1fr) 360px",
     alignItems: "start",
   },
   left: { display: "grid", gap: 20, minWidth: 0 },

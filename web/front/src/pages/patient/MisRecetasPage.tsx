@@ -154,11 +154,11 @@ export default function MisRecetasPage() {
       <div style={s.tabs}>
         <button style={{ ...s.tab, ...(tab === "curso" ? s.tabActive : {}) }} onClick={() => setTab("curso")}>
           En curso
-          <span style={{ ...s.tabBadge, ...(tab === "curso" ? { background: accent.main, color: "#fff" } : {}) }}>{solicitudes.length}</span>
+          <span style={{ ...s.tabBadge, ...(tab === "curso" ? { background: accent.main, color: landing.onBrand } : {}) }}>{solicitudes.length}</span>
         </button>
         <button style={{ ...s.tab, ...(tab === "emitidas" ? s.tabActive : {}) }} onClick={() => setTab("emitidas")}>
           Emitidas
-          <span style={{ ...s.tabBadge, ...(tab === "emitidas" ? { background: accent.main, color: "#fff" } : {}) }}>{emitidas.length}</span>
+          <span style={{ ...s.tabBadge, ...(tab === "emitidas" ? { background: accent.main, color: landing.onBrand } : {}) }}>{emitidas.length}</span>
         </button>
       </div>
 
@@ -184,7 +184,7 @@ export default function MisRecetasPage() {
               {STATUS_FILTERS.map((f) => (
                 <button
                   key={String(f.value)}
-                  style={{ ...s.chip, ...(statusFilter === f.value ? { background: accent.main, borderColor: accent.main, color: "#fff" } : {}) }}
+                  style={{ ...s.chip, ...(statusFilter === f.value ? { background: accent.main, borderColor: accent.main, color: landing.onBrand } : {}) }}
                   onClick={() => setStatusFilter(f.value)}
                 >
                   {f.label}
@@ -296,7 +296,7 @@ const s: Record<string, React.CSSProperties> = {
   cardTitle: { fontSize: 15, fontWeight: 700, color: landing.navy },
   cardDesc: { fontSize: 14, color: landing.navy, fontStyle: "italic" },
   cardMeta: { fontSize: 13, color: landing.textFaint },
-  viewBtn: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, color: "#fff", fontWeight: 700, flexShrink: 0, border: "none", cursor: "pointer", fontFamily: fontFamily.sans, padding: "8px 16px", borderRadius: 999 },
+  viewBtn: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, color: landing.onBrand, fontWeight: 700, flexShrink: 0, border: "none", cursor: "pointer", fontFamily: fontFamily.sans, padding: "8px 16px", borderRadius: 999 },
   reqActions: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 },
   statusPill: { fontSize: 11, fontWeight: 700, padding: "4px 11px", borderRadius: 999, flexShrink: 0 },
   cancelBtn: { background: "none", color: colors.error.fg, border: `1.5px solid ${palette.red200}`, padding: "6px 13px", borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: fontFamily.sans },

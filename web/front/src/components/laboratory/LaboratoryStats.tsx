@@ -1,4 +1,4 @@
-import { palette } from "../../styles";
+import { landing, colors, fontSize, fontWeight, radius } from "../../styles";
 type LaboratoryStatsProps = {
   totalStudies: number;
   loading?: boolean;
@@ -18,13 +18,14 @@ const styles: Record<string, React.CSSProperties> = {
     display: "inline-flex",
     alignItems: "center",
     gap: 6,
-    background: palette.emerald50,
-    border: `1px solid ${palette.emerald200}`,
-    borderRadius: 20,
-    padding: "6px 14px",
+    background: landing.cardBg,
+    border: landing.cardBorder,
+    boxShadow: landing.softShadow,
+    borderRadius: radius.full,
+    padding: "8px 16px",
     marginLeft: "auto",
     flexShrink: 0,
   },
-  value: { fontSize: 16, fontWeight: 700, color: palette.emerald500 },
-  label: { fontSize: 12, fontWeight: 500, color: palette.slate500 },
+  value: { fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.lab },
+  label: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: landing.textBody },
 };

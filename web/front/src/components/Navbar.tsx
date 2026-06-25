@@ -1,6 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../context/WalletContext";
 import { palette, fontFamily } from "../styles";
+import BrandLogo from "./BrandLogo";
+
+const HOME_BY_LABEL: Record<string, string> = {
+  Paciente: "/patient",
+  Médico: "/doctor",
+  Laboratorio: "/lab",
+  Institución: "/lab",
+  Admin: "/admin",
+};
 
 const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
   Paciente:     { bg: palette.indigoSoft, color: palette.indigo500 },
@@ -18,14 +27,13 @@ export default function Navbar() {
 
   return (
     <nav style={s.nav}>
-      <div style={s.logo}>
-        <div style={s.logoIcon}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-          </svg>
-        </div>
-        <span style={s.logoText}>MediChain</span>
-      </div>
+      <button
+        style={s.logo}
+        onClick={() => navigate(isAdmin ? "/admin" : HOME_BY_LABEL[label] ?? "/")}
+        aria-label="MediChain, inicio"
+      >
+        <BrandLogo markHeight={26} fontSize={16} />
+      </button>
 
       {address && (
         <div style={s.right}>
@@ -74,22 +82,10 @@ const s: Record<string, React.CSSProperties> = {
   logo: {
     display: "flex",
     alignItems: "center",
-    gap: 8,
-  },
-  logoIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    background: palette.indigoSoft,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoText: {
-    fontSize: 15,
-    fontWeight: 700,
-    color: palette.slate900,
-    letterSpacing: "-0.4px",
+    background: "none",
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
   },
   right: {
     display: "flex",

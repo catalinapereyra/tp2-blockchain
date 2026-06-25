@@ -9,7 +9,9 @@ import Select from "../common/Select";
 import Spinner from "../common/Spinner";
 import { useToast } from "../common/Toast";
 import { STUDY_CATEGORIES } from "../../lib/categories";
-import { palette, gradients } from "../../styles";
+import { landing, colors, palette, gradients, fontFamily, fontSize, fontWeight, radius } from "../../styles";
+
+const LAB = colors.lab;
 
 type StudyUploadFormProps = {
   onStudyCreated?: () => void;
@@ -232,7 +234,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
               }}
               placeholder="Seleccioná un paciente…"
               emptyText="No hay pacientes registrados todavía."
-              accent={palette.emerald500}
+              accent={LAB}
             />
             <small style={styles.small}>
               El nombre se guarda off-chain; on-chain solo viaja la address.
@@ -247,7 +249,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
               value={documentType}
               onChange={setDocumentType}
               placeholder="Seleccioná una categoría…"
-              accent={palette.emerald500}
+              accent={LAB}
             />
             <small style={styles.small}>Categoría general visible para todos</small>
           </label>
@@ -299,7 +301,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
           {studyFile ? (
             <div style={styles.file}>
               <div style={styles.fileIcon}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={palette.emerald500} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={LAB} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
                 </svg>
               </div>
@@ -321,7 +323,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
           ) : (
             <div style={styles.emptyFile}>
               <div style={styles.fileIcon}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={palette.slate400} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={landing.textFaint} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
                 </svg>
               </div>
@@ -360,7 +362,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
         </div>
         {message ? (
           <div style={{ ...styles.message, display: "flex", alignItems: "center", gap: 8 }}>
-            {isSubmitting && <Spinner size={15} color={palette.emerald500} />}
+            {isSubmitting && <Spinner size={15} color={LAB} />}
             {message}
           </div>
         ) : null}
@@ -372,7 +374,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
 
 const styles: Record<string, React.CSSProperties> = {
   body: { padding: "20px 22px 24px" },
-  help: { color: palette.slate400, fontSize: 12, lineHeight: 1.6, marginBottom: 22, marginTop: 0 },
+  help: { color: landing.textBody, fontSize: fontSize.sm, lineHeight: 1.6, marginBottom: 22, marginTop: 0 },
   twoColumns: {
     display: "grid",
     gap: 24,
@@ -380,39 +382,29 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 16,
   },
   field: { display: "flex", flexDirection: "column" as const, gap: 6, minWidth: 0 },
-  label: { color: palette.labInk, fontSize: 12, fontWeight: 600 },
-  tag: { fontStyle: "normal", fontSize: 10, fontWeight: 500, color: palette.slate400, marginLeft: 4 },
+  label: { color: landing.navy, fontSize: fontSize.sm, fontWeight: fontWeight.semibold },
+  tag: { fontStyle: "normal", fontSize: 10, fontWeight: fontWeight.medium, color: landing.textFaint, marginLeft: 4 },
   input: {
-    border: `1px solid ${palette.slate200}`,
-    borderRadius: 10,
-    color: palette.slate900,
-    fontSize: 13,
-    fontWeight: 500,
+    border: "1px solid rgba(8,31,73,0.12)",
+    borderRadius: radius.md,
+    color: landing.navy,
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.medium,
     height: 40,
     padding: "0 12px",
     width: "100%",
     outline: "none",
     boxSizing: "border-box" as const,
+    fontFamily: fontFamily.sans,
   },
-  inputWithButton: { display: "grid", gridTemplateColumns: "minmax(0, 1fr) 90px", minWidth: 0 },
-  verify: {
-    background: palette.emerald50,
-    border: `1px solid ${palette.emerald200}`,
-    borderLeft: "none",
-    borderRadius: "0 10px 10px 0",
-    color: palette.emerald500,
-    cursor: "pointer",
-    fontSize: 12,
-    fontWeight: 600,
-  },
-  small: { color: palette.slate400, fontSize: 11 },
-  okText: { color: palette.emerald500, fontSize: 11, fontWeight: 600 },
-  warnText: { color: palette.orange500, fontSize: 11, fontWeight: 600 },
+  small: { color: landing.textFaint, fontSize: fontSize.xs },
+  okText: { color: colors.lab, fontSize: fontSize.xs, fontWeight: fontWeight.semibold },
+  warnText: { color: colors.warning.fg, fontSize: fontSize.xs, fontWeight: fontWeight.semibold },
   dropzone: {
     alignItems: "center",
-    background: palette.slate50,
-    border: `1.5px dashed ${palette.slate200}`,
-    borderRadius: 12,
+    background: "rgba(8,31,73,0.02)",
+    border: "1.5px dashed rgba(8,31,73,0.16)",
+    borderRadius: radius.lg,
     display: "grid",
     gap: 16,
     gridTemplateColumns: "minmax(0, 1fr) 160px",
@@ -435,63 +427,65 @@ const styles: Record<string, React.CSSProperties> = {
     minWidth: 0,
   },
   fileIcon: {
-    width: 32, height: 32, borderRadius: 8,
-    background: palette.emerald50,
+    width: 32, height: 32, borderRadius: radius.sm,
+    background: colors.labSoft,
     display: "flex", alignItems: "center", justifyContent: "center",
     flexShrink: 0,
   },
   fileInfo: { display: "flex", flexDirection: "column" as const, gap: 2, minWidth: 0 },
-  fileName: { fontSize: 12, fontWeight: 600, color: palette.slate900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  fileSize: { fontSize: 11, color: palette.slate400 },
-  emptyFileTitle: { display: "block", fontSize: 12, fontWeight: 600, color: palette.slate500 },
-  emptyFileSub: { display: "block", fontSize: 11, color: palette.slate400, marginTop: 2 },
-  remove: { background: "transparent", border: "none", color: palette.red500, cursor: "pointer", fontSize: 16, padding: 0 },
+  fileName: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: landing.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  fileSize: { fontSize: fontSize.xs, color: landing.textFaint },
+  emptyFileTitle: { display: "block", fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: landing.textBody },
+  emptyFileSub: { display: "block", fontSize: fontSize.xs, color: landing.textFaint, marginTop: 2 },
+  remove: { background: "transparent", border: "none", color: colors.error.fg, cursor: "pointer", fontSize: fontSize.lg, padding: 0 },
   selectFile: {
     background: palette.white,
-    border: `1.5px solid ${palette.slate200}`,
-    borderRadius: 10,
-    color: palette.emerald500,
+    border: "1.5px solid rgba(8,31,73,0.12)",
+    borderRadius: radius.md,
+    color: colors.lab,
     cursor: "pointer",
-    fontSize: 12,
-    fontWeight: 600,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
     padding: "10px 12px",
     display: "flex",
     flexDirection: "column" as const,
     alignItems: "center",
     gap: 4,
+    fontFamily: fontFamily.sans,
     transition: "border-color 0.15s",
   },
-  selectFileSub: { fontSize: 10, color: palette.slate400, fontWeight: 400 },
+  selectFileSub: { fontSize: 10, color: landing.textFaint, fontWeight: fontWeight.regular },
   footer: { alignItems: "center", display: "grid", gap: 16, gridTemplateColumns: "minmax(0, 1fr) 160px" },
-  confirm: { alignItems: "flex-start", color: palette.slate500, display: "flex", fontSize: 12, gap: 8, lineHeight: 1.5, cursor: "pointer" },
+  confirm: { alignItems: "flex-start", color: landing.textBody, display: "flex", fontSize: fontSize.sm, gap: 8, lineHeight: 1.5, cursor: "pointer" },
   submit: {
     background: gradients.labButton,
     border: "none",
-    borderRadius: 10,
+    borderRadius: radius.full,
     color: palette.white,
     cursor: "pointer",
-    fontSize: 13,
-    fontWeight: 600,
-    height: 40,
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.bold,
+    height: 42,
+    fontFamily: fontFamily.sans,
     transition: "opacity 0.15s",
   },
   message: {
-    background: palette.emerald50,
-    border: `1px solid ${palette.emerald200}`,
-    borderRadius: 10,
-    color: palette.green700,
-    fontSize: 12,
-    fontWeight: 600,
+    background: colors.success.bg,
+    border: `1px solid ${colors.success.border}`,
+    borderRadius: radius.md,
+    color: colors.success.fg,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
     marginTop: 14,
     padding: "10px 14px",
   },
   error: {
-    background: palette.red50,
-    border: `1px solid ${palette.red200}`,
-    borderRadius: 10,
-    color: palette.red600,
-    fontSize: 12,
-    fontWeight: 600,
+    background: colors.error.bg,
+    border: `1px solid ${colors.error.border}`,
+    borderRadius: radius.md,
+    color: colors.error.fg,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
     marginTop: 14,
     padding: "10px 14px",
   },

@@ -1,112 +1,91 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
-import { palette, fontFamily, gradients } from "../../styles";
+import { Icon, type IconName } from "../../components/landing/Icon";
+import { landing, sectionAccent, gradients, fontFamily, fontSize, fontWeight, radius, type SectionAccent } from "../../styles";
+
+const ACTIONS: { path: string; icon: IconName; title: string; desc: string; badge: string | null; accent: SectionAccent }[] = [
+  {
+    path: "/doctor/recetas",
+    icon: "clipboard",
+    title: "Solicitudes de recetas",
+    desc: "Revisá y respondé las solicitudes de tus pacientes.",
+    badge: null,
+    accent: sectionAccent.recetas,
+  },
+  {
+    path: "/doctor/pacientes",
+    icon: "user",
+    title: "Mis pacientes",
+    desc: "Mirá los estudios compartidos y dejá diagnósticos.",
+    badge: null,
+    accent: sectionAccent.estudios,
+  },
+  {
+    path: "/doctor/firmar",
+    icon: "shield",
+    title: "Firmar estudio",
+    desc: "Firmás el estudio sin pagar gas; el paciente lo registra en su historial.",
+    badge: "Sin gas",
+    accent: sectionAccent.firmados,
+  },
+];
 
 export default function DoctorDashboard() {
   const { address, name } = useWallet();
   const navigate = useNavigate();
-  const info = { label: "Médico", color: palette.sky500 };
-
-  const ACTIONS = [
-    {
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.sky500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-          <rect x="9" y="3" width="6" height="4" rx="1"/>
-          <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
-        </svg>
-      ),
-      bg: palette.sky50,
-      border: palette.sky200,
-      title: "Solicitudes de recetas",
-      desc: "Revisá y respondé las solicitudes de tus pacientes.",
-      badge: "2 pendientes",
-      badgeColor: palette.sky500,
-      badgeBg: palette.sky100,
-      path: "/doctor/recetas",
-    },
-    {
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      ),
-      bg: palette.indigoSoft,
-      border: palette.indigo200,
-      title: "Mis pacientes",
-      desc: "Mirá los estudios compartidos y dejá diagnósticos.",
-      badge: "3 estudios sin diagnóstico",
-      badgeColor: palette.indigo500,
-      badgeBg: palette.violet100,
-      path: "/doctor/pacientes",
-    },
-    {
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.emerald500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/>
-        </svg>
-      ),
-      bg: palette.emerald50,
-      border: palette.emerald200,
-      title: "Firmar estudio",
-      desc: "Firmás el estudio sin pagar gas; el paciente lo registra en su historial.",
-      badge: "Sin gas",
-      badgeColor: palette.emerald600,
-      badgeBg: palette.mint50,
-      path: "/doctor/firmar",
-    },
-  ];
+  const [hover, setHover] = useState<string | null>(null);
 
   return (
     <div style={s.page}>
       <div style={s.container}>
-
-        {/* Header */}
         <div style={s.header}>
-          <div style={s.headerLeft}>
-            <div style={s.avatar}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={info.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-              </svg>
+          <div style={s.avatarWrap}>
+            <span style={s.avatarInner}><Icon name="doctor" size={24} /></span>
+          </div>
+          <div>
+            <p style={s.eyebrow}>Tu espacio en MediChain</p>
+            <div style={s.greetingRow}>
+              <h1 style={s.greeting}>Hola, {name || "👋"}</h1>
+              <span style={s.roleTag}>Médico</span>
             </div>
-            <div>
-              <div style={s.greetingRow}>
-                <h1 style={s.greeting}>Hola, {name || "👋"}</h1>
-                <span style={s.roleTag}>Médico</span>
-              </div>
-              <p style={s.addr}>{address?.slice(0, 10)}…{address?.slice(-6)}</p>
-            </div>
+            <p style={s.addr}>{address?.slice(0, 10)}…{address?.slice(-6)}</p>
           </div>
         </div>
 
-        {/* Action cards */}
         <div style={s.actions}>
-          {ACTIONS.map((a) => (
-            <div
-              key={a.path}
-              style={{ ...s.actionCard, background: a.bg, borderColor: a.border }}
-              onClick={() => navigate(a.path)}
-            >
-              <div style={s.actionTop}>
-                <div style={s.actionIcon}>{a.icon}</div>
-                <span style={{ ...s.actionBadge, background: a.badgeBg, color: a.badgeColor }}>
-                  {a.badge}
+          {ACTIONS.map((a) => {
+            const isHover = hover === a.path;
+            return (
+              <button
+                key={a.path}
+                style={{
+                  ...s.card,
+                  transform: isHover ? "translateY(-3px)" : "none",
+                  boxShadow: isHover ? "0 24px 56px rgba(8,31,73,0.13)" : landing.softShadow,
+                }}
+                onClick={() => navigate(a.path)}
+                onMouseEnter={() => setHover(a.path)}
+                onMouseLeave={() => setHover(null)}
+              >
+                <div style={s.cardTop}>
+                  <span style={{ ...s.cardIcon, background: a.accent.soft, color: a.accent.main }}>
+                    <Icon name={a.icon} size={26} />
+                  </span>
+                  {a.badge && (
+                    <span style={{ ...s.badge, background: a.accent.soft, color: a.accent.main }}>{a.badge}</span>
+                  )}
+                </div>
+                <h2 style={s.cardTitle}>{a.title}</h2>
+                <p style={s.cardDesc}>{a.desc}</p>
+                <span style={{ ...s.cardCta, background: a.accent.main }}>
+                  Ver todo
+                  <Icon name="arrow" size={15} />
                 </span>
-              </div>
-              <h2 style={s.actionTitle}>{a.title}</h2>
-              <p style={s.actionDesc}>{a.desc}</p>
-              <div style={s.actionArrow}>
-                Ver todo
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-              </div>
-            </div>
-          ))}
+              </button>
+            );
+          })}
         </div>
-
       </div>
     </div>
   );
@@ -115,53 +94,48 @@ export default function DoctorDashboard() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "calc(100vh - 56px)",
-    background: gradients.app,
+    background: landing.pageBg,
     fontFamily: fontFamily.sans,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "40px 20px",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    padding: "48px 24px",
   },
-  container: { width: "100%", maxWidth: 600 },
-  header: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    marginBottom: 36,
-  },
-  headerLeft: { display: "flex", alignItems: "center", gap: 14 },
-  avatar: {
-    width: 52, height: 52, borderRadius: 16,
-    background: palette.white, border: `1px solid ${palette.slate100}`,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+  container: { width: "100%", maxWidth: 640 },
+  header: { display: "flex", alignItems: "center", gap: 16, marginBottom: 32 },
+  avatarWrap: {
+    width: 60, height: 60, borderRadius: 18, flexShrink: 0,
+    background: landing.cardBg, border: landing.cardBorder,
+    boxShadow: "0 14px 36px rgba(8,31,73,0.10)",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
-  greetingRow: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const },
-  greeting: { fontSize: 22, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.5px" },
-  roleTag: { fontSize: 11, fontWeight: 700, color: palette.sky500, background: palette.sky50, padding: "3px 10px", borderRadius: 20 },
-  addr: { fontFamily: fontFamily.mono, fontSize: 12, color: palette.slate400, margin: "3px 0 0" },
+  avatarInner: {
+    width: 44, height: 44, borderRadius: 13,
+    background: "linear-gradient(135deg, rgba(3,190,195,0.18), rgba(120,82,255,0.16))",
+    color: sectionAccent.recetas.main,
+    display: "flex", alignItems: "center", justifyContent: "center",
+  },
+  eyebrow: { color: sectionAccent.recetas.main, fontWeight: fontWeight.bold, fontSize: fontSize.sm, letterSpacing: "0.05em", textTransform: "uppercase" as const, margin: 0 },
+  greetingRow: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const, margin: "5px 0 0" },
+  greeting: { fontSize: 28, fontWeight: fontWeight.bold, color: landing.navy, margin: 0, letterSpacing: "-0.03em" },
+  roleTag: { fontSize: fontSize.xs, fontWeight: fontWeight.bold, color: landing.onBrand, background: gradients.brand, padding: "4px 12px", borderRadius: radius.full },
+  addr: { fontFamily: fontFamily.mono, fontSize: fontSize.sm, color: landing.textBody, margin: "5px 0 0" },
   actions: { display: "flex", flexDirection: "column" as const, gap: 14 },
-  actionCard: {
-    border: "1.5px solid",
-    borderRadius: 18,
-    padding: "24px",
-    cursor: "pointer",
-    transition: "transform 0.15s, box-shadow 0.15s",
-    display: "flex", flexDirection: "column" as const, gap: 8,
+  card: {
+    background: landing.cardBg, border: landing.cardBorder,
+    borderRadius: radius["3xl"], padding: 24, textAlign: "left" as const,
+    cursor: "pointer", fontFamily: fontFamily.sans,
+    display: "flex", flexDirection: "column" as const, gap: 9,
+    transition: "transform 0.18s ease, box-shadow 0.18s ease",
   },
-  actionTop: { display: "flex", alignItems: "flex-start", justifyContent: "space-between" },
-  actionIcon: {
-    width: 48, height: 48, borderRadius: 14,
-    background: palette.white,
+  cardTop: { display: "flex", alignItems: "flex-start", justifyContent: "space-between" },
+  cardIcon: {
+    width: 52, height: 52, borderRadius: radius["2xl"],
     display: "flex", alignItems: "center", justifyContent: "center",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
   },
-  actionBadge: {
-    fontSize: 11, fontWeight: 700,
-    padding: "4px 10px", borderRadius: 20,
-  },
-  actionTitle: { fontSize: 17, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.3px" },
-  actionDesc: { fontSize: 13, color: palette.slate500, margin: 0, lineHeight: 1.5 },
-  actionArrow: {
-    display: "inline-flex", alignItems: "center", gap: 4,
-    fontSize: 13, fontWeight: 600, color: palette.slate400, marginTop: 4,
+  badge: { fontSize: fontSize.xs, fontWeight: fontWeight.bold, padding: "4px 11px", borderRadius: radius.full },
+  cardTitle: { fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: landing.navy, margin: "4px 0 0", letterSpacing: "-0.01em" },
+  cardDesc: { fontSize: fontSize.md, color: landing.textBody, margin: 0, lineHeight: 1.55 },
+  cardCta: {
+    display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8, alignSelf: "flex-start",
+    color: landing.onBrand, fontWeight: fontWeight.bold, fontSize: fontSize.md, padding: "9px 18px", borderRadius: radius.full,
   },
 };

@@ -139,7 +139,7 @@ const s: Record<string, React.CSSProperties> = {
   diagDoctor: { fontSize: 11, fontWeight: 700 },
   diagText: { fontSize: 12, color: landing.textBody, lineHeight: 1.4 },
   viewBtn: {
-    display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#fff", fontWeight: 700,
+    display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: landing.onBrand, fontWeight: 700,
     flexShrink: 0, border: "none", cursor: "pointer", fontFamily: fontFamily.sans,
     padding: "7px 14px", borderRadius: 999,
   },

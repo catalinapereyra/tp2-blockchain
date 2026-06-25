@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { type DocumentMetadata } from "../../lib/api";
 import { LaboratoryCard } from "./LaboratoryCard";
-import { palette, fontFamily } from "../../styles";
+import { landing, colors, categoryAccentOf, fontFamily, fontSize, fontWeight } from "../../styles";
 
 type RecentActivityProps = {
   documents: DocumentMetadata[];
@@ -45,7 +45,7 @@ export function RecentActivity({ documents, loading = false, error = null }: Rec
         ) : null}
         {visibleDocuments.map((document) => (
           <div key={document.id} style={styles.item}>
-            <div style={styles.dot} />
+            <div style={{ ...styles.dot, background: categoryAccentOf(document.documentType).main }} />
             <div style={styles.info}>
               <strong style={styles.itemTitle}>{document.title || document.documentType}</strong>
               <p style={styles.itemSub}>{shortAddress(document.patientAddress)}</p>
@@ -69,12 +69,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dot: {
     width: 8, height: 8, borderRadius: "50%",
-    background: palette.emerald500, flexShrink: 0,
+    flexShrink: 0,
   },
   info: { minWidth: 0 },
-  itemTitle: { display: "block", fontSize: 12, fontWeight: 600, color: palette.slate900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  itemSub: { fontSize: 11, color: palette.slate400, margin: "2px 0 0", fontFamily: fontFamily.mono },
-  time: { fontSize: 10, color: palette.slate400, whiteSpace: "nowrap" },
-  state: { color: palette.slate400, fontSize: 12, lineHeight: 1.5, margin: 0 },
-  errorText: { color: palette.red500, fontSize: 12, lineHeight: 1.5, margin: 0 },
+  itemTitle: { display: "block", fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: landing.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  itemSub: { fontSize: fontSize.xs, color: landing.textFaint, margin: "2px 0 0", fontFamily: fontFamily.mono },
+  time: { fontSize: 10, color: landing.textFaint, whiteSpace: "nowrap" },
+  state: { color: landing.textFaint, fontSize: fontSize.sm, lineHeight: 1.5, margin: 0 },
+  errorText: { color: colors.error.fg, fontSize: fontSize.sm, lineHeight: 1.5, margin: 0 },
 };

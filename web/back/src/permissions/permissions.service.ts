@@ -54,7 +54,7 @@ export class PermissionsService {
     return result;
   }
 
-  // Agrega un médico a "mis médicos" sin compartirle ningún documento.
+
   async addDoctor(patientAddress: string, doctorAddress: string) {
     return this.prisma.patientDoctor.upsert({
       where: {
@@ -101,7 +101,6 @@ export class PermissionsService {
     return result;
   }
 
-  // Documentos que un paciente específico compartió con un médico específico
   async getShared(patientAddress: string, doctorAddress: string) {
     const accesses = await this.prisma.documentAccess.findMany({
       where: {

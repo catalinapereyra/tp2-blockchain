@@ -81,7 +81,7 @@ export default function Home() {
           <div style={s.grid}>
             {ROLES.map((r) => (
               <button key={r.key} style={s.card} onClick={() => handleConnect(r.key)} disabled={loading}>
-                <span style={s.cardIcon}><Icon name={r.icon} size={28} /></span>
+                <span style={s.cardIcon}><Icon name={r.icon} size={32} /></span>
                 <h3 style={s.cardTitle}>{r.title}</h3>
                 <p style={s.cardDesc}>{r.desc}</p>
                 <span style={s.cardCta}>
@@ -118,24 +118,24 @@ const s: Record<string, React.CSSProperties> = {
   eyebrow: { color: TURQ, fontWeight: 700, fontSize: 14, letterSpacing: "0.04em", textTransform: "uppercase", margin: 0 },
   title: { color: NAVY, fontSize: 38, fontWeight: 700, margin: "10px 0 12px", letterSpacing: "-0.02em" },
   subtitle: { color: TEXT, fontSize: 16, maxWidth: 560, lineHeight: 1.6, margin: "0 0 40px" },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, width: "100%" },
+  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: 24, width: "100%" },
   card: {
     background: "rgba(255,255,255,0.92)", border: "1px solid rgba(8,31,73,0.08)",
-    borderRadius: 22, padding: "30px 26px", textAlign: "left",
-    display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10,
+    borderRadius: 26, padding: "40px 34px", textAlign: "left",
+    display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12,
     cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
     boxShadow: "0 18px 50px rgba(8,31,73,0.08)", transition: "transform 0.18s, box-shadow 0.18s",
   },
   cardIcon: {
-    width: 56, height: 56, borderRadius: 16,
+    width: 66, height: 66, borderRadius: 18,
     background: "linear-gradient(135deg, rgba(3,190,195,0.16), rgba(120,82,255,0.14))",
-    color: TURQ, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6,
+    color: TURQ, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8,
   },
-  cardTitle: { color: NAVY, fontSize: 18, fontWeight: 700, margin: 0 },
-  cardDesc: { color: TEXT, fontSize: 14, lineHeight: 1.6, margin: 0, flexGrow: 1 },
+  cardTitle: { color: NAVY, fontSize: 21, fontWeight: 700, margin: 0 },
+  cardDesc: { color: TEXT, fontSize: 15, lineHeight: 1.6, margin: 0, flexGrow: 1 },
   cardCta: {
-    display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8,
-    color: "#fff", fontWeight: 700, fontSize: 14, padding: "10px 20px", borderRadius: 999,
+    display: "inline-flex", alignItems: "center", gap: 6, marginTop: 12,
+    color: "#fff", fontWeight: 700, fontSize: 15, padding: "12px 24px", borderRadius: 999,
     background: GRADIENT,
   },
   adminCard: {

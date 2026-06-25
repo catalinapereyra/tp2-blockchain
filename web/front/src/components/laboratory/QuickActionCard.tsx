@@ -1,17 +1,20 @@
 import React from "react";
-import { palette, fontFamily, fontSize, fontWeight, radius } from "../../styles";
+import { landing, colors, fontFamily, fontSize, fontWeight, radius, type SectionAccent } from "../../styles";
 
 export interface QuickAction {
   icon: string;
   title: string;
   text: string;
+  accent?: SectionAccent;
   onClick?: () => void;
 }
 
-export default function QuickActionCard({ icon, title, text, onClick }: QuickAction) {
+const DEFAULT: SectionAccent = { main: colors.lab, soft: colors.labSoft };
+
+export default function QuickActionCard({ icon, title, text, accent = DEFAULT, onClick }: QuickAction) {
   return (
     <button style={s.action} onClick={onClick}>
-      <span style={s.icon}>{icon}</span>
+      <span style={{ ...s.icon, background: accent.soft, color: accent.main }}>{icon}</span>
       <span style={s.texts}>
         <strong style={s.title}>{title}</strong>
         <small style={s.text}>{text}</small>
@@ -23,31 +26,30 @@ export default function QuickActionCard({ icon, title, text, onClick }: QuickAct
 const s: Record<string, React.CSSProperties> = {
   action: {
     alignItems: "center",
-    background: palette.slate50,
-    border: `1.5px solid ${palette.slate100}`,
-    borderRadius: radius.lg,
-    color: palette.slate900,
+    background: "rgba(8,31,73,0.02)",
+    border: landing.cardBorder,
+    borderRadius: radius.xl,
+    color: landing.navy,
     cursor: "pointer",
     display: "flex",
     gap: 10,
     padding: "12px",
     textAlign: "left",
-    transition: "border-color 0.15s",
+    fontFamily: fontFamily.sans,
+    transition: "border-color 0.15s, background 0.15s",
   },
   icon: {
     alignItems: "center",
-    background: palette.emerald50,
     borderRadius: radius.md,
-    color: palette.emerald500,
     display: "flex",
-    fontSize: fontSize.md,
-    height: 34,
+    fontSize: fontSize.sm,
+    height: 36,
     justifyContent: "center",
-    width: 34,
+    width: 36,
     flexShrink: 0,
     fontWeight: fontWeight.bold,
   },
   texts: { display: "flex", flexDirection: "column" as const, gap: 2, minWidth: 0 },
-  title: { display: "block", fontSize: fontSize.xs, fontWeight: fontWeight.semibold, color: palette.slate900 },
-  text: { color: palette.slate400, display: "block", fontSize: 10, fontWeight: fontWeight.regular },
+  title: { display: "block", fontSize: fontSize.base, fontWeight: fontWeight.semibold, color: landing.navy },
+  text: { color: landing.textFaint, display: "block", fontSize: 11, fontWeight: fontWeight.regular },
 };
