@@ -185,6 +185,43 @@ npx hardhat verify --network sepolia <permissionManager> <docRegistry> <userRegi
 npx hardhat verify --network sepolia <prescriptionManager> <userRegistry> <docRegistry>
 ```
 
+## Despliegue en produccion (Railway + Vercel)
+
+La arquitectura de hosting es:
+
+- **Backend (NestJS) + PostgreSQL:** Railway. El backend corre como un servidor Node normal (sin límite de tamaño de request), por lo que la subida de archivos funciona sin cambios.
+- **Frontend (Vite):** Vercel.
+
+Los contratos ya están desplegados en Sepolia, así que esa capa no requiere acción.
+
+### 1. Backend y base de datos en Railway
+
+1. Crear un proyecto en Railway y agregar un servicio **PostgreSQL** (Railway expone su cadena de conexión como `DATABASE_URL`).
+2. Agregar un servicio desde el repositorio de GitHub y configurar como **Root Directory** la carpeta `web/back`. Railway detecta el `railway.json`, que define:
+   - Build: `npm run build`
+   - Start: `npx prisma migrate deploy && node dist/main` (aplica las migraciones y arranca la API)
+3. Configurar las variables de entorno del servicio:
+   - `DATABASE_URL` — referenciar la del servicio de PostgreSQL (Railway permite enlazarla con `${{Postgres.DATABASE_URL}}`).
+   - `JWT_SECRET` — un secreto fuerte para firmar los JWT.
+   - `FRONT_URL` — el dominio de producción de Vercel (se completa después del paso 2). Acepta varios separados por coma.
+   - `PORT` — Railway lo inyecta automáticamente; no hace falta setearlo.
+4. Una vez desplegado, Railway te da una URL pública (ej: `https://medichain-back.up.railway.app`). Esa es la base de la API.
+
+### 2. Frontend en Vercel
+
+1. Importar el repositorio en Vercel y configurar como **Root Directory** la carpeta `web/front`. Vercel detecta Vite y usa el `vercel.json` incluido (build `npm run build`, output `dist`, y un rewrite para que el ruteo de la SPA funcione al recargar).
+2. Configurar las variables de entorno del proyecto (mismas claves `VITE_*` que en local):
+   - `VITE_API_URL` — la URL pública del backend en Railway, **sin** `/api` al final (ej: `https://medichain-back.up.railway.app`).
+   - `VITE_CHAIN_ID`, `VITE_RPC_URL` y las cuatro direcciones de contratos (`VITE_USER_REGISTRY_ADDRESS`, `VITE_DOCUMENT_REGISTRY_ADDRESS`, `VITE_PERMISSION_MANAGER_ADDRESS`, `VITE_PRESCRIPTION_MANAGER_ADDRESS`), más `VITE_ADMIN_ADDRESS`.
+3. Deployar. Vercel te da un dominio (ej: `https://medichain.vercel.app`).
+
+### 3. Conectar las dos puntas
+
+1. Copiar el dominio de Vercel y setearlo como `FRONT_URL` en Railway (para que el CORS del backend lo acepte). Si querés permitir también las URLs de preview de Vercel, agregalas separadas por coma.
+2. Redeployar el backend para que tome el nuevo `FRONT_URL`.
+
+> Nota sobre `VITE_API_URL`: el frontend arma las rutas como `VITE_API_URL` + `/api/...`. Por eso la variable debe ser la raíz del backend, sin incluir `/api`.
+
 ## Modelo de roles y flujos principales
 
 **Roles:** Paciente, Médico, Laboratorio, Institución y Administrador (el owner de los contratos).
