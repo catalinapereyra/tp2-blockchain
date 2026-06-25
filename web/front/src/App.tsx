@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useWallet } from "./context/WalletContext";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
+import Landing from "./pages/Landing";
 import Register from "./pages/Register";
 import Pending from "./pages/Pending";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -20,21 +21,26 @@ import LaboratoryDashboard from "./pages/LaboratoryDashboard";
 function ProtectedRoute({ children, condition }: { children: React.ReactElement; condition: boolean }) {
   const { address, loading } = useWallet();
   if (loading) return <div style={{ textAlign: "center", padding: 60 }}>Cargando...</div>;
-  if (!address) return <Navigate to="/" />;
-  if (!condition) return <Navigate to="/" />;
+  if (!address) return <Navigate to="/home" />;
+  if (!condition) return <Navigate to="/home" />;
   return children;
 }
 
 export default function App() {
   const { address, isAdmin, isRegistered, isApproved, role } = useWallet();
   const location = useLocation();
-  const hideGlobalNavbar = location.pathname === "/lab" || location.pathname === "/laboratory";
+  const hideGlobalNavbar =
+    location.pathname === "/" ||
+    location.pathname === "/home" ||
+    location.pathname === "/lab" ||
+    location.pathname === "/laboratory";
 
   return (
     <>
       {address && !hideGlobalNavbar && <Navbar />}
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/register" element={
           <ProtectedRoute condition={!!address && !isRegistered}>
             <Register />
