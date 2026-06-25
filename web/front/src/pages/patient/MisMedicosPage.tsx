@@ -618,7 +618,7 @@ const s: Record<string, React.CSSProperties> = {
   doctorHeader: { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer", userSelect: "none" as const },
   doctorName: { fontSize: 14, fontWeight: 600, color: palette.slate900, margin: 0 },
   doctorAddrSmall: { fontFamily: fontFamily.mono, fontSize: 11, color: palette.slate400, margin: "2px 0 0" },
-  addDocBar: { padding: "10px 16px 0", display: "flex", gap: 8, flexWrap: "wrap" as const },
+  addDocBar: { padding: "14px 16px 6px", display: "flex", gap: 12, flexWrap: "wrap" as const },
   grantAllInlineBtn: {
     background: colors.labSoft, color: colors.lab, border: `1px solid ${palette.emerald200}`,
     padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
