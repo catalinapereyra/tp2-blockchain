@@ -4,6 +4,7 @@ import { useDocViewer } from "../common/DocViewer";
 
 export interface EstudioItem {
   id: number;
+  documentIdOnChain?: number;
   studyDate: string; // ISO string o cualquier fecha parseable
   title: string;
   labName?: string;
@@ -110,7 +111,7 @@ export default function EstudioGrupoCard({ studyType, category, estudios }: Prop
               {e.fileUrl && (
                 <button
                   style={s.viewBtn}
-                  onClick={() => viewer.open({ url: e.fileUrl!, fileName: e.fileName, title: e.title })}
+                  onClick={() => viewer.open({ url: e.fileUrl!, fileName: e.fileName, title: e.title, documentId: e.documentIdOnChain })}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   Ver

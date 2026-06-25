@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
 import { api, type DocumentMetadata, type PrescriptionMeta } from "../../lib/api";
 import { getPrescriptionManager } from "../../lib/contracts";
+import { getErrorMessage } from "../../lib/error";
 import { useDocViewer } from "../../components/common/DocViewer";
+import { useToast } from "../../components/common/Toast";
+import { useLoader } from "../../components/common/Loader";
+import { useConfirm } from "../../components/common/Confirm";
 import { palette, colors, fontFamily, fontSize, fontWeight, radius, shadow, gradients } from "../../styles";
 
 type Solicitud = { id: number; doctorName: string; description: string; status: number };
@@ -24,40 +28,72 @@ export default function MisRecetasPage() {
   const navigate = useNavigate();
   const { address } = useWallet();
   const viewer = useDocViewer();
+  const toast = useToast();
+  const loader = useLoader();
+  const confirm = useConfirm();
   const [emitidas, setEmitidas] = useState<DocumentMetadata[]>([]);
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState<number | null>(null);
 
-  useEffect(() => {
+  async function load() {
     if (!address) return;
-    (async () => {
-      try {
-        // Recetas emitidas = documentos de categoría "receta"
-        const docs = await api.getDocuments(address);
-        setEmitidas(docs.filter((d) => d.documentType === "receta"));
+    setLoading(true);
+    try {
+      // Recetas emitidas = documentos de categoría "receta"
+      const docs = await api.getDocuments(address);
+      setEmitidas(docs.filter((d) => d.documentType === "receta"));
 
-        // Solicitudes en curso (estado on-chain) + texto/nombre off-chain
-        const pm = await getPrescriptionManager();
-        const ids: bigint[] = await pm.getPatientPrescriptions(address);
-        const metas: PrescriptionMeta[] = await api.getPrescriptions({ patient: address });
-        const byId = new Map(metas.map((m) => [m.prescriptionIdOnChain, m]));
-        const reqs = await Promise.all(
-          ids.map(async (idBn) => {
-            const id = Number(idBn);
-            const p = await pm.getPrescription(idBn);
-            const meta = byId.get(id);
-            return { id, doctorName: meta?.doctorName || "Médico", description: meta?.description ?? p.prescriptionType, status: Number(p.status) };
-          }),
-        );
-        // mostramos solo las que NO están emitidas (esas aparecen arriba con su PDF)
-        setSolicitudes(reqs.filter((r) => r.status === 0 || r.status === 1 || r.status === 2).sort((a, b) => b.id - a.id));
-      } catch {
-        /* sin datos */
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [address]);
+      // Solicitudes en curso (estado on-chain) + texto/nombre off-chain
+      const pm = await getPrescriptionManager();
+      const ids: bigint[] = await pm.getPatientPrescriptions(address);
+      const metas: PrescriptionMeta[] = await api.getPrescriptions({ patient: address });
+      const byId = new Map(metas.map((m) => [m.prescriptionIdOnChain, m]));
+      const reqs = await Promise.all(
+        ids.map(async (idBn) => {
+          const id = Number(idBn);
+          const p = await pm.getPrescription(idBn);
+          const meta = byId.get(id);
+          return { id, doctorName: meta?.doctorName || "Médico", description: meta?.description ?? p.prescriptionType, status: Number(p.status) };
+        }),
+      );
+      // mostramos solo las que NO están emitidas (esas aparecen arriba con su PDF)
+      setSolicitudes(reqs.filter((r) => r.status === 0 || r.status === 1 || r.status === 2).sort((a, b) => b.id - a.id));
+    } catch {
+      /* sin datos */
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { if (address) load(); }, [address]);
+
+  // El paciente cancela su solicitud (mientras esté pendiente o aceptada)
+  async function handleCancel(id: number) {
+    const ok = await confirm({
+      title: "Cancelar solicitud",
+      message: "¿Querés cancelar esta solicitud de receta?",
+      confirmText: "Sí, cancelar",
+      cancelText: "No",
+      danger: true,
+    });
+    if (!ok) return;
+    setCancelling(id);
+    loader.show("Confirmá en MetaMask…");
+    try {
+      const pm = await getPrescriptionManager();
+      const tx = await pm.cancelPrescription(id);
+      loader.show("Procesando transacción…");
+      await tx.wait();
+      toast.show("Solicitud cancelada");
+      await load();
+    } catch (e) {
+      toast.show(getErrorMessage(e) || "No se pudo cancelar", "error");
+    } finally {
+      loader.hide();
+      setCancelling(null);
+    }
+  }
 
   return (
     <div style={s.page}>
@@ -94,7 +130,7 @@ export default function MisRecetasPage() {
               </div>
               <button
                 style={s.viewBtn}
-                onClick={() => viewer.open({ url: api.fileUrl(d.documentIdOnChain), fileName: d.fileName, title: d.title })}
+                onClick={() => viewer.open({ url: api.fileUrl(d.documentIdOnChain), fileName: d.fileName, title: d.title, documentId: d.documentIdOnChain })}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 Ver receta
@@ -116,7 +152,14 @@ export default function MisRecetasPage() {
                       <span style={s.cardDesc}>"{r.description}"</span>
                       <span style={s.cardMeta}>Dr. {r.doctorName}</span>
                     </div>
-                    <span style={{ ...s.statusPill, background: sc.bg, color: sc.color }}>{sc.label}</span>
+                    <div style={s.reqActions}>
+                      <span style={{ ...s.statusPill, background: sc.bg, color: sc.color }}>{sc.label}</span>
+                      {(r.status === 0 || r.status === 1) && (
+                        <button style={{ ...s.cancelBtn, opacity: cancelling === r.id ? 0.5 : 1 }} disabled={cancelling === r.id} onClick={() => handleCancel(r.id)}>
+                          {cancelling === r.id ? "…" : "Cancelar"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -145,6 +188,8 @@ const s: Record<string, React.CSSProperties> = {
   cardDesc: { fontSize: fontSize.base, color: colors.text, fontStyle: "italic" },
   cardMeta: { fontSize: fontSize.sm, color: colors.textFaint },
   viewBtn: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: fontSize.base, color: colors.primary, fontWeight: fontWeight.semibold, flexShrink: 0, background: "none", border: "none", cursor: "pointer", fontFamily: fontFamily.sans, padding: 0 },
+  reqActions: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 },
   statusPill: { fontSize: fontSize.xs, fontWeight: fontWeight.bold, padding: "3px 10px", borderRadius: radius.full, flexShrink: 0 },
+  cancelBtn: { background: "none", color: colors.error.fg, border: `1.5px solid ${palette.red200}`, padding: "5px 12px", borderRadius: radius.sm, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, cursor: "pointer", fontFamily: fontFamily.sans },
   emptyText: { fontSize: fontSize.base, color: colors.textFaint, margin: "0 0 16px" },
 };

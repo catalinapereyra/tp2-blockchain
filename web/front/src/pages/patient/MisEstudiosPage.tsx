@@ -54,6 +54,7 @@ function groupDocuments(docs: DocRecord[], myAddress: string): Grupo[] {
             : "lab",
       fileUrl: api.fileUrl(doc.documentIdOnChain),
       fileName: doc.fileName,
+      documentIdOnChain: doc.documentIdOnChain,
       diagnoses: doc.diagnoses ?? [],
     });
   }
