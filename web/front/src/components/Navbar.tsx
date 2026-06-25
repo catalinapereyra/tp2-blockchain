@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useWallet } from "../context/WalletContext";
 import { palette, fontFamily } from "../styles";
 
@@ -10,7 +11,8 @@ const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
 };
 
 export default function Navbar() {
-  const { address, roleLabel, isAdmin, logout } = useWallet();
+  const navigate = useNavigate();
+  const { address, roleLabel, isAdmin, isRegistered, logout } = useWallet();
   const label = isAdmin ? "Admin" : (roleLabel || "Sin rol");
   const chip = ROLE_COLORS[label] ?? { bg: palette.slate100, color: palette.slate500 };
 
@@ -33,6 +35,12 @@ export default function Navbar() {
           <span style={s.addr}>
             {address.slice(0, 6)}…{address.slice(-4)}
           </span>
+          {!isAdmin && isRegistered && (
+            <button style={s.btn} onClick={() => navigate("/perfil")} title="Mi perfil">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Perfil
+            </button>
+          )}
           <div style={s.divider} />
           <button style={s.btn} onClick={logout}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

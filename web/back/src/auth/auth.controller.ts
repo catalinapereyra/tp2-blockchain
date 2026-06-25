@@ -33,7 +33,7 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   updateProfile(
     @WalletAddress() wallet: string,
-    @Body() body: { name?: string; lastName?: string; email?: string; role?: number },
+    @Body() body: { name?: string; lastName?: string; email?: string; role?: number; specialty?: string },
   ) {
     return this.authService.updateProfile(wallet, body);
   }

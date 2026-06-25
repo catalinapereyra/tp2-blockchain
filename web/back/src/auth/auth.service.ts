@@ -81,7 +81,7 @@ export class AuthService {
    */
   async updateProfile(
     walletAddress: string,
-    data: { name?: string; lastName?: string; email?: string; role?: number },
+    data: { name?: string; lastName?: string; email?: string; role?: number; specialty?: string },
   ) {
     return this.prisma.userProfile.update({
       where: { walletAddress: walletAddress.toLowerCase() },
@@ -97,7 +97,7 @@ export class AuthService {
   async getPublicProfile(walletAddress: string) {
     return this.prisma.userProfile.findUnique({
       where: { walletAddress: walletAddress.toLowerCase() },
-      select: { walletAddress: true, name: true, lastName: true },
+      select: { walletAddress: true, name: true, lastName: true, specialty: true },
     });
   }
 
@@ -109,7 +109,7 @@ export class AuthService {
   async getUsersByRole(role: number) {
     return this.prisma.userProfile.findMany({
       where: { role, name: { not: "" } },
-      select: { walletAddress: true, name: true, lastName: true },
+      select: { walletAddress: true, name: true, lastName: true, specialty: true },
       orderBy: [{ name: "asc" }, { lastName: "asc" }],
     });
   }

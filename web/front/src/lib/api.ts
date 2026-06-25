@@ -38,6 +38,7 @@ export type AppUser = {
   walletAddress: string;
   name: string;
   lastName?: string | null;
+  specialty?: string | null;
 };
 
 // Documento firmado off-chain por un médico, pendiente de que el paciente lo registre
@@ -96,7 +97,7 @@ export const api = {
       body: JSON.stringify({ walletAddress: wallet, signature }),
     }),
   getMe: () => request("/api/auth/me"),
-  updateProfile: (data: { name?: string; lastName?: string; email?: string; role?: number }) =>
+  updateProfile: (data: { name?: string; lastName?: string; email?: string; role?: number; specialty?: string }) =>
     request("/api/auth/profile", { method: "PUT", body: JSON.stringify(data) }),
   // Lista usuarios por rol (0=paciente, 1=médico, 2=lab, 3=institución) con nombre + address
   getUsers: (role: number) =>

@@ -65,7 +65,9 @@ export default function MisMedicosPage() {
   const [grantingAllTo, setGrantingAllTo] = useState<string | null>(null);
 
   const [doctorNames, setDoctorNames] = useState<Map<string, string>>(new Map());
+  const [doctorSpecialties, setDoctorSpecialties] = useState<Map<string, string>>(new Map());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [removing, setRemoving] = useState<string | null>(null);
 
   function toggleExpanded(addr: string) {
     setExpanded((prev) => {
@@ -111,15 +113,18 @@ export default function MisMedicosPage() {
       setMyDocs(docs);
 
       const names = new Map<string, string>();
+      const specialties = new Map<string, string>();
       await Promise.all(
         perms.map(async (d: DoctorEntry) => {
           try {
             const p = await api.getProfileByWallet(d.doctorAddress);
             if (p?.name) names.set(d.doctorAddress, `${p.name} ${p.lastName ?? ""}`.trim());
+            if (p?.specialty) specialties.set(d.doctorAddress, p.specialty);
           } catch { /* sin perfil */ }
         }),
       );
       setDoctorNames(names);
+      setDoctorSpecialties(specialties);
     } catch (e: any) {
       setError(e.message || "Error cargando datos");
     } finally {
@@ -328,6 +333,30 @@ export default function MisMedicosPage() {
     }
   }
 
+  // Quita un médico de "mis médicos" (relación off-chain, sin gas).
+  // Solo aplica a médicos sin documentos compartidos.
+  async function handleRemoveDoctor(doctorAddress: string) {
+    if (!address) return;
+    const ok = await confirm({
+      title: "Quitar médico",
+      message: "¿Sacar a este médico de tu lista? Podés volver a agregarlo cuando quieras.",
+      confirmText: "Sí, quitar",
+      cancelText: "Cancelar",
+      danger: true,
+    });
+    if (!ok) return;
+    setRemoving(doctorAddress);
+    try {
+      await api.removeMyDoctor(address, doctorAddress);
+      toast.show("Médico quitado de tu lista");
+      await load();
+    } catch (e) {
+      toast.show(getErrorMessage(e) || "No se pudo quitar", "error");
+    } finally {
+      setRemoving(null);
+    }
+  }
+
   function unavailableIds(doctor: DoctorEntry) {
     return new Set(doctor.documents.map((d) => d.documentIdOnChain));
   }
@@ -435,6 +464,7 @@ export default function MisMedicosPage() {
           const isAddingHere = addingToDoctor === doctor.doctorAddress;
           const isOpen = expanded.has(doctor.doctorAddress);
           const name = doctorNames.get(doctor.doctorAddress);
+          const specialty = doctorSpecialties.get(doctor.doctorAddress);
 
           return (
             <div key={doctor.doctorAddress} style={s.doctorCard}>
@@ -444,6 +474,7 @@ export default function MisMedicosPage() {
                 </div>
                 <div style={{ minWidth: 0 }}>
                   {name && <p style={s.doctorName}>{name}</p>}
+                  {specialty && <p style={s.doctorSpecialty}>{specialty}</p>}
                   <p style={name ? s.doctorAddrSmall : s.doctorAddr}>{fmtAddr(doctor.doctorAddress)}</p>
                 </div>
                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
@@ -478,6 +509,15 @@ export default function MisMedicosPage() {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                   {grantingAllTo === doctor.doctorAddress ? "Otorgando…" : "Dar acceso a todos mis docs"}
                 </button>
+                {doctor.documents.length === 0 && (
+                  <button
+                    style={{ ...s.removeDocBtn, opacity: removing === doctor.doctorAddress ? 0.5 : 1 }}
+                    disabled={removing === doctor.doctorAddress}
+                    onClick={() => handleRemoveDoctor(doctor.doctorAddress)}
+                  >
+                    {removing === doctor.doctorAddress ? "Quitando…" : "Quitar de mis médicos"}
+                  </button>
+                )}
               </div>
 
               {/* Picker inline para agregar más docs */}
@@ -617,7 +657,13 @@ const s: Record<string, React.CSSProperties> = {
   doctorCard: { background: palette.white, border: `1px solid ${palette.slate100}`, borderRadius: 14, marginBottom: 12, overflow: "hidden" },
   doctorHeader: { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer", userSelect: "none" as const },
   doctorName: { fontSize: 14, fontWeight: 600, color: palette.slate900, margin: 0 },
+  doctorSpecialty: { fontSize: 12, fontWeight: 600, color: palette.sky500, margin: "1px 0 0" },
   doctorAddrSmall: { fontFamily: fontFamily.mono, fontSize: 11, color: palette.slate400, margin: "2px 0 0" },
+  removeDocBtn: {
+    background: palette.white, color: palette.slate500, border: `1.5px solid ${palette.slate200}`,
+    padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+    cursor: "pointer", fontFamily: fontFamily.sans, display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
+  },
   addDocBar: { padding: "14px 16px 6px", display: "flex", gap: 12, flexWrap: "wrap" as const },
   grantAllInlineBtn: {
     background: colors.labSoft, color: colors.lab, border: `1px solid ${palette.emerald200}`,

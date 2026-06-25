@@ -17,6 +17,7 @@ model UserProfile {
   // 0=PATIENT, 1=DOCTOR, 2=LABORATORY, 3=INSTITUTION). El rol "fuente de verdad"
   // sigue siendo on-chain; esto es solo para listar usuarios por rol con su nombre.
   role          Int?
+  specialty     String? // especialidad del médico (off-chain)
   nonce         String   @default(uuid())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

@@ -4,6 +4,8 @@ import { useWallet } from "../context/WalletContext";
 import { getUserRegistry } from "../lib/contracts";
 import { api } from "../lib/api";
 import { useLoader } from "../components/common/Loader";
+import Select from "../components/common/Select";
+import { SPECIALTY_OPTIONS } from "../lib/specialties";
 import { palette, fontFamily } from "../styles";
 
 type OptionKey = "patient" | "doctor" | "lab" | "institution";
@@ -34,6 +36,7 @@ export default function Register() {
   const [fromHome] = useState<boolean>(() => !!localStorage.getItem("intended_role"));
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [specialty, setSpecialty] = useState("");
 
   useEffect(() => {
     localStorage.removeItem("intended_role");
@@ -71,6 +74,7 @@ export default function Register() {
           name: name.trim(),
           lastName: isOrg ? undefined : lastName.trim(),
           role: roleNumber,
+          specialty: selected === "doctor" && specialty ? specialty : undefined,
         });
       } catch (profileErr) {
         console.error("No se pudo guardar el perfil off-chain", profileErr);
@@ -179,6 +183,19 @@ export default function Register() {
           )}
         </div>
 
+        {selected === "doctor" && (
+          <div style={styles.specialtyField}>
+            <label style={styles.nameLabel}>Especialidad</label>
+            <Select
+              options={SPECIALTY_OPTIONS}
+              value={specialty}
+              onChange={setSpecialty}
+              placeholder="Elegí tu especialidad…"
+              accent={palette.sky500}
+            />
+          </div>
+        )}
+
         {selected !== "patient" && (
           <div style={styles.approvalBanner}>
             <span style={styles.bannerIcon}>⏳</span>
@@ -251,6 +268,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   bannerIcon: { fontSize: 22, flexShrink: 0 },
   nameRow: { display: "flex", gap: 10, marginBottom: 16 },
+  specialtyField: { display: "flex", flexDirection: "column" as const, gap: 6, marginBottom: 16 },
   nameField: { display: "flex", flexDirection: "column" as const, gap: 6, flex: 1 },
   nameLabel: { fontSize: 13, fontWeight: 600, color: palette.slate600 },
   nameInput: {
