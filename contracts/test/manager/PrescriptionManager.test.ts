@@ -22,55 +22,22 @@ describe("PrescriptionManager", function () {
         const userRegistry: any = await UserRegistryFactory.deploy();
         await userRegistry.waitForDeployment();
 
-        const MedicalRegistryFactory = await ethers.getContractFactory("MedicalRegistry");
-        const medicalRegistry: any = await MedicalRegistryFactory.deploy();
-        await medicalRegistry.waitForDeployment();
-
         const DocRegistryFactory = await ethers.getContractFactory("MedicalDocumentRegistry");
         const docRegistry: any = await DocRegistryFactory.deploy(
-            await medicalRegistry.getAddress(),
             await userRegistry.getAddress()
         );
         await docRegistry.waitForDeployment();
 
         const PrescriptionManagerFactory = await ethers.getContractFactory("PrescriptionManager");
         const prescriptionManager: any = await PrescriptionManagerFactory.deploy(
-            await medicalRegistry.getAddress(),
             await userRegistry.getAddress(),
             await docRegistry.getAddress()
         );
         await prescriptionManager.waitForDeployment();
 
-        // Conectar contratos
-        await medicalRegistry.setAuthorizedCaller(await userRegistry.getAddress());
-        await userRegistry.setMedicalRegistry(await medicalRegistry.getAddress());
-
-        // PrescriptionManager necesita poder llamar registerDocument en docRegistry
-        // Para eso, el owner de docRegistry lo autoriza como caller
-        // En este diseño, docRegistry usa onlyOwner para registerDocument,
-        // por lo que habilitamos al PrescriptionManager como emisor verificado
-        // (el médico que emite desde PrescriptionManager ya está verificado en MedicalRegistry)
-        // No se necesita configuración extra: el médico es msg.sender en issuePrescription,
-        // pero registerDocument lo llama PrescriptionManager en nombre del médico.
-        // Solución: PrescriptionManager debe ser un caller autorizado de docRegistry.
-        // → Agregamos setAuthorizedCaller en MedicalDocumentRegistry también.
-        // PERO según la implementación actual, registerDocument verifica msg.sender en MedicalRegistry.
-        // msg.sender dentro de issuePrescription al llamar _documentRegistry.registerDocument
-        // será la dirección de PrescriptionManager, no la del médico.
-        // Necesitamos autorizar a PrescriptionManager en MedicalRegistry como emisor,
-        // O cambiar la firma para aceptar el emisor como parámetro.
-        // La forma más limpia: PrescriptionManager pasa la dirección del médico al registrar.
-        // Pero registerDocument usa msg.sender como emisor internamente.
-        // Solución correcta: autorizar a PrescriptionManager como caller trusted en docRegistry.
-
-        // Por ahora, registramos PrescriptionManager como emisor verificado para que
-        // pueda llamar registerDocument (actuando como contrato proxy del médico).
-        // En producción esto se resuelve con un patrón de trusted forwarder o
-        // pasando el emisor real como parámetro desde el owner.
-        await medicalRegistry.registerEmitter(
-            await prescriptionManager.getAddress(),
-            0n // DOCTOR — actuando como proxy
-        );
+        // PrescriptionManager registra documentos en nombre del médico,
+        // así que el owner de docRegistry lo autoriza como caller de confianza.
+        await docRegistry.setAuthorizedCaller(await prescriptionManager.getAddress());
 
         // Registrar y aprobar al médico
         await userRegistry.connect(doctor).registerAsProfessional(1n); // DOCTOR
@@ -79,7 +46,7 @@ describe("PrescriptionManager", function () {
         // Registrar al paciente
         await userRegistry.connect(patient).registerAsPatient();
 
-        return { prescriptionManager, docRegistry, medicalRegistry, userRegistry, admin, doctor, patient, stranger };
+        return { prescriptionManager, docRegistry, userRegistry, admin, doctor, patient, stranger };
     }
 
     // Helper: crea una solicitud pendiente
@@ -100,21 +67,12 @@ describe("PrescriptionManager", function () {
     // ─── Constructor ──────────────────────────────────────────────────────────
 
     describe("constructor", function () {
-        it("reverts si medicalRegistry es address cero", async function () {
-            const [, , , , extra] = await ethers.getSigners();
-            const PrescriptionManagerFactory = await ethers.getContractFactory("PrescriptionManager");
-
-            await expect(
-                PrescriptionManagerFactory.deploy(ethers.ZeroAddress, extra.address, extra.address)
-            ).to.be.revertedWith("PrescriptionManager: medicalRegistry invalido");
-        });
-
         it("reverts si userRegistry es address cero", async function () {
             const [, , , , extra] = await ethers.getSigners();
             const PrescriptionManagerFactory = await ethers.getContractFactory("PrescriptionManager");
 
             await expect(
-                PrescriptionManagerFactory.deploy(extra.address, ethers.ZeroAddress, extra.address)
+                PrescriptionManagerFactory.deploy(ethers.ZeroAddress, extra.address)
             ).to.be.revertedWith("PrescriptionManager: userRegistry invalido");
         });
 
@@ -123,7 +81,7 @@ describe("PrescriptionManager", function () {
             const PrescriptionManagerFactory = await ethers.getContractFactory("PrescriptionManager");
 
             await expect(
-                PrescriptionManagerFactory.deploy(extra.address, extra.address, ethers.ZeroAddress)
+                PrescriptionManagerFactory.deploy(extra.address, ethers.ZeroAddress)
             ).to.be.revertedWith("PrescriptionManager: documentRegistry invalido");
         });
     });
@@ -181,17 +139,14 @@ describe("PrescriptionManager", function () {
             ).to.be.revertedWith("PrescriptionManager: medico no verificado");
         });
 
-        it("reverts si el paciente se solicita a si mismo", async function () {
-            const { prescriptionManager, medicalRegistry, userRegistry, admin } = await deployAll();
-            const [,,,, doctorPatient] = await ethers.getSigners();
+        it("reverts si el médico se solicita una receta a si mismo", async function () {
+            const { prescriptionManager, doctor } = await deployAll();
 
-            // Registrar como paciente y también como médico verificado
-            await userRegistry.connect(doctorPatient).registerAsPatient();
-            // Registrarlo directamente en MedicalRegistry como médico
-            await medicalRegistry.registerEmitter(doctorPatient.address, 0n);
-
+            // El médico ya está registrado y verificado; al pedirse a sí mismo
+            // pasa las validaciones de registro/verificación pero choca con la
+            // restricción de no poder solicitarse a sí mismo.
             await expect(
-                prescriptionManager.connect(doctorPatient).requestPrescription(doctorPatient.address, PRESCRIPTION_TYPE)
+                prescriptionManager.connect(doctor).requestPrescription(doctor.address, PRESCRIPTION_TYPE)
             ).to.be.revertedWith("PrescriptionManager: no puede solicitarse a si mismo");
         });
     });

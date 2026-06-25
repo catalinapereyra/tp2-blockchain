@@ -7,19 +7,74 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//perfil off-chain del usuario, el rol y el estado viven en el contrato UserRegistry en bc
-//aca solo guardamos lo que la bc no puede guardar
 model UserProfile {
   id            Int      @id @default(autoincrement())
   walletAddress String   @unique
   name          String
   lastName      String?
   email         String?
-  //nonce para el login con wallet, el front firma este string con MetaMask,
-  //el back verifica la firma
+  //rol elegido al registrarse (mismo enum que el contrato:
+  // 0=PATIENT, 1=DOCTOR, 2=LABORATORY, 3=INSTITUTION). El rol "fuente de verdad"
+  // sigue siendo on-chain; esto es solo para listar usuarios por rol con su nombre.
+  role          Int?
   nonce         String   @default(uuid())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// Documento firmado off-chain por un médico (EIP-712), pendiente de que el
+// paciente lo registre on-chain. El médico no paga gas: solo firma. El archivo
+// y la firma quedan acá hasta que el paciente paga la tx y lo registra.
+model SignedDocument {
+  id             Int      @id @default(autoincrement())
+  patientAddress String
+  doctorAddress  String
+  documentHash   String // bytes32 hex (keccak256 del archivo)
+  documentType   String // categoría genérica (on-chain)
+  offChainRef    String // referencia usada dentro de la firma EIP-712
+  signature      String // firma EIP-712 del médico
+  title          String
+  studyType      String?
+  notes          String?
+  fileData       Bytes // el PDF/imagen, hasta que el paciente lo registra
+  fileName       String
+  mimeType       String
+  status         String   @default("PENDING") // PENDING | REGISTERED
+  createdAt      DateTime @default(now())
+}
+
+// Diagnóstico / comentario de un médico sobre un documento. Off-chain y privado.
+// Cada médico tiene a lo sumo un diagnóstico por documento (puede editarlo).
+model Diagnosis {
+  id                Int      @id @default(autoincrement())
+  documentIdOnChain Int
+  doctorAddress     String
+  text              String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([documentIdOnChain, doctorAddress])
+}
+
+// Relación "este es mi médico" (off-chain). Permite tener un médico en la lista
+// sin compartirle ningún documento. No necesita estar on-chain.
+model PatientDoctor {
+  id             Int      @id @default(autoincrement())
+  patientAddress String
+  doctorAddress  String
+  createdAt      DateTime @default(now())
+
+  @@unique([patientAddress, doctorAddress])
+}
+
+// Texto privado de la receta (off-chain). On-chain solo queda el estado y el hash.
+model Prescription {
+  id                    Int      @id @default(autoincrement())
+  prescriptionIdOnChain Int      @unique
+  patientAddress        String
+  doctorAddress         String
+  description           String // qué pide el paciente (privado)
+  createdAt             DateTime @default(now())
 }
 
 model DocumentAccess {
@@ -32,9 +87,6 @@ model DocumentAccess {
   @@unique([patientAddress, doctorAddress, documentIdOnChain])
 }
 
-//metadatos off-chain de documentos medicos
-//el hash y el estado viven en MedicalDocumentRegistry en bc
-//aca guardamos el titulo, descr y el CID de IPFS para poder mostrarlos en el front
 model DocumentMetadata {
   id                Int       @id @default(autoincrement())
   documentIdOnChain Int       @unique
@@ -47,7 +99,10 @@ model DocumentMetadata {
   labName           String?
   notes             String?
   studyDate         DateTime?
-  ipfsCid           String
-  ipfsUrl           String
+  // El documento (PDF/imagen) se guarda directamente en la base de datos
+  // para mantenerlo privado, en vez de publicarlo en IPFS.
+  fileData          Bytes
+  fileName          String
+  mimeType          String
   createdAt         DateTime  @default(now())
 }

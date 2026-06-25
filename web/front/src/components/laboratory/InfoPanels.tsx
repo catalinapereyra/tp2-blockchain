@@ -1,4 +1,5 @@
 import { LaboratoryCard } from "./LaboratoryCard";
+import { palette, gradients } from "../../styles";
 
 export function InfoPanels() {
   return (
@@ -22,8 +23,8 @@ export function InfoPanels() {
 
 const styles: Record<string, React.CSSProperties> = {
   stack: { display: "grid", gap: 24 },
-  panel: { color: "#61708d", display: "grid", fontSize: 13, fontWeight: 800, gap: 14, lineHeight: 1.6, padding: 22 },
-  blue: { color: "#2563eb", fontSize: 15 },
-  green: { color: "#15803d", fontSize: 15 },
-  greenPanel: { background: "linear-gradient(135deg, #ecfdf5, #f8fafc)", borderRadius: 8 },
+  panel: { color: palette.labGray2, display: "grid", fontSize: 13, fontWeight: 800, gap: 14, lineHeight: 1.6, padding: 22 },
+  blue: { color: palette.blue600, fontSize: 15 },
+  green: { color: palette.green700, fontSize: 15 },
+  greenPanel: { background: gradients.labCard, borderRadius: 8 },
 };

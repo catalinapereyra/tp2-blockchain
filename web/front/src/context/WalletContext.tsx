@@ -5,11 +5,13 @@ import { getUserRegistry, ROLE_LABELS } from "../lib/contracts";
 
 interface WalletContextType {
   address: string | null;
+  name: string | null;
   role: number | null;
   roleLabel: string | null;
   isRegistered: boolean;
   isApproved: boolean;
   isAdmin: boolean;
+  userStatus: number | null;
   loading: boolean;
   connect: () => Promise<void>;
   logout: () => void;
@@ -21,10 +23,12 @@ const ADMIN_ADDRESS = (import.meta.env.VITE_ADMIN_ADDRESS as string | undefined)
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const [role, setRole] = useState<number | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userStatus, setUserStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function loadChainData(addr: string) {
@@ -42,10 +46,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setIsApproved(approved);
         const r = await contract.getRole(addr);
         setRole(Number(r));
+        const u = await contract.getUser(addr);
+        setUserStatus(Number(u.status));
       } else {
         setIsApproved(false);
         setRole(null);
+        setUserStatus(null);
       }
+      // Nombre off-chain del perfil (para "Hola, {nombre}")
+      try {
+        const me = await api.getMe();
+        setName(me?.name || null);
+      } catch { /* sin sesión de backend */ }
     } catch (e) {
       console.error("Error cargando datos del contrato", e);
     }
@@ -88,10 +100,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("wallet");
     localStorage.removeItem("intended_role");
     setAddress(null);
+    setName(null);
     setRole(null);
     setIsRegistered(false);
     setIsApproved(false);
     setIsAdmin(false);
+    setUserStatus(null);
   }
 
   useEffect(() => {
@@ -118,6 +132,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setIsRegistered(false);
         setIsApproved(false);
         setIsAdmin(false);
+        setUserStatus(null);
         // Redirigir a home
         window.location.href = "/";
       }
@@ -131,11 +146,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     <WalletContext.Provider
       value={{
         address,
+        name,
         role,
         roleLabel: role !== null ? ROLE_LABELS[role] : null,
         isRegistered,
         isApproved,
         isAdmin,
+        userStatus,
         loading,
         connect,
         logout,

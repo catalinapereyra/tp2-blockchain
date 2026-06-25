@@ -1,38 +1,81 @@
 import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
+const METADATA_SELECT = {
+  id: true,
+  documentIdOnChain: true,
+  patientAddress: true,
+  emitterAddress: true,
+  title: true,
+  description: true,
+  documentType: true,
+  studyType: true,
+  labName: true,
+  notes: true,
+  studyDate: true,
+  fileName: true,
+  mimeType: true,
+  createdAt: true,
+} as const;
+
 @Injectable()
 export class PermissionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Retorna todos los médicos a los que el paciente dio acceso, con sus documentos
   async getByPatient(patientAddress: string) {
-    const accesses = await this.prisma.documentAccess.findMany({
-      where: { patientAddress: patientAddress.toLowerCase() },
-      orderBy: { grantedAt: "asc" },
-    });
+    const patient = patientAddress.toLowerCase();
 
-    // Agrupar por médico
-    const byDoctor = new Map<string, number[]>();
+    const [rels, accesses] = await Promise.all([
+      this.prisma.patientDoctor.findMany({ where: { patientAddress: patient } }),
+      this.prisma.documentAccess.findMany({ where: { patientAddress: patient }, orderBy: { grantedAt: "asc" } }),
+    ]);
+
+    const docIdsByDoctor = new Map<string, number[]>();
     for (const a of accesses) {
-      if (!byDoctor.has(a.doctorAddress)) byDoctor.set(a.doctorAddress, []);
-      byDoctor.get(a.doctorAddress)!.push(a.documentIdOnChain);
+      if (!docIdsByDoctor.has(a.doctorAddress)) docIdsByDoctor.set(a.doctorAddress, []);
+      docIdsByDoctor.get(a.doctorAddress)!.push(a.documentIdOnChain);
     }
 
-    // Para cada médico, traer los detalles de los docs
+    const doctorAddrs = new Set<string>([...rels.map((r) => r.doctorAddress), ...docIdsByDoctor.keys()]);
+
     const result = [];
-    for (const [doctorAddress, docIds] of byDoctor.entries()) {
-      const documents = await this.prisma.documentMetadata.findMany({
-        where: { documentIdOnChain: { in: docIds } },
-        orderBy: { createdAt: "desc" },
-      });
+    for (const doctorAddress of doctorAddrs) {
+      const docIds = docIdsByDoctor.get(doctorAddress) ?? [];
+      const documents = docIds.length
+        ? await this.prisma.documentMetadata.findMany({
+            where: { documentIdOnChain: { in: docIds } },
+            orderBy: { createdAt: "desc" },
+            select: METADATA_SELECT,
+          })
+        : [];
       result.push({ doctorAddress, documents });
     }
 
     return result;
   }
 
-  // Retorna todos los pacientes que le dieron acceso a este médico, con sus documentos
+  // Agrega un médico a "mis médicos" sin compartirle ningún documento.
+  async addDoctor(patientAddress: string, doctorAddress: string) {
+    return this.prisma.patientDoctor.upsert({
+      where: {
+        patientAddress_doctorAddress: {
+          patientAddress: patientAddress.toLowerCase(),
+          doctorAddress: doctorAddress.toLowerCase(),
+        },
+      },
+      create: { patientAddress: patientAddress.toLowerCase(), doctorAddress: doctorAddress.toLowerCase() },
+      update: {},
+    });
+  }
+
+  async removeDoctor(patientAddress: string, doctorAddress: string) {
+    await this.prisma.patientDoctor.deleteMany({
+      where: { patientAddress: patientAddress.toLowerCase(), doctorAddress: doctorAddress.toLowerCase() },
+    });
+    return { ok: true };
+  }
+
+  //devuelve todos los pacientes que le dieron acceso a este medico, con sus documentos
   async getByDoctor(doctorAddress: string) {
     const accesses = await this.prisma.documentAccess.findMany({
       where: { doctorAddress: doctorAddress.toLowerCase() },
@@ -50,6 +93,7 @@ export class PermissionsService {
       const documents = await this.prisma.documentMetadata.findMany({
         where: { documentIdOnChain: { in: docIds } },
         orderBy: { createdAt: "desc" },
+        select: METADATA_SELECT,
       });
       result.push({ patientAddress, documents });
     }
@@ -69,14 +113,22 @@ export class PermissionsService {
     const docIds = accesses.map((a) => a.documentIdOnChain);
     if (docIds.length === 0) return [];
 
-    return this.prisma.documentMetadata.findMany({
+    const documents = await this.prisma.documentMetadata.findMany({
       where: { documentIdOnChain: { in: docIds } },
       orderBy: { createdAt: "desc" },
+      select: METADATA_SELECT,
     });
+
+    const diags = await this.prisma.diagnosis.findMany({
+      where: { doctorAddress: doctorAddress.toLowerCase(), documentIdOnChain: { in: docIds } },
+    });
+    const textByDoc = new Map(diags.map((d) => [d.documentIdOnChain, d.text]));
+
+    return documents.map((d) => ({ ...d, diagnosis: textByDoc.get(d.documentIdOnChain) ?? null }));
   }
 
   async grant(patientAddress: string, doctorAddress: string, documentIdOnChain: number) {
-    // upsert: si ya existe el registro (on-chain grant previo sin DB), lo deja igual
+    await this.addDoctor(patientAddress, doctorAddress);
     return this.prisma.documentAccess.upsert({
       where: {
         patientAddress_doctorAddress_documentIdOnChain: {
@@ -90,7 +142,7 @@ export class PermissionsService {
         doctorAddress: doctorAddress.toLowerCase(),
         documentIdOnChain,
       },
-      update: {}, // ya existe, no cambia nada
+      update: {},
     });
   }
 

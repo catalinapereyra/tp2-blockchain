@@ -1,23 +1,24 @@
 import { useWallet } from "../context/WalletContext";
+import { palette, fontFamily } from "../styles";
 
 const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
-  Paciente:     { bg: "#f5f3ff", color: "#6366f1" },
-  Médico:       { bg: "#f0f9ff", color: "#0ea5e9" },
-  Laboratorio:  { bg: "#f0fdf4", color: "#10b981" },
-  Institución:  { bg: "#fff7ed", color: "#f59e0b" },
-  Admin:        { bg: "#f5f3ff", color: "#6366f1" },
+  Paciente:     { bg: palette.indigoSoft, color: palette.indigo500 },
+  Médico:       { bg: palette.sky50, color: palette.sky500 },
+  Laboratorio:  { bg: palette.emerald50, color: palette.emerald500 },
+  Institución:  { bg: palette.amber100, color: palette.amber500 },
+  Admin:        { bg: palette.indigoSoft, color: palette.indigo500 },
 };
 
 export default function Navbar() {
   const { address, roleLabel, isAdmin, logout } = useWallet();
   const label = isAdmin ? "Admin" : (roleLabel || "Sin rol");
-  const chip = ROLE_COLORS[label] ?? { bg: "#f1f5f9", color: "#64748b" };
+  const chip = ROLE_COLORS[label] ?? { bg: palette.slate100, color: palette.slate500 };
 
   return (
     <nav style={s.nav}>
       <div style={s.logo}>
         <div style={s.logoIcon}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
           </svg>
         </div>
@@ -56,8 +57,8 @@ const s: Record<string, React.CSSProperties> = {
     height: 56,
     background: "rgba(255,255,255,0.85)",
     backdropFilter: "blur(12px)",
-    borderBottom: "1px solid #f1f5f9",
-    fontFamily: "'DM Sans', sans-serif",
+    borderBottom: `1px solid ${palette.slate100}`,
+    fontFamily: fontFamily.sans,
     position: "sticky",
     top: 0,
     zIndex: 100,
@@ -71,7 +72,7 @@ const s: Record<string, React.CSSProperties> = {
     width: 30,
     height: 30,
     borderRadius: 8,
-    background: "#f5f3ff",
+    background: palette.indigoSoft,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -79,7 +80,7 @@ const s: Record<string, React.CSSProperties> = {
   logoText: {
     fontSize: 15,
     fontWeight: 700,
-    color: "#0f172a",
+    color: palette.slate900,
     letterSpacing: "-0.4px",
   },
   right: {
@@ -95,28 +96,28 @@ const s: Record<string, React.CSSProperties> = {
     letterSpacing: "0.2px",
   },
   addr: {
-    fontFamily: "monospace",
+    fontFamily: fontFamily.mono,
     fontSize: 12,
-    color: "#94a3b8",
+    color: palette.slate400,
   },
   divider: {
     width: 1,
     height: 18,
-    background: "#e2e8f0",
+    background: palette.slate200,
   },
   btn: {
     display: "flex",
     alignItems: "center",
     gap: 6,
     background: "none",
-    border: "1.5px solid #e2e8f0",
-    color: "#64748b",
+    border: `1.5px solid ${palette.slate200}`,
+    color: palette.slate500,
     padding: "6px 12px",
     borderRadius: 8,
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 500,
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fontFamily.sans,
     transition: "border-color 0.15s, color 0.15s",
   },
 };

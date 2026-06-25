@@ -77,15 +77,40 @@ export class AuthService {
   }
 
   /**
-   * Completa o actualiza el perfil del usuario (nombre, apellido, email).
+   * Completa o actualiza el perfil del usuario (nombre, apellido, email, rol).
    */
   async updateProfile(
     walletAddress: string,
-    data: { name?: string; lastName?: string; email?: string },
+    data: { name?: string; lastName?: string; email?: string; role?: number },
   ) {
     return this.prisma.userProfile.update({
       where: { walletAddress: walletAddress.toLowerCase() },
       data,
+    });
+  }
+
+  /**
+   * Devuelve el nombre/apellido (off-chain) de una wallet. Público: se usa para
+   * mostrar el nombre junto a la address (ej: panel de admin) sin exponer datos
+   * sensibles (solo nombre, apellido y dirección).
+   */
+  async getPublicProfile(walletAddress: string) {
+    return this.prisma.userProfile.findUnique({
+      where: { walletAddress: walletAddress.toLowerCase() },
+      select: { walletAddress: true, name: true, lastName: true },
+    });
+  }
+
+  /**
+   * Lista los usuarios de un rol (0=paciente, 1=médico, 2=laboratorio, 3=institución)
+   * con su nombre, apellido y dirección. Sirve para armar los desplegables
+   * (elegir médico, elegir paciente) mostrando el nombre off-chain + la address.
+   */
+  async getUsersByRole(role: number) {
+    return this.prisma.userProfile.findMany({
+      where: { role, name: { not: "" } },
+      select: { walletAddress: true, name: true, lastName: true },
+      orderBy: [{ name: "asc" }, { lastName: "asc" }],
     });
   }
 

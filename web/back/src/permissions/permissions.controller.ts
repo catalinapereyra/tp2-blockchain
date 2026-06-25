@@ -6,7 +6,6 @@ import { PermissionsService } from "./permissions.service";
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
-  // Rutas específicas ANTES de la ruta genérica :patientAddress
   @Get("doctor/:doctorAddress")
   getByDoctor(@Param("doctorAddress") doctorAddress: string) {
     return this.permissionsService.getByDoctor(doctorAddress);
@@ -26,6 +25,19 @@ export class PermissionsController {
   @UseGuards(AuthGuard("jwt"))
   grant(@Body() body: { patientAddress: string; doctorAddress: string; documentIdOnChain: number }) {
     return this.permissionsService.grant(body.patientAddress, body.doctorAddress, body.documentIdOnChain);
+  }
+
+  //agregar un medico a "mis medicos" sin compartir documentos
+  @Post("doctor")
+  @UseGuards(AuthGuard("jwt"))
+  addDoctor(@Body() body: { patientAddress: string; doctorAddress: string }) {
+    return this.permissionsService.addDoctor(body.patientAddress, body.doctorAddress);
+  }
+
+  @Delete("doctor")
+  @UseGuards(AuthGuard("jwt"))
+  removeDoctor(@Body() body: { patientAddress: string; doctorAddress: string }) {
+    return this.permissionsService.removeDoctor(body.patientAddress, body.doctorAddress);
   }
 
   @Delete()

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
+import { palette } from "../../styles";
 
 const items = [
   { icon: "⌂", label: "Inicio", active: true },
@@ -43,8 +44,8 @@ export function LaboratorySidebar() {
 
 const styles: Record<string, React.CSSProperties> = {
   sidebar: {
-    background: "#ffffff",
-    borderRight: "1px solid #e5ebf5",
+    background: palette.white,
+    borderRight: `1px solid ${palette.labBorder3}`,
     display: "flex",
     flexDirection: "column",
     minHeight: "100vh",
@@ -59,9 +60,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   shield: {
     alignItems: "center",
-    border: "3px solid #2563eb",
+    border: `3px solid ${palette.blue600}`,
     borderRadius: 8,
-    color: "#2563eb",
+    color: palette.blue600,
     display: "flex",
     fontSize: 18,
     fontWeight: 900,
@@ -69,15 +70,15 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "center",
     width: 36,
   },
-  brandName: { color: "#1d4ed8", fontSize: 20, fontWeight: 900 },
-  brandText: { color: "#667797", fontSize: 11, fontWeight: 700 },
+  brandName: { color: palette.blue700, fontSize: 20, fontWeight: 900 },
+  brandText: { color: palette.labGray3, fontSize: 11, fontWeight: 700 },
   nav: { display: "grid", gap: 10 },
   navItem: {
     alignItems: "center",
     background: "transparent",
     border: "none",
     borderRadius: 8,
-    color: "#64748b",
+    color: palette.slate500,
     cursor: "pointer",
     display: "flex",
     fontSize: 14,
@@ -88,8 +89,8 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: "left",
   },
   active: {
-    background: "#f1f6ff",
-    color: "#2563eb",
+    background: palette.violetSoft2,
+    color: palette.blue600,
   },
   navIcon: {
     alignItems: "center",
@@ -106,7 +107,7 @@ const styles: Record<string, React.CSSProperties> = {
   bottomItem: {
     background: "transparent",
     border: "none",
-    color: "#64748b",
+    color: palette.slate500,
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 800,

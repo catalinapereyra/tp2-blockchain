@@ -15,13 +15,8 @@ describe("PermissionManager", function () {
         const userRegistry: any = await UserRegistryFactory.deploy();
         await userRegistry.waitForDeployment();
 
-        const MedicalRegistryFactory = await ethers.getContractFactory("MedicalRegistry");
-        const medicalRegistry: any = await MedicalRegistryFactory.deploy();
-        await medicalRegistry.waitForDeployment();
-
         const DocRegistryFactory = await ethers.getContractFactory("MedicalDocumentRegistry");
         const docRegistry: any = await DocRegistryFactory.deploy(
-            await medicalRegistry.getAddress(),
             await userRegistry.getAddress()
         );
         await docRegistry.waitForDeployment();
@@ -32,9 +27,6 @@ describe("PermissionManager", function () {
             await userRegistry.getAddress()
         );
         await permissionManager.waitForDeployment();
-
-        await medicalRegistry.setAuthorizedCaller(await userRegistry.getAddress());
-        await userRegistry.setMedicalRegistry(await medicalRegistry.getAddress());
 
         await userRegistry.connect(doctor).registerAsProfessional(1n);
         await userRegistry.connect(admin).approveUser(doctor.address);
@@ -60,13 +52,10 @@ describe("PermissionManager", function () {
 
         it("reverts si userRegistry es address cero", async function () {
             const DocRegistryFactory = await ethers.getContractFactory("MedicalDocumentRegistry");
-            const MedicalRegistryFactory = await ethers.getContractFactory("MedicalRegistry");
-            const medReg: any = await MedicalRegistryFactory.deploy();
-            await medReg.waitForDeployment();
             const UserRegistryFactory = await ethers.getContractFactory("UserRegistry");
             const userRegistry: any = await UserRegistryFactory.deploy();
             await userRegistry.waitForDeployment();
-            const docReg: any = await DocRegistryFactory.deploy(await medReg.getAddress(), await userRegistry.getAddress());
+            const docReg: any = await DocRegistryFactory.deploy(await userRegistry.getAddress());
             await docReg.waitForDeployment();
 
             const PermissionManagerFactory = await ethers.getContractFactory("PermissionManager");

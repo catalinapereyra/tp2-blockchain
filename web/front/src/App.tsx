@@ -11,12 +11,18 @@ import PatientDashboard from "./pages/patient/PatientDashboard";
 import MisEstudiosPage from "./pages/patient/MisEstudiosPage";
 import SubirEstudioPage from "./pages/patient/SubirEstudioPage";
 import SolicitarRecetaPage from "./pages/patient/SolicitarRecetaPage";
+import MisRecetasPage from "./pages/patient/MisRecetasPage";
 import MisMedicosPage from "./pages/patient/MisMedicosPage";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
+import FirmarEstudioPage from "./pages/doctor/FirmarEstudioPage";
+import PendientesFirmaPage from "./pages/patient/PendientesFirmaPage";
 import RecetasPage from "./pages/doctor/RecetasPage";
 import PacientesPage from "./pages/doctor/PacientesPage";
 import PacienteDetailPage from "./pages/doctor/PacienteDetailPage";
 import LaboratoryDashboard from "./pages/LaboratoryDashboard";
+import LabPacientesPage from "./pages/lab/LabPacientesPage";
+import LabPacienteDetailPage from "./pages/lab/LabPacienteDetailPage";
+import LabCategoriasPage from "./pages/lab/LabCategoriasPage";
 
 function ProtectedRoute({ children, condition }: { children: React.ReactElement; condition: boolean }) {
   const { address, loading } = useWallet();
@@ -37,7 +43,7 @@ export default function App() {
 
   return (
     <>
-      {address && !hideGlobalNavbar && <Navbar />}
+      {address && <Navbar />}
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/home" element={<Home />} />
@@ -73,12 +79,22 @@ export default function App() {
         } />
         <Route path="/patient/recetas" element={
           <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
+            <MisRecetasPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/patient/recetas/solicitar" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
             <SolicitarRecetaPage />
           </ProtectedRoute>
         } />
         <Route path="/patient/medicos" element={
           <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
             <MisMedicosPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/patient/pendientes" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 0}>
+            <PendientesFirmaPage />
           </ProtectedRoute>
         } />
         <Route path="/doctor" element={
@@ -101,9 +117,29 @@ export default function App() {
             <PacienteDetailPage />
           </ProtectedRoute>
         } />
+        <Route path="/doctor/firmar" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role === 1}>
+            <FirmarEstudioPage />
+          </ProtectedRoute>
+        } />
         <Route path="/lab" element={
           <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0 && role !== 1}>
             <LaboratoryDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/lab/pacientes" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0 && role !== 1}>
+            <LabPacientesPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/lab/pacientes/:address" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0 && role !== 1}>
+            <LabPacienteDetailPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/lab/categorias" element={
+          <ProtectedRoute condition={!isAdmin && isRegistered && isApproved && role !== null && role !== 0 && role !== 1}>
+            <LabCategoriasPage />
           </ProtectedRoute>
         } />
         <Route path="/laboratory" element={<Navigate to="/lab" />} />

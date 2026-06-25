@@ -3,7 +3,6 @@ pragma solidity ^0.8.28;
 
 //permite que el contrato tenga un owner (admin) que va a poder ejecutar funciones restringidas como aprobar, rechazar o revocar usuarios
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./MedicalRegistry.sol";
 
 contract UserRegistry is Ownable {
 
@@ -31,10 +30,9 @@ contract UserRegistry is Ownable {
     }
 
 
-    mapping(address => User) private _users; //relaciona una direccion de wallet con un usuario
-    mapping(address => bool) private _registered; //para no tener doble registro
-
-    MedicalRegistry private _medicalRegistry;
+    //unico mapa de usuarios. Para saber si una wallet esta registrada
+    //alcanza con mirar registeredAt (0 = nunca se registro)
+    mapping(address => User) private _users;
 
 
     event PatientRegistered(address indexed patient);
@@ -42,17 +40,14 @@ contract UserRegistry is Ownable {
     event UserApproved(address indexed user, Role role);
     event UserRejected(address indexed user);
     event UserRevoked(address indexed user);
-    event MedicalRegistrySet(address indexed medicalRegistry);//ee emite cuando se configura la dir del contrato MedicalRegistry
 
 
     constructor() Ownable(msg.sender) {} //indica que la wallet que deploya el contrato sera el owner
 
 
-//permite configurar la direccion del contrato MedicalRegistry
-    function setMedicalRegistry(address medicalRegistry) external onlyOwner {
-        require(medicalRegistry != address(0), "UserRegistry: direccion invalida");
-        _medicalRegistry = MedicalRegistry(medicalRegistry);
-        emit MedicalRegistrySet(medicalRegistry); //emite evento avisando q se configuro mr
+    //helper interno: una wallet esta registrada si tiene registeredAt distinto de 0
+    function _isRegistered(address user) private view returns (bool) {
+        return _users[user].registeredAt != 0;
     }
 
 
@@ -61,7 +56,7 @@ contract UserRegistry is Ownable {
 
     //para q una wallet se registre como paciente
     function registerAsPatient() external {
-        require(!_registered[msg.sender], "UserRegistry: ya registrado");
+        require(!_isRegistered(msg.sender), "UserRegistry: ya registrado");
 
         _users[msg.sender] = User({ //dirección de la wallet que firmo la transaccion
             role: Role.PATIENT,
@@ -70,8 +65,6 @@ contract UserRegistry is Ownable {
             updatedAt: block.timestamp
         });
 
-        _registered[msg.sender] = true; //marca wallet como registrada
-
         emit PatientRegistered(msg.sender); //emite evento avisando q el paciente fue registrado
     }
 
@@ -79,7 +72,7 @@ contract UserRegistry is Ownable {
     //medico, laboratorio o institución se registran como PENDING
     //No pueden operar hasta que el admin los apruebe
     function registerAsProfessional(Role role) external {
-        require(!_registered[msg.sender], "UserRegistry: ya registrado");
+        require(!_isRegistered(msg.sender), "UserRegistry: ya registrado");
         require(role != Role.PATIENT, "UserRegistry: usar registerAsPatient");
 
         _users[msg.sender] = User({
@@ -89,35 +82,27 @@ contract UserRegistry is Ownable {
             updatedAt: block.timestamp
         });
 
-        _registered[msg.sender] = true;
-
         //Emite un evento indicando que ese profesional pidio registrarse
         emit ProfessionalRegistrationRequested(msg.sender, role);
     }
 
 
     function approveUser(address user) external onlyOwner {
-        require(_registered[user], "UserRegistry: no registrado");
+        require(_isRegistered(user), "UserRegistry: no registrado");
         require(
             _users[user].status == UserStatus.PENDING,
             "UserRegistry: no esta pendiente"
         );
 
-        Role role = _users[user].role;
-
         _users[user].status = UserStatus.APPROVED;
         _users[user].updatedAt = block.timestamp;
 
-        if (role != Role.PATIENT && address(_medicalRegistry) != address(0)) {
-            _medicalRegistry.registerEmitter(user, _toEmitterType(role)); //Que el contrato MedicalRegistry haya sido configurado
-        }
-
-        emit UserApproved(user, role);
+        emit UserApproved(user, _users[user].role);
     }
 
     //admin rechaza una solicitud pendiente
     function rejectUser(address user) external onlyOwner {
-        require(_registered[user], "UserRegistry: no registrado");
+        require(_isRegistered(user), "UserRegistry: no registrado");
         require(
             _users[user].status == UserStatus.PENDING,
             "UserRegistry: no esta pendiente"
@@ -131,9 +116,8 @@ contract UserRegistry is Ownable {
 
 
     //admin revoca a un profesional aprobado
-    //También lo revoca en MedicalRegistry automáticamente
     function revokeUser(address user) external onlyOwner {
-        require(_registered[user], "UserRegistry: no registrado");
+        require(_isRegistered(user), "UserRegistry: no registrado");
         require(
             _users[user].status == UserStatus.APPROVED,
             "UserRegistry: no esta aprobado"
@@ -142,43 +126,40 @@ contract UserRegistry is Ownable {
         _users[user].status = UserStatus.REVOKED;
         _users[user].updatedAt = block.timestamp;
 
-        if (_users[user].role != Role.PATIENT && address(_medicalRegistry) != address(0)) {
-            _medicalRegistry.revokeEmitter(user);
-        }
-
         emit UserRevoked(user);
     }
 
 
     function isApproved(address user) external view returns (bool) {
-        return _registered[user] && _users[user].status == UserStatus.APPROVED;
+        return _users[user].status == UserStatus.APPROVED && _isRegistered(user);
     }
 
     function isRegistered(address user) external view returns (bool) {
-        return _registered[user];
+        return _isRegistered(user);
+    }
+
+    //un emisor verificado es un profesional (no paciente) aprobado.
+    //Reemplaza lo que antes hacia MedicalRegistry.isVerifiedEmitter
+    function isVerifiedEmitter(address user) external view returns (bool) {
+        return
+            _isRegistered(user) &&
+            _users[user].status == UserStatus.APPROVED &&
+            _users[user].role != Role.PATIENT;
     }
 
     function getRole(address user) external view returns (Role) {
-        require(_registered[user], "UserRegistry: no registrado");
+        require(_isRegistered(user), "UserRegistry: no registrado");
         return _users[user].role;
     }
 
     //para obtener toda la información del usuario
     function getUser(address user) external view returns (User memory) {
-        require(_registered[user], "UserRegistry: no registrado");
+        require(_isRegistered(user), "UserRegistry: no registrado");
         return _users[user];
     }
 
     function getStatus(address user) external view returns (UserStatus) {
-        require(_registered[user], "UserRegistry: no registrado");
+        require(_isRegistered(user), "UserRegistry: no registrado");
         return _users[user].status;
-    }
-
-
-    //convierte un rol de UserRegistry en un tipo de emisor de MedicalRegistry
-    function _toEmitterType(Role role) private pure returns (MedicalRegistry.EmitterType) {
-        if (role == Role.DOCTOR) return MedicalRegistry.EmitterType.DOCTOR;
-        if (role == Role.LABORATORY) return MedicalRegistry.EmitterType.LABORATORY;
-        return MedicalRegistry.EmitterType.INSTITUTION;
     }
 }

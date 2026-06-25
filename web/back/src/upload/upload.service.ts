@@ -1,7 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import PinataSDK from "@pinata/sdk";
 import { createHash } from "crypto";
-import { Readable } from "stream";
 
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -13,12 +11,17 @@ const MAX_SIZE_MB = 10;
 
 @Injectable()
 export class UploadService {
-  private pinata = new PinataSDK({
-    pinataApiKey: process.env.PINATA_API_KEY!,
-    pinataSecretApiKey: process.env.PINATA_SECRET_KEY!,
-  });
+  /**
+   * Valida el archivo y calcula su hash. NO lo publica en IPFS:
+   * los documentos médicos son privados y se guardan en la base de datos.
+   * Devuelve el archivo en base64 para que el front lo adjunte al guardar
+   * la metadata del documento, junto con el hash que se registra on-chain.
+   */
+  processFile(file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException("No se recibió ningún archivo");
+    }
 
-  async uploadToIpfs(file: Express.Multer.File) {
     // Validar tipo
     if (!ALLOWED_TYPES.includes(file.mimetype)) {
       throw new BadRequestException(
@@ -31,21 +34,15 @@ export class UploadService {
       throw new BadRequestException(`El archivo supera el límite de ${MAX_SIZE_MB}MB`);
     }
 
-    // Calcular el hash del archivo (keccak256 para que coincida con el contrato)
+    // Calcular el hash del archivo para registrar la integridad on-chain
     const fileHash = "0x" + createHash("sha256").update(file.buffer).digest("hex");
 
-    // Subir a IPFS via Pinata
-    const stream = Readable.from(file.buffer);
-    const result = await this.pinata.pinFileToIPFS(stream, {
-      pinataMetadata: { name: file.originalname },
-    });
-
     return {
-      cid: result.IpfsHash,
-      url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`,
       // El front usa este hash para registrar el documento en el contrato
       fileHash,
-      originalName: file.originalname,
+      // Contenido del archivo; el front lo reenvía al guardar la metadata
+      fileBase64: file.buffer.toString("base64"),
+      fileName: file.originalname,
       mimeType: file.mimetype,
       sizeBytes: file.size,
     };

@@ -1,3 +1,4 @@
+import { palette, fontFamily } from "../../styles";
 type LaboratoryHeaderProps = {
   address: string | null;
 };
@@ -20,8 +21,8 @@ export function LaboratoryHeader({ address }: LaboratoryHeaderProps) {
 const styles: Record<string, React.CSSProperties> = {
   header: {
     alignItems: "center",
-    background: "#ffffff",
-    borderBottom: "1px solid #e5ebf5",
+    background: palette.white,
+    borderBottom: `1px solid ${palette.labBorder3}`,
     display: "flex",
     height: 84,
     justifyContent: "space-between",
@@ -35,24 +36,24 @@ const styles: Record<string, React.CSSProperties> = {
   bell: {
     background: "transparent",
     border: "none",
-    color: "#60708d",
+    color: palette.labGray,
     cursor: "pointer",
     fontSize: 24,
   },
   wallet: {
-    border: "1px solid #e4eaf4",
+    border: `1px solid ${palette.labBorder2}`,
     borderRadius: 999,
-    color: "#536582",
-    fontFamily: "monospace",
+    color: palette.labMuted,
+    fontFamily: fontFamily.mono,
     fontSize: 13,
     fontWeight: 800,
     padding: "12px 32px",
   },
   avatar: {
     alignItems: "center",
-    background: "#f1edff",
+    background: palette.violetSoft1,
     borderRadius: "50%",
-    color: "#7155d9",
+    color: palette.violet500,
     display: "flex",
     fontSize: 13,
     fontWeight: 900,

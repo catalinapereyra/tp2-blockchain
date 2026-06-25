@@ -57,53 +57,28 @@ describe("MedicalDocumentRegistry", function () {
         const userRegistry: any = await UserRegistryFactory.deploy();
         await userRegistry.waitForDeployment();
 
-
-        const MedicalRegistryFactory = await ethers.getContractFactory("MedicalRegistry");
-        const medicalRegistry: any = await MedicalRegistryFactory.deploy();
-        await medicalRegistry.waitForDeployment();
-
         const DocRegistryFactory = await ethers.getContractFactory("MedicalDocumentRegistry");
         const docRegistry: any = await DocRegistryFactory.deploy(
-            await medicalRegistry.getAddress(),
             await userRegistry.getAddress()
         );
         await docRegistry.waitForDeployment();
-
-        await medicalRegistry.setAuthorizedCaller(await userRegistry.getAddress());
-        await userRegistry.setMedicalRegistry(await medicalRegistry.getAddress());
 
         await userRegistry.connect(doctor).registerAsProfessional(1n); // DOCTOR
         await userRegistry.connect(admin).approveUser(doctor.address);
 
         await userRegistry.connect(patient).registerAsPatient();
 
-        return { docRegistry, userRegistry, medicalRegistry, admin, doctor, patient, stranger };
+        return { docRegistry, userRegistry, admin, doctor, patient, stranger };
     }
 
 
 
     describe("constructor", function () {
-        it("reverts si medicalRegistry es address cero", async function () {
-            const UserRegistryFactory = await ethers.getContractFactory("UserRegistry");
-            const userRegistry: any = await UserRegistryFactory.deploy();
-            await userRegistry.waitForDeployment();
-
-            const DocRegistryFactory = await ethers.getContractFactory("MedicalDocumentRegistry");
-
-            await expect(
-                DocRegistryFactory.deploy(ethers.ZeroAddress, await userRegistry.getAddress())
-            ).to.be.revertedWith("MedicalDocumentRegistry: medicalRegistry invalido");
-        });
-
         it("reverts si userRegistry es address cero", async function () {
-            const MedicalRegistryFactory = await ethers.getContractFactory("MedicalRegistry");
-            const medicalRegistry: any = await MedicalRegistryFactory.deploy();
-            await medicalRegistry.waitForDeployment();
-
             const DocRegistryFactory = await ethers.getContractFactory("MedicalDocumentRegistry");
 
             await expect(
-                DocRegistryFactory.deploy(await medicalRegistry.getAddress(), ethers.ZeroAddress)
+                DocRegistryFactory.deploy(ethers.ZeroAddress)
             ).to.be.revertedWith("MedicalDocumentRegistry: userRegistry invalido");
         });
     });

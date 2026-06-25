@@ -1,4 +1,5 @@
 import React from "react";
+import { palette, fontFamily } from "../../styles";
 
 export type RecetaStatus = "pending" | "accepted" | "rejected" | "issued";
 
@@ -12,19 +13,21 @@ export interface Receta {
 }
 
 const STATUS_CONFIG: Record<RecetaStatus, { label: string; bg: string; color: string }> = {
-  pending:  { label: "Pendiente",  bg: "#fffbeb", color: "#d97706" },
-  accepted: { label: "Aceptada",   bg: "#f0fdf4", color: "#16a34a" },
-  rejected: { label: "Rechazada",  bg: "#fef2f2", color: "#dc2626" },
-  issued:   { label: "Emitida",    bg: "#eff6ff", color: "#2563eb" },
+  pending:  { label: "Pendiente",  bg: palette.amber50, color: palette.amber600 },
+  accepted: { label: "Aceptada",   bg: palette.emerald50, color: palette.emerald600 },
+  rejected: { label: "Rechazada",  bg: palette.red50, color: palette.red600 },
+  issued:   { label: "Emitida",    bg: palette.blue50, color: palette.blue600 },
 };
 
 interface Props {
   receta: Receta;
+  busy?: boolean;
   onAccept?: (id: number) => void;
   onReject?: (id: number) => void;
+  onIssue?: (id: number) => void;
 }
 
-export default function RecetaCard({ receta, onAccept, onReject }: Props) {
+export default function RecetaCard({ receta, busy, onAccept, onReject, onIssue }: Props) {
   const sc = STATUS_CONFIG[receta.status];
 
   return (
@@ -37,8 +40,11 @@ export default function RecetaCard({ receta, onAccept, onReject }: Props) {
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
             </div>
-            <span style={s.addr}>{receta.patientAddress.slice(0, 10)}…{receta.patientAddress.slice(-6)}</span>
+            {receta.patientName
+              ? <span style={s.patientName}>{receta.patientName}</span>
+              : <span style={s.addr}>{receta.patientAddress.slice(0, 10)}…{receta.patientAddress.slice(-6)}</span>}
           </div>
+          {receta.patientName && <span style={s.addrSmall}>{receta.patientAddress.slice(0, 10)}…{receta.patientAddress.slice(-6)}</span>}
           <p style={s.desc}>"{receta.description}"</p>
         </div>
         <div style={s.right}>
@@ -49,13 +55,22 @@ export default function RecetaCard({ receta, onAccept, onReject }: Props) {
 
       {receta.status === "pending" && (
         <div style={s.actions}>
-          <button style={s.btnAccept} onClick={() => onAccept?.(receta.id)}>
+          <button style={{ ...s.btnAccept, opacity: busy ? 0.5 : 1 }} disabled={busy} onClick={() => onAccept?.(receta.id)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             Aceptar
           </button>
-          <button style={s.btnReject} onClick={() => onReject?.(receta.id)}>
+          <button style={{ ...s.btnReject, opacity: busy ? 0.5 : 1 }} disabled={busy} onClick={() => onReject?.(receta.id)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             Rechazar
+          </button>
+        </div>
+      )}
+
+      {receta.status === "accepted" && (
+        <div style={s.actions}>
+          <button style={{ ...s.btnAccept, opacity: busy ? 0.5 : 1 }} disabled={busy} onClick={() => onIssue?.(receta.id)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            {busy ? "Emitiendo…" : "Emitir receta (adjuntar PDF)"}
           </button>
         </div>
       )}
@@ -65,8 +80,8 @@ export default function RecetaCard({ receta, onAccept, onReject }: Props) {
 
 const s: Record<string, React.CSSProperties> = {
   card: {
-    background: "white",
-    border: "1px solid #f1f5f9",
+    background: palette.white,
+    border: `1px solid ${palette.slate100}`,
     borderRadius: 14,
     padding: "16px 18px",
     display: "flex",
@@ -84,25 +99,27 @@ const s: Record<string, React.CSSProperties> = {
   patientRow: { display: "flex", alignItems: "center", gap: 6 },
   avatar: {
     width: 26, height: 26, borderRadius: 8,
-    background: "#f5f3ff", color: "#6366f1",
+    background: palette.indigoSoft, color: palette.indigo500,
     display: "flex", alignItems: "center", justifyContent: "center",
   },
-  addr: { fontFamily: "monospace", fontSize: 12, color: "#334155", fontWeight: 500 },
-  desc: { fontSize: 13, color: "#475569", margin: 0, fontStyle: "italic" },
+  addr: { fontFamily: fontFamily.mono, fontSize: 12, color: palette.slate700, fontWeight: 500 },
+  patientName: { fontSize: 14, fontWeight: 600, color: palette.slate900 },
+  addrSmall: { fontFamily: fontFamily.mono, fontSize: 11, color: palette.slate400 },
+  desc: { fontSize: 13, color: palette.slate600, margin: 0, fontStyle: "italic" },
   statusPill: { fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 },
-  date: { fontSize: 11, color: "#94a3b8" },
-  actions: { display: "flex", gap: 8, paddingTop: 4, borderTop: "1px solid #f8fafc" },
+  date: { fontSize: 11, color: palette.slate400 },
+  actions: { display: "flex", gap: 8, paddingTop: 4, borderTop: `1px solid ${palette.slate50}` },
   btnAccept: {
     display: "flex", alignItems: "center", gap: 6,
-    background: "#16a34a", color: "white", border: "none",
+    background: palette.emerald600, color: palette.white, border: "none",
     padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    cursor: "pointer", fontFamily: fontFamily.sans,
   },
   btnReject: {
     display: "flex", alignItems: "center", gap: 6,
-    background: "none", color: "#dc2626",
-    border: "1.5px solid #fca5a5",
+    background: "none", color: palette.red600,
+    border: `1.5px solid ${palette.red300}`,
     padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+    cursor: "pointer", fontFamily: fontFamily.sans,
   },
 };

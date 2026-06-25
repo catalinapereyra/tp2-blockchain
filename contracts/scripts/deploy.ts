@@ -10,31 +10,23 @@ async function main() {
     console.log("╚══════════════════════════════════════════╝\n");
     console.log(`Admin: ${admin.address}\n`);
 
-    // ── 1. MedicalRegistry ──────────────────────────────────────────────────
-    process.stdout.write("Deployando MedicalRegistry...  ");
-    const MedicalRegistry = await ethers.getContractFactory("MedicalRegistry");
-    const medicalRegistry = await MedicalRegistry.deploy();
-    await medicalRegistry.waitForDeployment();
-    console.log(`✔  ${await medicalRegistry.getAddress()}`);
-
-    // ── 2. UserRegistry ─────────────────────────────────────────────────────
+    // ── 1. UserRegistry ─────────────────────────────────────────────────────
     process.stdout.write("Deployando UserRegistry...     ");
     const UserRegistry = await ethers.getContractFactory("UserRegistry");
     const userRegistry = await UserRegistry.deploy();
     await userRegistry.waitForDeployment();
     console.log(`✔  ${await userRegistry.getAddress()}`);
 
-    // ── 3. MedicalDocumentRegistry ──────────────────────────────────────────
+    // ── 2. MedicalDocumentRegistry ──────────────────────────────────────────
     process.stdout.write("Deployando DocRegistry...      ");
     const DocRegistry = await ethers.getContractFactory("MedicalDocumentRegistry");
     const docRegistry = await DocRegistry.deploy(
-        await medicalRegistry.getAddress(),
         await userRegistry.getAddress()
     );
     await docRegistry.waitForDeployment();
     console.log(`✔  ${await docRegistry.getAddress()}`);
 
-    // ── 4. PermissionManager ────────────────────────────────────────────────
+    // ── 3. PermissionManager ────────────────────────────────────────────────
     process.stdout.write("Deployando PermissionManager...  ");
     const PermissionManager = await ethers.getContractFactory("PermissionManager");
     const permissionManager = await PermissionManager.deploy(
@@ -44,11 +36,10 @@ async function main() {
     await permissionManager.waitForDeployment();
     console.log(`✔  ${await permissionManager.getAddress()}`);
 
-    // ── 5. PrescriptionManager ──────────────────────────────────────────────
+    // ── 4. PrescriptionManager ──────────────────────────────────────────────
     process.stdout.write("Deployando PrescriptionManager...");
     const PrescriptionManager = await ethers.getContractFactory("PrescriptionManager");
     const prescriptionManager = await PrescriptionManager.deploy(
-        await medicalRegistry.getAddress(),
         await userRegistry.getAddress(),
         await docRegistry.getAddress()
     );
@@ -58,19 +49,12 @@ async function main() {
     // ── Conexiones entre contratos ──────────────────────────────────────────
     console.log("\nConectando contratos...");
 
-    await medicalRegistry.setAuthorizedCaller(await userRegistry.getAddress());
-    console.log("  ✔  MedicalRegistry ← UserRegistry (authorizedCaller)");
-
-    await userRegistry.setMedicalRegistry(await medicalRegistry.getAddress());
-    console.log("  ✔  UserRegistry ← MedicalRegistry");
-
     // PrescriptionManager necesita poder registrar documentos en nombre del médico
-    await medicalRegistry.registerEmitter(await prescriptionManager.getAddress(), 0n);
-    console.log("  ✔  PrescriptionManager registrado como emisor en MedicalRegistry");
+    await docRegistry.setAuthorizedCaller(await prescriptionManager.getAddress());
+    console.log("  ✔  DocRegistry ← PrescriptionManager (authorizedCaller)");
 
     // ── Guardar direcciones ─────────────────────────────────────────────────
     const addresses = {
-        medicalRegistry: await medicalRegistry.getAddress(),
         userRegistry: await userRegistry.getAddress(),
         docRegistry: await docRegistry.getAddress(),
         permissionManager: await permissionManager.getAddress(),
@@ -90,11 +74,10 @@ async function main() {
 
     if (isTestnet) {
         console.log("Para verificar los contratos en Etherscan, corré:");
-        console.log(`  npx hardhat verify --network sepolia ${addresses.medicalRegistry}`);
         console.log(`  npx hardhat verify --network sepolia ${addresses.userRegistry}`);
-        console.log(`  npx hardhat verify --network sepolia ${addresses.docRegistry} ${addresses.medicalRegistry} ${addresses.userRegistry}`);
+        console.log(`  npx hardhat verify --network sepolia ${addresses.docRegistry} ${addresses.userRegistry}`);
         console.log(`  npx hardhat verify --network sepolia ${addresses.permissionManager} ${addresses.docRegistry} ${addresses.userRegistry}`);
-        console.log(`  npx hardhat verify --network sepolia ${addresses.prescriptionManager} ${addresses.medicalRegistry} ${addresses.userRegistry} ${addresses.docRegistry}`);
+        console.log(`  npx hardhat verify --network sepolia ${addresses.prescriptionManager} ${addresses.userRegistry} ${addresses.docRegistry}`);
         console.log("");
     }
 }

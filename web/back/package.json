@@ -16,7 +16,6 @@
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^10.0.0",
-    "@pinata/sdk": "^2.1.0",
     "@prisma/client": "^6.0.0",
     "ethers": "^6.16.0",
     "form-data": "^4.0.5",

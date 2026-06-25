@@ -14,8 +14,9 @@ import { UploadService } from "./upload.service";
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
-  //sube un archivo a IPFS via Pinata
-  //Devuelve el CID, la URL y el hash del archivo para registrar en el contrato
+  //Valida el archivo y devuelve su hash + contenido en base64.
+  //El documento es privado: no se publica en IPFS, se guarda en la base de datos
+  //al crear la metadata del documento.
   @Post()
   @UseGuards(AuthGuard("jwt"))
   @UseInterceptors(
@@ -25,6 +26,6 @@ export class UploadController {
     }),
   )
   upload(@UploadedFile() file: Express.Multer.File) {
-    return this.uploadService.uploadToIpfs(file);
+    return this.uploadService.processFile(file);
   }
 }

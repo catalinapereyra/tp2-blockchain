@@ -2,7 +2,6 @@
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../registry/MedicalRegistry.sol";
 import "../registry/UserRegistry.sol";
 import "../registry/MedicalDocumentRegistry.sol";
 
@@ -25,7 +24,7 @@ contract PrescriptionManager is Ownable {
         string prescriptionType;
         PrescriptionStatus status;
         bytes32 documentHash;   // vacío hasta que se emite
-        string offChainRef;     // CID de IPFS, vacío hasta que se emite
+        string offChainRef;     // referencia off-chain en la base de datos, vacío hasta que se emite
         uint256 requestedAt;
         uint256 updatedAt;
     }
@@ -36,7 +35,6 @@ contract PrescriptionManager is Ownable {
     mapping(address => uint256[]) private _doctorPrescriptions;
     uint256 private _nextId;
 
-    MedicalRegistry private immutable _medicalRegistry;
     UserRegistry private immutable _userRegistry;
     MedicalDocumentRegistry private immutable _documentRegistry;
 
@@ -54,14 +52,11 @@ contract PrescriptionManager is Ownable {
 
 
     constructor(
-        address medicalRegistry,
         address userRegistry,
         address documentRegistry
     ) Ownable(msg.sender) {
-        require(medicalRegistry != address(0), "PrescriptionManager: medicalRegistry invalido");
         require(userRegistry != address(0), "PrescriptionManager: userRegistry invalido");
         require(documentRegistry != address(0), "PrescriptionManager: documentRegistry invalido");
-        _medicalRegistry = MedicalRegistry(medicalRegistry);
         _userRegistry = UserRegistry(userRegistry);
         _documentRegistry = MedicalDocumentRegistry(documentRegistry);
     }
@@ -75,7 +70,7 @@ contract PrescriptionManager is Ownable {
         string calldata prescriptionType
     ) external returns (uint256) {
         require(_userRegistry.isRegistered(msg.sender), "PrescriptionManager: paciente no registrado");
-        require(_medicalRegistry.isVerifiedEmitter(doctor), "PrescriptionManager: medico no verificado");
+        require(_userRegistry.isVerifiedEmitter(doctor), "PrescriptionManager: medico no verificado");
         require(doctor != msg.sender, "PrescriptionManager: no puede solicitarse a si mismo");
 
         uint256 id = _nextId++;
