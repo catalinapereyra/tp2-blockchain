@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <g transform="rotate(30 32 32)" fill="none" stroke="#3fbfc2" stroke-width="4.2"
+     stroke-linecap="round" stroke-linejoin="round">
+    <rect x="13" y="12" width="38" height="42" rx="11" />
+    <path d="M9 7 H30 M9 7 V25" />
+  </g>
+  <text x="32" y="34" text-anchor="middle" dominant-baseline="central"
+        font-family="'DM Sans', Arial, sans-serif" font-size="26" font-weight="800" fill="#3fbfc2">M</text>
+</svg>

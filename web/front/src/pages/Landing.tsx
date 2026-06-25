@@ -5,6 +5,7 @@ import { Hero } from "../components/landing/Hero";
 import { SecuritySection } from "../components/landing/SecuritySection";
 import { StepsSection } from "../components/landing/StepsSection";
 import { UsersSection } from "../components/landing/UsersSection";
+import { BenefitsSection } from "../components/landing/BenefitsSection";
 import "../components/landing/Landing.css";
 
 export default function Landing() {
@@ -21,6 +22,7 @@ export default function Landing() {
       <UsersSection />
       <StepsSection />
       <SecuritySection />
+      <BenefitsSection />
       <Footer />
     </main>
   );

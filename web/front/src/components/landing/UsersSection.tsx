@@ -3,7 +3,7 @@ import { Icon } from "./Icon";
 
 export function UsersSection() {
   return (
-    <section className="users-section" id="beneficios">
+    <section className="users-section" id="usuarios">
       <h2>¿Quiénes usan MediChain?</h2>
       <div className="user-grid">
         {USERS.map((user) => (
