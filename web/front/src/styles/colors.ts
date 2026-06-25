@@ -1,6 +1,12 @@
 export const palette = {
   white: "#ffffff",
 
+  //(landing / área logueada)
+  navy: "#081f49",
+  navySoft: "#53627c",
+  navyFaint: "#8a97ad",
+  turquoise: "#03bec3",
+
   slate50: "#f8fafc",
   slate100: "#f1f5f9",
   slate200: "#e2e8f0",
@@ -117,8 +123,55 @@ export const roleAccent = {
   admin: colors.primary,
 } as const;
 
+// Lenguaje visual del landing/home, reutilizado en el área logueada del paciente.
+// Mismo estilo (fondo radial, tarjetas blancas, sombras suaves, títulos navy),
+// pero el color de acento lo decide cada sección (ver `sectionAccent`).
+export const landing = {
+  navy: palette.navy,
+  textBody: palette.navySoft,
+  textFaint: palette.navyFaint,
+  cardBg: "rgba(255,255,255,0.92)",
+  cardBorder: "1px solid rgba(8,31,73,0.08)",
+  hairline: "rgba(8,31,73,0.06)",
+  softShadow: "0 18px 50px rgba(8,31,73,0.08)",
+  pageBg:
+    "radial-gradient(circle at 78% 8%, rgba(80,194,255,0.16), transparent 26%), radial-gradient(circle at 95% 4%, rgba(109,99,255,0.14), transparent 30%), #fff",
+} as const;
+
+// Acento por sección del paciente: mismo estilo de tarjeta, distinto color.
+export const sectionAccent = {
+  estudios: { main: palette.indigo500, soft: palette.indigoSoft },
+  recetas:  { main: palette.sky500,    soft: palette.sky50 },
+  medicos:  { main: palette.amber500,  soft: palette.amber50 },
+  firmados: { main: palette.emerald500, soft: palette.emerald50 },
+} as const;
+
+export type SectionAccent = { main: string; soft: string };
+
+// Color por categoría de estudio: cada tipo tiene su acento para dar variedad
+// (no todo del mismo color). Cae en `otro` si la categoría no está mapeada.
+export const categoryAccent: Record<string, SectionAccent> = {
+  analisis:     { main: palette.sky500,     soft: palette.sky50 },
+  imagen:       { main: palette.indigo500,  soft: palette.indigoSoft },
+  patologia:    { main: palette.amber500,   soft: palette.amber50 },
+  cardiologia:  { main: palette.red500,     soft: palette.red50 },
+  genetica:     { main: palette.violet500,  soft: palette.violet100 },
+  endoscopia:   { main: palette.emerald500, soft: palette.emerald50 },
+  oftalmologia: { main: palette.blue600,    soft: palette.blue50 },
+  odontologia:  { main: palette.sky500,     soft: palette.sky50 },
+  dermatologia: { main: palette.orange500,  soft: palette.orange100 },
+  vacuna:       { main: palette.emerald500, soft: palette.mint50 },
+  receta:       { main: palette.sky500,     soft: palette.sky50 },
+  otro:         { main: palette.slate500,   soft: palette.slate100 },
+};
+
+export function categoryAccentOf(value: string): SectionAccent {
+  return categoryAccent[value] ?? categoryAccent.otro;
+}
+
 export const gradients = {
   app: "linear-gradient(135deg, #eef2ff 0%, #f8faff 40%, #f0fdf8 100%)",
+  brand: "linear-gradient(100deg, #02c6bd 0%, #05aeea 48%, #7852ff 100%)",
   labButton: "linear-gradient(135deg, #10b981, #059669)",
   labCard: "linear-gradient(135deg, #ecfdf5, #f8fafc)",
 } as const;

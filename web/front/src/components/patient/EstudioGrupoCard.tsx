@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { palette, fontFamily } from "../../styles";
+import { Icon } from "../landing/Icon";
+import { lu, iconBox } from "./PageShell";
+import { landing, palette, fontFamily, type SectionAccent } from "../../styles";
 import { useDocViewer } from "../common/DocViewer";
 
 export interface EstudioItem {
@@ -18,14 +20,8 @@ interface Props {
   studyType: string;
   category: string;
   estudios: EstudioItem[];
+  accent: SectionAccent;
 }
-
-const CATEGORY_STYLE: Record<string, { bg: string; color: string }> = {
-  analisis:  { bg: palette.sky50, color: palette.sky500 },
-  imagen:    { bg: palette.indigoSoft, color: palette.indigo500 },
-  patologia: { bg: palette.amber100, color: palette.amber500 },
-  otro:      { bg: palette.slate50, color: palette.slate500 },
-};
 
 function fmtDate(d: string): string {
   const parsed = new Date(d);
@@ -33,64 +29,58 @@ function fmtDate(d: string): string {
   return parsed.toLocaleDateString("es-AR", { month: "short", year: "numeric" });
 }
 
-export default function EstudioGrupoCard({ studyType, category, estudios }: Props) {
+export default function EstudioGrupoCard({ studyType, category, estudios, accent }: Props) {
   const viewer = useDocViewer();
   const [expanded, setExpanded] = useState(false);
-  const cs = CATEGORY_STYLE[category] ?? CATEGORY_STYLE.otro;
   const sorted = [...estudios].sort(
     (a, b) => new Date(b.studyDate).getTime() - new Date(a.studyDate).getTime()
   );
   const newest = sorted[0];
 
+  // El origen del estudio mantiene su propio color (no el de la sección).
+  const UPLOAD_PILL: Record<string, { label: string; color: string }> = {
+    lab: { label: "✓ Lab", color: palette.emerald600 },
+    doctor: { label: "✓ Médico", color: palette.sky500 },
+    patient: { label: "Subido por vos", color: palette.violet500 },
+  };
+
   return (
     <div style={s.card}>
       <div style={s.header} onClick={() => setExpanded(!expanded)}>
         <div style={s.headerLeft}>
-          <div style={{ ...s.iconWrap, background: cs.bg, color: cs.color }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-            </svg>
-          </div>
+          <span style={iconBox(accent)}><Icon name="document" size={20} /></span>
           <div style={s.titleGroup}>
             <span style={s.studyType}>{studyType}</span>
             <div style={s.metaRow}>
-              <span style={{ ...s.pill, background: cs.bg, color: cs.color }}>{category}</span>
+              <span style={{ ...s.pill, color: accent.main, background: accent.soft }}>{category}</span>
               <span style={s.metaText}>{estudios.length} {estudios.length === 1 ? "estudio" : "estudios"}</span>
               <span style={s.metaText}>· Último: {fmtDate(newest.studyDate)}</span>
             </div>
           </div>
         </div>
         <div style={s.headerRight}>
-          <span style={s.newestBadge}>● {fmtDate(newest.studyDate)}</span>
-          <svg
-            width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={palette.slate300} strokeWidth="2"
-            style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
-          >
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
+          <span style={{ ...s.newestBadge, color: accent.main }}>● {fmtDate(newest.studyDate)}</span>
+          <span style={{ display: "inline-flex", color: landing.textFaint, transform: expanded ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>
+            <Icon name="arrow" size={15} />
+          </span>
         </div>
       </div>
 
       {expanded && (
         <div style={s.body}>
           {sorted.map((e, idx) => (
-            <div key={e.id} style={{ ...s.item, ...(idx === 0 ? s.itemNewest : {}) }}>
+            <div key={e.id} style={{ ...s.item, ...(idx === 0 ? { background: accent.soft } : {}) }}>
               <div style={s.itemLeft}>
-                {idx === 0 && <span style={s.newestDot} title="Más reciente" />}
+                {idx === 0 && <span style={{ ...s.newestDot, background: accent.main }} title="Más reciente" />}
                 <div style={s.itemInfo}>
                   <span style={s.itemTitle}>{e.title}</span>
                   <div style={s.itemMeta}>
                     <span style={s.metaText}>{fmtDate(e.studyDate)}</span>
                     {e.labName && <><span style={s.metaText}>·</span><span style={s.metaText}>{e.labName}</span></>}
                     {(() => {
-                      const pill = {
-                        lab: { label: "✓ Lab", bg: palette.emerald50, color: palette.emerald600 },
-                        doctor: { label: "✓ Médico", bg: palette.sky50, color: palette.sky500 },
-                        patient: { label: "Subido por vos", bg: palette.indigoSoft, color: palette.indigo500 },
-                      }[e.uploadedBy];
+                      const pill = UPLOAD_PILL[e.uploadedBy];
                       return (
-                        <span style={{ ...s.uploadedPill, background: pill.bg, color: pill.color }}>
+                        <span style={{ ...s.uploadedPill, color: pill.color, background: `${pill.color}1a` }}>
                           {pill.label}
                         </span>
                       );
@@ -99,8 +89,8 @@ export default function EstudioGrupoCard({ studyType, category, estudios }: Prop
                   {e.diagnoses && e.diagnoses.length > 0 && (
                     <div style={s.diagList}>
                       {e.diagnoses.map((d, i) => (
-                        <div key={i} style={s.diagItem}>
-                          <span style={s.diagDoctor}>🩺 {d.doctorName || "Médico"}</span>
+                        <div key={i} style={{ ...s.diagItem, borderLeft: `2px solid ${accent.main}` }}>
+                          <span style={{ ...s.diagDoctor, color: accent.main }}>🩺 {d.doctorName || "Médico"}</span>
                           <span style={s.diagText}>{d.text}</span>
                         </div>
                       ))}
@@ -110,10 +100,10 @@ export default function EstudioGrupoCard({ studyType, category, estudios }: Prop
               </div>
               {e.fileUrl && (
                 <button
-                  style={s.viewBtn}
+                  style={{ ...s.viewBtn, background: accent.main }}
                   onClick={() => viewer.open({ url: e.fileUrl!, fileName: e.fileName, title: e.title, documentId: e.documentIdOnChain })}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  <Icon name="arrow" size={13} />
                   Ver
                 </button>
               )}
@@ -126,50 +116,31 @@ export default function EstudioGrupoCard({ studyType, category, estudios }: Prop
 }
 
 const s: Record<string, React.CSSProperties> = {
-  card: { background: palette.white, border: `1px solid ${palette.slate100}`, borderRadius: 14, overflow: "hidden" },
-  header: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "14px 16px", cursor: "pointer", gap: 12,
-  },
-  headerLeft: { display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 },
-  iconWrap: {
-    width: 36, height: 36, borderRadius: 10,
-    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-  },
-  titleGroup: { display: "flex", flexDirection: "column" as const, gap: 4 },
-  studyType: { fontSize: 14, fontWeight: 600, color: palette.slate900 },
-  metaRow: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const },
-  pill: { fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20 },
-  metaText: { fontSize: 11, color: palette.slate400 },
-  headerRight: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 },
-  newestBadge: { fontSize: 11, color: palette.emerald500, fontWeight: 600 },
-  body: { borderTop: `1px solid ${palette.slate50}`, display: "flex", flexDirection: "column" as const },
-  item: {
-    display: "flex", alignItems: "flex-start", justifyContent: "space-between",
-    padding: "12px 16px", borderBottom: `1px solid ${palette.slate50}`, gap: 12,
-  },
-  itemNewest: { background: palette.gray50 },
+  card: { ...lu.card, borderRadius: 18, overflow: "hidden" },
+  header: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px", cursor: "pointer", gap: 12 },
+  headerLeft: { display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 },
+  titleGroup: { display: "flex", flexDirection: "column" as const, gap: 5 },
+  studyType: { fontSize: 15, fontWeight: 700, color: landing.navy },
+  metaRow: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const },
+  pill: { fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 999, textTransform: "capitalize" as const },
+  metaText: { fontSize: 12, color: landing.textFaint },
+  headerRight: { display: "flex", alignItems: "center", gap: 10, flexShrink: 0 },
+  newestBadge: { fontSize: 11, fontWeight: 700 },
+  body: { borderTop: `1px solid ${landing.hairline}`, display: "flex", flexDirection: "column" as const },
+  item: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "13px 18px", borderBottom: "1px solid rgba(8,31,73,0.05)", gap: 12 },
   itemLeft: { display: "flex", alignItems: "flex-start", gap: 8, flex: 1 },
-  newestDot: {
-    width: 8, height: 8, borderRadius: "50%", background: palette.emerald500,
-    marginTop: 5, flexShrink: 0, display: "inline-block",
-  },
+  newestDot: { width: 8, height: 8, borderRadius: "50%", marginTop: 5, flexShrink: 0, display: "inline-block" },
   itemInfo: { display: "flex", flexDirection: "column" as const, gap: 4 },
-  itemTitle: { fontSize: 13, fontWeight: 500, color: palette.slate800 },
+  itemTitle: { fontSize: 14, fontWeight: 600, color: landing.navy },
   itemMeta: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const },
-  uploadedPill: { fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 20 },
+  uploadedPill: { fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999 },
   diagList: { display: "flex", flexDirection: "column" as const, gap: 6, marginTop: 4 },
-  diagItem: {
-    display: "flex", flexDirection: "column" as const, gap: 2,
-    background: palette.slate50, borderRadius: 8, padding: "6px 10px",
-    borderLeft: `2px solid ${palette.indigo500}`,
-  },
-  diagDoctor: { fontSize: 11, fontWeight: 700, color: palette.indigo500 },
-  diagText: { fontSize: 12, color: palette.slate600, lineHeight: 1.4 },
+  diagItem: { display: "flex", flexDirection: "column" as const, gap: 2, background: "rgba(8,31,73,0.04)", borderRadius: 10, padding: "7px 11px" },
+  diagDoctor: { fontSize: 11, fontWeight: 700 },
+  diagText: { fontSize: 12, color: landing.textBody, lineHeight: 1.4 },
   viewBtn: {
-    display: "inline-flex", alignItems: "center", gap: 4,
-    fontSize: 12, color: palette.indigo500, fontWeight: 600,
-    flexShrink: 0, background: "none", border: "none", cursor: "pointer",
-    fontFamily: fontFamily.sans, padding: 0,
+    display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#fff", fontWeight: 700,
+    flexShrink: 0, border: "none", cursor: "pointer", fontFamily: fontFamily.sans,
+    padding: "7px 14px", borderRadius: 999,
   },
 };

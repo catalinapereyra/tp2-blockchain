@@ -9,8 +9,11 @@ import UserSelect from "../../components/common/UserSelect";
 import { useToast } from "../../components/common/Toast";
 import { useLoader } from "../../components/common/Loader";
 import { useConfirm } from "../../components/common/Confirm";
-import Icon from "../../components/common/Icon";
-import { palette, colors, fontFamily, gradients } from "../../styles";
+import { Icon } from "../../components/landing/Icon";
+import PageShell, { lu, iconBox, accentPill } from "../../components/patient/PageShell";
+import { landing, sectionAccent, palette, fontFamily } from "../../styles";
+
+const accent = sectionAccent.medicos;
 
 interface DocMeta {
   id: number;
@@ -53,7 +56,6 @@ export default function MisMedicosPage() {
   const [granting, setGranting] = useState(false);
   const [grantError, setGrantError] = useState("");
 
-
   const [addingToDoctor, setAddingToDoctor] = useState<string | null>(null);
   const [addDocIds, setAddDocIds] = useState<number[]>([]);
   const [addingDocs, setAddingDocs] = useState(false);
@@ -78,7 +80,6 @@ export default function MisMedicosPage() {
   }
 
   useEffect(() => { if (address) load(); }, [address]);
-
 
   useEffect(() => {
     (async () => {
@@ -193,7 +194,6 @@ export default function MisMedicosPage() {
       setGranting(false);
     }
   }
-
 
   async function handleGrantAll() {
     if (!address || !newDoctorAddr.startsWith("0x")) return;
@@ -362,222 +362,210 @@ export default function MisMedicosPage() {
   }
 
   return (
-    <div style={s.page}>
-      <div style={s.container}>
-        <div style={s.topBar}>
-          <button style={s.backBtn} onClick={() => navigate("/patient")}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-            Volver
-          </button>
-        </div>
-
-        <div style={s.pageHeader}>
-          <div>
-            <h1 style={s.pageTitle}>Mis médicos</h1>
-            <p style={s.pageSubtitle}>{loading ? "Cargando…" : `${doctors.length} médico${doctors.length !== 1 ? "s" : ""} con acceso`}</p>
+    <PageShell
+      back={() => navigate("/patient")}
+      accent={accent}
+      icon="doctor"
+      eyebrow="Acceso a tu historial"
+      title="Mis médicos"
+      subtitle={loading ? "Cargando…" : `${doctors.length} médico${doctors.length !== 1 ? "s" : ""} con acceso`}
+      action={
+        <button style={accentPill(accent)} onClick={() => { setShowGrant(!showGrant); setGrantError(""); setNewSelectedIds([]); }}>
+          <Icon name="arrow" size={15} />
+          Dar acceso
+        </button>
+      }
+    >
+      {/* Panel nuevo médico */}
+      {showGrant && (
+        <div style={s.grantPanel}>
+          <h3 style={s.grantTitle}>Dar acceso a un médico nuevo</h3>
+          <div style={s.field}>
+            <label style={s.label}>Médico <span style={s.req}>*</span></label>
+            <UserSelect
+              users={medicos}
+              value={newDoctorAddr}
+              onChange={setNewDoctorAddr}
+              placeholder="Seleccioná un médico…"
+              emptyText="No hay médicos aprobados disponibles todavía."
+              accent={accent.main}
+            />
           </div>
-          <button style={s.addBtn} onClick={() => { setShowGrant(!showGrant); setGrantError(""); setNewSelectedIds([]); }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Dar acceso
-          </button>
-        </div>
 
-        {/* Panel nuevo médico */}
-        {showGrant && (
-          <div style={s.grantPanel}>
-            <h3 style={s.grantTitle}>Dar acceso a un médico nuevo</h3>
-            <div style={s.field}>
-              <label style={s.label}>Médico <span style={s.req}>*</span></label>
-              <UserSelect
-                users={medicos}
-                value={newDoctorAddr}
-                onChange={setNewDoctorAddr}
-                placeholder="Seleccioná un médico…"
-                emptyText="No hay médicos aprobados disponibles todavía."
-                accent={palette.amber500}
+          <button
+            style={{ ...s.addOnlyBtn, opacity: newDoctorAddr.startsWith("0x") && !granting ? 1 : 0.5 }}
+            disabled={!newDoctorAddr.startsWith("0x") || granting}
+            onClick={handleAddDoctorOnly}
+          >
+            + Agregar a mis médicos (sin compartir documentos)
+          </button>
+          {myDocs.length === 0 ? (
+            <p style={s.emptySmall}>No tenés estudios para compartir aún.</p>
+          ) : (
+            <>
+              <span style={s.pickerHint}>Elegí documentos puntuales:</span>
+              <DocPicker
+                docs={myDocs}
+                selectedIds={newSelectedIds}
+                onToggle={(id) => setNewSelectedIds((prev) => prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id])}
               />
-            </div>
-
-            <button
-              style={{ ...s.addOnlyBtn, opacity: newDoctorAddr.startsWith("0x") && !granting ? 1 : 0.5 }}
-              disabled={!newDoctorAddr.startsWith("0x") || granting}
-              onClick={handleAddDoctorOnly}
-            >
-              + Agregar a mis médicos (sin compartir documentos)
-            </button>
-            {myDocs.length === 0 ? (
-              <p style={s.emptySmall}>No tenés estudios para compartir aún.</p>
-            ) : (
-              <>
-                <span style={s.pickerHint}>Elegí documentos puntuales:</span>
-                <DocPicker
-                  docs={myDocs}
-                  selectedIds={newSelectedIds}
-                  onToggle={(id) => setNewSelectedIds((prev) => prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id])}
-                />
-                <div style={s.orRow}>
-                  <span style={s.orLine} /><span style={s.orText}>o</span><span style={s.orLine} />
-                </div>
-                <button
-                  style={{ ...s.grantAllBtn, opacity: newDoctorAddr.startsWith("0x") && !granting ? 1 : 0.5 }}
-                  disabled={!newDoctorAddr.startsWith("0x") || granting}
-                  onClick={handleGrantAll}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  Dar acceso a TODOS mis documentos
-                </button>
-              </>
-            )}
-            {grantError && <p style={s.errorMsg}>{grantError}</p>}
-            <div style={s.grantActions}>
+              <div style={s.orRow}>
+                <span style={s.orLine} /><span style={s.orText}>o</span><span style={s.orLine} />
+              </div>
               <button
-                style={{ ...s.confirmBtn, opacity: newDoctorAddr.startsWith("0x") && newSelectedIds.length > 0 && !granting ? 1 : 0.5 }}
-                disabled={!newDoctorAddr.startsWith("0x") || newSelectedIds.length === 0 || granting}
-                onClick={handleGrantNew}
+                style={{ ...s.grantAllBtn, opacity: newDoctorAddr.startsWith("0x") && !granting ? 1 : 0.5 }}
+                disabled={!newDoctorAddr.startsWith("0x") || granting}
+                onClick={handleGrantAll}
               >
-                {granting ? "Firmando en MetaMask…" : `Confirmar (${newSelectedIds.length} doc${newSelectedIds.length !== 1 ? "s" : ""})`}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Dar acceso a TODOS mis documentos
               </button>
-              <button style={s.cancelBtn} onClick={() => { setShowGrant(false); setNewDoctorAddr(""); setNewSelectedIds([]); setGrantError(""); }}>
-                Cancelar
-              </button>
+            </>
+          )}
+          {grantError && <p style={s.errorMsg}>{grantError}</p>}
+          <div style={s.grantActions}>
+            <button
+              style={{ ...s.confirmBtn, opacity: newDoctorAddr.startsWith("0x") && newSelectedIds.length > 0 && !granting ? 1 : 0.5 }}
+              disabled={!newDoctorAddr.startsWith("0x") || newSelectedIds.length === 0 || granting}
+              onClick={handleGrantNew}
+            >
+              {granting ? "Firmando en MetaMask…" : `Confirmar (${newSelectedIds.length} doc${newSelectedIds.length !== 1 ? "s" : ""})`}
+            </button>
+            <button style={s.cancelBtn} onClick={() => { setShowGrant(false); setNewDoctorAddr(""); setNewSelectedIds([]); setGrantError(""); }}>
+              Cancelar
+            </button>
+          </div>
+          {granting && <p style={s.grantNote}>Una firma de MetaMask por cada documento.</p>}
+        </div>
+      )}
+
+      {error && <div style={s.errorBox}>{error}</div>}
+      {revokeError && <div style={s.errorBox}>{revokeError}</div>}
+      {loading && <div style={s.center}><div style={{ ...lu.spinner, borderTopColor: accent.main }} /></div>}
+
+      {!loading && doctors.length === 0 && (
+        <div style={s.empty}>
+          <span style={{ ...iconBox(accent), width: 60, height: 60, borderRadius: 18 }}><Icon name="doctor" size={30} /></span>
+          <p style={s.emptyText}>Ningún médico tiene acceso a tus estudios todavía.</p>
+        </div>
+      )}
+
+      {!loading && doctors.map((doctor) => {
+        const sharedIds = unavailableIds(doctor);
+        const unsharedDocs = myDocs.filter((d) => !sharedIds.has(d.documentIdOnChain));
+        const isAddingHere = addingToDoctor === doctor.doctorAddress;
+        const isOpen = expanded.has(doctor.doctorAddress);
+        const name = doctorNames.get(doctor.doctorAddress);
+        const specialty = doctorSpecialties.get(doctor.doctorAddress);
+
+        return (
+          <div key={doctor.doctorAddress} style={s.doctorCard}>
+            <div style={s.doctorHeader} onClick={() => toggleExpanded(doctor.doctorAddress)}>
+              <span style={iconBox(accent)}><Icon name="doctor" size={20} /></span>
+              <div style={{ minWidth: 0 }}>
+                {name && <p style={s.doctorName}>{name}</p>}
+                {specialty && <p style={s.doctorSpecialty}>{specialty}</p>}
+                <p style={name ? s.doctorAddrSmall : s.doctorAddr}>{fmtAddr(doctor.doctorAddress)}</p>
+              </div>
+              <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={s.docCount}>{doctor.documents.length} doc{doctor.documents.length !== 1 ? "s" : ""}</span>
+                <span style={{ display: "inline-flex", color: landing.textFaint, transform: isOpen ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>
+                  <Icon name="arrow" size={15} />
+                </span>
+              </div>
             </div>
-            {granting && <p style={s.grantNote}>Una firma de MetaMask por cada documento.</p>}
-          </div>
-        )}
 
-        {error && <div style={s.errorBox}>{error}</div>}
-        {revokeError && <div style={s.errorBox}>{revokeError}</div>}
-        {loading && <div style={s.center}><div style={s.spinner} /></div>}
-
-        {!loading && doctors.length === 0 && (
-          <div style={s.empty}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={palette.slate200} strokeWidth="1.5">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-            </svg>
-            <p style={s.emptyText}>Ningún médico tiene acceso a tus estudios todavía.</p>
-          </div>
-        )}
-
-        {!loading && doctors.map((doctor) => {
-          const sharedIds = unavailableIds(doctor);
-          const unsharedDocs = myDocs.filter((d) => !sharedIds.has(d.documentIdOnChain));
-          const isAddingHere = addingToDoctor === doctor.doctorAddress;
-          const isOpen = expanded.has(doctor.doctorAddress);
-          const name = doctorNames.get(doctor.doctorAddress);
-          const specialty = doctorSpecialties.get(doctor.doctorAddress);
-
-          return (
-            <div key={doctor.doctorAddress} style={s.doctorCard}>
-              <div style={s.doctorHeader} onClick={() => toggleExpanded(doctor.doctorAddress)}>
-                <div style={s.doctorIcon}>
-                  <Icon name="doctor" size={17} color={palette.sky500} />
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  {name && <p style={s.doctorName}>{name}</p>}
-                  {specialty && <p style={s.doctorSpecialty}>{specialty}</p>}
-                  <p style={name ? s.doctorAddrSmall : s.doctorAddr}>{fmtAddr(doctor.doctorAddress)}</p>
-                </div>
-                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={s.docCount}>{doctor.documents.length} doc{doctor.documents.length !== 1 ? "s" : ""}</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={palette.slate300} strokeWidth="2"
-                    style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}>
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
-              </div>
-
-              {isOpen && (
-              <>
-              <div style={s.addDocBar}>
-                {unsharedDocs.length > 0 && (
-                  <button
-                    style={s.addDocBtn}
-                    onClick={() => {
-                      if (isAddingHere) { setAddingToDoctor(null); setAddDocIds([]); setAddDocError(""); }
-                      else { setAddingToDoctor(doctor.doctorAddress); setAddDocIds([]); setAddDocError(""); }
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    {isAddingHere ? "Cerrar" : "Agregar doc"}
-                  </button>
-                )}
+            {isOpen && (
+            <>
+            <div style={s.addDocBar}>
+              {unsharedDocs.length > 0 && (
                 <button
-                  style={{ ...s.grantAllInlineBtn, opacity: grantingAllTo === doctor.doctorAddress ? 0.5 : 1 }}
-                  disabled={grantingAllTo === doctor.doctorAddress}
-                  onClick={() => handleGrantAllToDoctor(doctor.doctorAddress)}
+                  style={s.addDocBtn}
+                  onClick={() => {
+                    if (isAddingHere) { setAddingToDoctor(null); setAddDocIds([]); setAddDocError(""); }
+                    else { setAddingToDoctor(doctor.doctorAddress); setAddDocIds([]); setAddDocError(""); }
+                  }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  {grantingAllTo === doctor.doctorAddress ? "Otorgando…" : "Dar acceso a todos mis docs"}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  {isAddingHere ? "Cerrar" : "Agregar doc"}
                 </button>
-                {doctor.documents.length === 0 && (
-                  <button
-                    style={{ ...s.removeDocBtn, opacity: removing === doctor.doctorAddress ? 0.5 : 1 }}
-                    disabled={removing === doctor.doctorAddress}
-                    onClick={() => handleRemoveDoctor(doctor.doctorAddress)}
-                  >
-                    {removing === doctor.doctorAddress ? "Quitando…" : "Quitar de mis médicos"}
-                  </button>
-                )}
-              </div>
+              )}
+              <button
+                style={{ ...s.grantAllInlineBtn, opacity: grantingAllTo === doctor.doctorAddress ? 0.5 : 1 }}
+                disabled={grantingAllTo === doctor.doctorAddress}
+                onClick={() => handleGrantAllToDoctor(doctor.doctorAddress)}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                {grantingAllTo === doctor.doctorAddress ? "Otorgando…" : "Dar acceso a todos mis docs"}
+              </button>
+              {doctor.documents.length === 0 && (
+                <button
+                  style={{ ...s.removeDocBtn, opacity: removing === doctor.doctorAddress ? 0.5 : 1 }}
+                  disabled={removing === doctor.doctorAddress}
+                  onClick={() => handleRemoveDoctor(doctor.doctorAddress)}
+                >
+                  {removing === doctor.doctorAddress ? "Quitando…" : "Quitar de mis médicos"}
+                </button>
+              )}
+            </div>
 
-              {/* Picker inline para agregar más docs */}
-              {isAddingHere && (
-                <div style={s.addDocPanel}>
-                  <p style={s.addDocLabel}>Estudios que todavía no ve:</p>
-                  <DocPicker
-                    docs={unsharedDocs}
-                    selectedIds={addDocIds}
-                    onToggle={(id) => setAddDocIds((prev) => prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id])}
-                  />
-                  {addDocError && <p style={s.errorMsg}>{addDocError}</p>}
-                  <div style={s.grantActions}>
+            {/* Picker inline para agregar más docs */}
+            {isAddingHere && (
+              <div style={s.addDocPanel}>
+                <p style={s.addDocLabel}>Estudios que todavía no ve:</p>
+                <DocPicker
+                  docs={unsharedDocs}
+                  selectedIds={addDocIds}
+                  onToggle={(id) => setAddDocIds((prev) => prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id])}
+                />
+                {addDocError && <p style={s.errorMsg}>{addDocError}</p>}
+                <div style={s.grantActions}>
+                  <button
+                    style={{ ...s.confirmBtn, opacity: addDocIds.length > 0 && !addingDocs ? 1 : 0.5 }}
+                    disabled={addDocIds.length === 0 || addingDocs}
+                    onClick={() => handleAddDocs(doctor.doctorAddress)}
+                  >
+                    {addingDocs ? "Firmando en MetaMask…" : `Compartir (${addDocIds.length} doc${addDocIds.length !== 1 ? "s" : ""})`}
+                  </button>
+                  <button style={s.cancelBtn} onClick={() => { setAddingToDoctor(null); setAddDocIds([]); setAddDocError(""); }}>
+                    Cancelar
+                  </button>
+                </div>
+                {addingDocs && <p style={s.grantNote}>Una firma de MetaMask por cada documento.</p>}
+              </div>
+            )}
+
+            {/* Lista de docs que ya puede ver */}
+            <div style={s.docAccesList}>
+              {doctor.documents.map((doc) => {
+                const key = `${doctor.doctorAddress}-${doc.documentIdOnChain}`;
+                const isRevoking = revoking === key;
+                return (
+                  <div key={doc.documentIdOnChain} style={s.accessRow}>
+                    <div style={s.accessInfo}>
+                      <span style={s.accessTitle}>{doc.title}</span>
+                      <span style={s.accessMeta}>
+                        {doc.studyType || doc.documentType}
+                        {doc.studyDate ? ` · ${fmtDate(doc.studyDate)}` : ""}
+                      </span>
+                    </div>
                     <button
-                      style={{ ...s.confirmBtn, opacity: addDocIds.length > 0 && !addingDocs ? 1 : 0.5 }}
-                      disabled={addDocIds.length === 0 || addingDocs}
-                      onClick={() => handleAddDocs(doctor.doctorAddress)}
+                      style={{ ...s.revokeBtn, opacity: isRevoking ? 0.5 : 1 }}
+                      disabled={isRevoking}
+                      onClick={() => handleRevoke(doctor.doctorAddress, doc.documentIdOnChain)}
                     >
-                      {addingDocs ? "Firmando en MetaMask…" : `Compartir (${addDocIds.length} doc${addDocIds.length !== 1 ? "s" : ""})`}
-                    </button>
-                    <button style={s.cancelBtn} onClick={() => { setAddingToDoctor(null); setAddDocIds([]); setAddDocError(""); }}>
-                      Cancelar
+                      {isRevoking ? "…" : "Revocar"}
                     </button>
                   </div>
-                  {addingDocs && <p style={s.grantNote}>Una firma de MetaMask por cada documento.</p>}
-                </div>
-              )}
-
-              {/* Lista de docs que ya puede ver */}
-              <div style={s.docAccesList}>
-                {doctor.documents.map((doc) => {
-                  const key = `${doctor.doctorAddress}-${doc.documentIdOnChain}`;
-                  const isRevoking = revoking === key;
-                  return (
-                    <div key={doc.documentIdOnChain} style={s.accessRow}>
-                      <div style={s.accessInfo}>
-                        <span style={s.accessTitle}>{doc.title}</span>
-                        <span style={s.accessMeta}>
-                          {doc.studyType || doc.documentType}
-                          {doc.studyDate ? ` · ${fmtDate(doc.studyDate)}` : ""}
-                        </span>
-                      </div>
-                      <button
-                        style={{ ...s.revokeBtn, opacity: isRevoking ? 0.5 : 1 }}
-                        disabled={isRevoking}
-                        onClick={() => handleRevoke(doctor.doctorAddress, doc.documentIdOnChain)}
-                      >
-                        {isRevoking ? "…" : "Revocar"}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-              </>
-              )}
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
-    </div>
+            </>
+            )}
+          </div>
+        );
+      })}
+    </PageShell>
   );
 }
 
@@ -603,85 +591,74 @@ function DocPicker({ docs, selectedIds, onToggle }: { docs: DocMeta[]; selectedI
   );
 }
 
+const FONT = fontFamily.sans;
+
 const sp: Record<string, React.CSSProperties> = {
-  docRow: { display: "flex", alignItems: "center", gap: 10, border: `1.5px solid ${palette.slate200}`, borderRadius: 10, padding: "10px 14px", cursor: "pointer", background: palette.white },
-  docRowActive: { borderColor: palette.amber500, background: palette.amber50 },
-  checkbox: { width: 16, height: 16, accentColor: palette.amber500, flexShrink: 0, cursor: "pointer" },
+  docRow: { display: "flex", alignItems: "center", gap: 10, border: "1.5px solid rgba(8,31,73,0.12)", borderRadius: 12, padding: "10px 14px", cursor: "pointer", background: palette.white },
+  docRowActive: { borderColor: accent.main, background: accent.soft },
+  checkbox: { width: 16, height: 16, accentColor: accent.main, flexShrink: 0, cursor: "pointer" },
   docInfo: { display: "flex", flexDirection: "column" as const, gap: 2 },
-  docTitle: { fontSize: 13, fontWeight: 500, color: palette.slate800 },
-  docMeta: { fontSize: 11, color: palette.slate400 },
+  docTitle: { fontSize: 13, fontWeight: 600, color: landing.navy },
+  docMeta: { fontSize: 11, color: landing.textFaint },
 };
 
 const s: Record<string, React.CSSProperties> = {
-  page: { minHeight: "calc(100vh - 56px)", background: gradients.app, fontFamily: fontFamily.sans, paddingBottom: 60 },
-  container: { maxWidth: 620, margin: "0 auto", padding: "28px 20px" },
-  topBar: { marginBottom: 20 },
-  backBtn: { display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none", color: palette.slate500, fontSize: 13, fontWeight: 500, cursor: "pointer", padding: 0, fontFamily: fontFamily.sans },
-  pageHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 20 },
-  pageIconWrap: { width: 44, height: 44, borderRadius: 12, background: palette.amber50, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  pageTitle: { fontSize: 20, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.4px" },
-  pageSubtitle: { fontSize: 13, color: palette.slate400, margin: "2px 0 0" },
-  addBtn: { marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, background: palette.amber500, color: palette.white, border: "none", padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: fontFamily.sans, flexShrink: 0 },
-  grantPanel: { background: palette.white, borderRadius: 16, padding: "20px 24px", marginBottom: 20, border: `1px solid ${palette.amber200}`, display: "flex", flexDirection: "column" as const, gap: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.04)" },
-  grantTitle: { fontSize: 15, fontWeight: 700, color: palette.slate900, margin: 0 },
+  grantPanel: { ...lu.card, borderRadius: 18, padding: "20px 24px", marginBottom: 20, display: "flex", flexDirection: "column" as const, gap: 16 },
+  grantTitle: { fontSize: 16, fontWeight: 700, color: landing.navy, margin: 0 },
   field: { display: "flex", flexDirection: "column" as const, gap: 8 },
-  label: { fontSize: 13, fontWeight: 600, color: palette.slate600 },
+  label: { fontSize: 13, fontWeight: 600, color: landing.textBody },
   req: { color: palette.red600 },
-  input: { border: `1.5px solid ${palette.slate200}`, borderRadius: 10, padding: "10px 12px", fontSize: 13, fontFamily: fontFamily.mono, outline: "none", width: "100%", boxSizing: "border-box" as const },
   grantActions: { display: "flex", gap: 8 },
-  confirmBtn: { background: palette.amber500, color: palette.white, border: "none", padding: "10px 18px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: fontFamily.sans },
-  cancelBtn: { background: "none", color: palette.slate500, border: `1.5px solid ${palette.slate200}`, padding: "10px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: fontFamily.sans },
-  grantNote: { fontSize: 11, color: palette.slate400, margin: 0 },
+  confirmBtn: { background: accent.main, color: "#fff", border: "none", padding: "11px 20px", borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT },
+  cancelBtn: { background: "none", color: landing.textBody, border: "1.5px solid rgba(8,31,73,0.12)", padding: "11px 18px", borderRadius: 999, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: FONT },
+  grantNote: { fontSize: 11, color: landing.textFaint, margin: 0 },
   errorMsg: { fontSize: 12, color: palette.red600, margin: 0 },
-  emptySmall: { fontSize: 13, color: palette.slate400, margin: 0 },
-  pickerHint: { fontSize: 12, fontWeight: 600, color: palette.slate500 },
+  emptySmall: { fontSize: 13, color: landing.textFaint, margin: 0 },
+  pickerHint: { fontSize: 12, fontWeight: 600, color: landing.textBody },
   orRow: { display: "flex", alignItems: "center", gap: 10, margin: "2px 0" },
-  orLine: { flex: 1, height: 1, background: palette.slate200 },
-  orText: { fontSize: 11, color: palette.slate400, fontWeight: 600 },
+  orLine: { flex: 1, height: 1, background: "rgba(8,31,73,0.1)" },
+  orText: { fontSize: 11, color: landing.textFaint, fontWeight: 600 },
   grantAllBtn: {
     display: "inline-flex", alignItems: "center", justifyContent: "center",
-    background: palette.amber50, color: palette.amber600, border: `1.5px solid ${palette.amber200}`,
-    padding: "11px 16px", borderRadius: 10, fontSize: 13, fontWeight: 700,
-    cursor: "pointer", fontFamily: fontFamily.sans, width: "100%",
+    background: accent.soft, color: accent.main, border: `1.5px solid ${accent.main}`,
+    padding: "11px 16px", borderRadius: 12, fontSize: 13, fontWeight: 700,
+    cursor: "pointer", fontFamily: FONT, width: "100%",
   },
   addOnlyBtn: {
-    background: palette.slate50, color: palette.slate600, border: `1.5px solid ${palette.slate200}`,
-    padding: "9px 14px", borderRadius: 10, fontSize: 12, fontWeight: 600,
-    cursor: "pointer", fontFamily: fontFamily.sans, width: "100%",
+    background: "rgba(8,31,73,0.04)", color: landing.textBody, border: "1.5px solid rgba(8,31,73,0.1)",
+    padding: "10px 14px", borderRadius: 12, fontSize: 12, fontWeight: 600,
+    cursor: "pointer", fontFamily: FONT, width: "100%",
   },
-  errorBox: { background: palette.red50, border: `1px solid ${palette.red200}`, borderRadius: 10, padding: "12px 16px", fontSize: 13, color: palette.red600, marginBottom: 16 },
+  errorBox: { background: palette.red50, border: `1px solid ${palette.red200}`, borderRadius: 12, padding: "12px 16px", fontSize: 14, color: palette.red600, marginBottom: 16 },
   center: { display: "flex", justifyContent: "center", padding: "48px 0" },
-  spinner: { width: 28, height: 28, border: `3px solid ${palette.slate200}`, borderTopColor: palette.amber500, borderRadius: "50%", animation: "spin 0.8s linear infinite" },
-  empty: { display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 12, padding: "60px 0", textAlign: "center" as const },
-  emptyText: { fontSize: 14, color: palette.slate400, margin: 0 },
-  doctorCard: { background: palette.white, border: `1px solid ${palette.slate100}`, borderRadius: 14, marginBottom: 12, overflow: "hidden" },
-  doctorHeader: { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer", userSelect: "none" as const },
-  doctorName: { fontSize: 14, fontWeight: 600, color: palette.slate900, margin: 0 },
-  doctorSpecialty: { fontSize: 12, fontWeight: 600, color: palette.sky500, margin: "1px 0 0" },
-  doctorAddrSmall: { fontFamily: fontFamily.mono, fontSize: 11, color: palette.slate400, margin: "2px 0 0" },
+  empty: { display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 14, padding: "60px 0", textAlign: "center" as const },
+  emptyText: { fontSize: 15, color: landing.textBody, margin: 0 },
+  doctorCard: { ...lu.card, borderRadius: 18, marginBottom: 12, overflow: "hidden" },
+  doctorHeader: { display: "flex", alignItems: "center", gap: 12, padding: "16px 18px", cursor: "pointer", userSelect: "none" as const },
+  doctorName: { fontSize: 15, fontWeight: 700, color: landing.navy, margin: 0 },
+  doctorSpecialty: { fontSize: 12, fontWeight: 600, color: accent.main, margin: "1px 0 0" },
+  doctorAddrSmall: { fontFamily: "monospace", fontSize: 11, color: landing.textFaint, margin: "2px 0 0" },
+  doctorAddr: { fontSize: 15, fontWeight: 700, color: landing.navy, margin: 0 },
+  docCount: { background: accent.soft, color: accent.main, fontSize: 11, fontWeight: 700, padding: "3px 11px", borderRadius: 999, flexShrink: 0 },
   removeDocBtn: {
-    background: palette.white, color: palette.slate500, border: `1.5px solid ${palette.slate200}`,
-    padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-    cursor: "pointer", fontFamily: fontFamily.sans, display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
+    background: palette.white, color: landing.textBody, border: "1.5px solid rgba(8,31,73,0.12)",
+    padding: "6px 13px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+    cursor: "pointer", fontFamily: FONT, display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
   },
-  addDocBar: { padding: "14px 16px 6px", display: "flex", gap: 12, flexWrap: "wrap" as const },
+  addDocBar: { padding: "14px 18px 6px", display: "flex", gap: 10, flexWrap: "wrap" as const, borderTop: `1px solid ${landing.hairline}` },
   grantAllInlineBtn: {
-    background: colors.labSoft, color: colors.lab, border: `1px solid ${palette.emerald200}`,
-    padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-    cursor: "pointer", fontFamily: fontFamily.sans,
+    background: sectionAccent.firmados.soft, color: sectionAccent.firmados.main, border: `1px solid ${sectionAccent.firmados.main}`,
+    padding: "6px 13px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+    cursor: "pointer", fontFamily: FONT,
     display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
   },
-  doctorIcon: { width: 36, height: 36, borderRadius: 10, background: palette.sky50, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  doctorAddr: { fontSize: 14, fontWeight: 600, color: palette.slate900, margin: 0 },
-  doctorFull: { fontFamily: fontFamily.mono, fontSize: 10, color: palette.slate400, margin: "2px 0 0" },
-  docCount: { background: palette.sky50, color: palette.sky500, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, flexShrink: 0 },
-  addDocBtn: { background: palette.indigoSoft, color: palette.indigo500, border: `1px solid ${palette.indigo200}`, padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: fontFamily.sans, display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
-  addDocPanel: { background: palette.neutral50, borderBottom: `1px solid ${palette.slate100}`, padding: "14px 16px", display: "flex", flexDirection: "column" as const, gap: 12 },
-  addDocLabel: { fontSize: 12, fontWeight: 600, color: palette.slate600, margin: 0 },
+  addDocBtn: { background: sectionAccent.estudios.soft, color: sectionAccent.estudios.main, border: `1px solid ${sectionAccent.estudios.main}`, padding: "6px 13px", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: FONT, display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
+  addDocPanel: { background: "rgba(8,31,73,0.03)", borderTop: `1px solid ${landing.hairline}`, padding: "14px 18px", display: "flex", flexDirection: "column" as const, gap: 12 },
+  addDocLabel: { fontSize: 12, fontWeight: 600, color: landing.textBody, margin: 0 },
   docAccesList: { display: "flex", flexDirection: "column" as const },
-  accessRow: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${palette.slate50}`, gap: 12 },
+  accessRow: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 18px", borderTop: "1px solid rgba(8,31,73,0.05)", gap: 12 },
   accessInfo: { display: "flex", flexDirection: "column" as const, gap: 2 },
-  accessTitle: { fontSize: 13, fontWeight: 500, color: palette.slate800 },
-  accessMeta: { fontSize: 11, color: palette.slate400 },
-  revokeBtn: { background: "none", color: palette.red600, border: `1.5px solid ${palette.red200}`, padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: fontFamily.sans, flexShrink: 0 },
+  accessTitle: { fontSize: 13, fontWeight: 600, color: landing.navy },
+  accessMeta: { fontSize: 11, color: landing.textFaint },
+  revokeBtn: { background: "none", color: palette.red600, border: `1.5px solid ${palette.red200}`, padding: "6px 13px", borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: FONT, flexShrink: 0 },
 };

@@ -1,90 +1,54 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
-import { palette, fontFamily, gradients } from "../../styles";
+import { Icon, type IconName } from "../../components/landing/Icon";
+import { landing, sectionAccent, gradients, fontFamily, type SectionAccent } from "../../styles";
 
-const ACTIONS = [
+const ACTIONS: { path: string; icon: IconName; title: string; desc: string; accent: SectionAccent }[] = [
   {
     path: "/patient/estudios",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
-      </svg>
-    ),
-    iconBg: palette.indigoSoft,
-    border: palette.indigo200,
-    bg: palette.indigoSoft,
+    icon: "document",
     title: "Mis estudios",
     desc: "Historial de análisis e imágenes, agrupados por tipo.",
-    badge: null,
+    accent: sectionAccent.estudios,
   },
   {
     path: "/patient/recetas",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.sky500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-        <rect x="9" y="3" width="6" height="4" rx="1"/>
-        <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
-      </svg>
-    ),
-    iconBg: palette.sky50,
-    border: palette.sky200,
-    bg: palette.sky50,
+    icon: "clipboard",
     title: "Mis recetas",
     desc: "Tus recetas emitidas y solicitá nuevas a tu médico.",
-    badge: null,
+    accent: sectionAccent.recetas,
   },
   {
     path: "/patient/medicos",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.amber500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
-    ),
-    iconBg: palette.amber50,
-    border: palette.amber200,
-    bg: palette.amber50,
+    icon: "doctor",
     title: "Mis médicos",
     desc: "Gestioná qué médicos pueden ver tus estudios.",
-    badge: "2 con acceso",
+    accent: sectionAccent.medicos,
   },
   {
     path: "/patient/pendientes",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={palette.emerald500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><circle cx="11" cy="11" r="2"/>
-      </svg>
-    ),
-    iconBg: palette.emerald50,
-    border: palette.emerald200,
-    bg: palette.emerald50,
+    icon: "shield",
     title: "Documentos firmados",
     desc: "Registrá en tu historial los estudios que firmó un médico.",
-    badge: "Pendientes",
+    accent: sectionAccent.firmados,
   },
 ];
 
 export default function PatientDashboard() {
   const { address, name } = useWallet();
   const navigate = useNavigate();
+  const [hover, setHover] = useState<string | null>(null);
 
   return (
     <div style={s.page}>
       <div style={s.container}>
-
         <div style={s.header}>
           <div style={s.avatarWrap}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={palette.indigo500} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-            </svg>
+            <span style={s.avatarInner}><Icon name="user" size={24} /></span>
           </div>
           <div>
+            <p style={s.eyebrow}>Tu espacio en MediChain</p>
             <div style={s.greetingRow}>
               <h1 style={s.greeting}>Hola, {name || "👋"}</h1>
               <span style={s.roleTag}>Paciente</span>
@@ -94,26 +58,33 @@ export default function PatientDashboard() {
         </div>
 
         <div style={s.grid}>
-          {ACTIONS.map((a) => (
-            <div
-              key={a.path}
-              style={{ ...s.card, background: a.bg, borderColor: a.border }}
-              onClick={() => navigate(a.path)}
-            >
-              <div style={s.cardTop}>
-                <div style={{ ...s.iconWrap, background: palette.white }}>{a.icon}</div>
-                {a.badge && <span style={s.badge}>{a.badge}</span>}
-              </div>
-              <h2 style={s.cardTitle}>{a.title}</h2>
-              <p style={s.cardDesc}>{a.desc}</p>
-              <div style={s.arrow}>
-                Ver
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-              </div>
-            </div>
-          ))}
+          {ACTIONS.map((a) => {
+            const isHover = hover === a.path;
+            return (
+              <button
+                key={a.path}
+                style={{
+                  ...s.card,
+                  transform: isHover ? "translateY(-4px)" : "none",
+                  boxShadow: isHover ? "0 26px 60px rgba(8,31,73,0.14)" : landing.softShadow,
+                }}
+                onClick={() => navigate(a.path)}
+                onMouseEnter={() => setHover(a.path)}
+                onMouseLeave={() => setHover(null)}
+              >
+                <span style={{ ...s.cardIcon, background: a.accent.soft, color: a.accent.main }}>
+                  <Icon name={a.icon} size={28} />
+                </span>
+                <h2 style={s.cardTitle}>{a.title}</h2>
+                <p style={s.cardDesc}>{a.desc}</p>
+                <span style={{ ...s.cardCta, background: a.accent.main }}>
+                  Ver
+                  <Icon name="arrow" size={16} />
+                </span>
+              </button>
+            );
+          })}
         </div>
-
       </div>
     </div>
   );
@@ -122,52 +93,45 @@ export default function PatientDashboard() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "calc(100vh - 56px)",
-    background: gradients.app,
+    background: landing.pageBg,
     fontFamily: fontFamily.sans,
     display: "flex", alignItems: "center", justifyContent: "center",
-    padding: "40px 20px",
+    padding: "48px 24px",
   },
-  container: { width: "100%", maxWidth: 620 },
-  header: { display: "flex", alignItems: "center", gap: 14, marginBottom: 32 },
+  container: { width: "100%", maxWidth: 720 },
+  header: { display: "flex", alignItems: "center", gap: 16, marginBottom: 36 },
   avatarWrap: {
-    width: 52, height: 52, borderRadius: 16,
-    background: palette.white, border: `1px solid ${palette.slate100}`,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+    width: 60, height: 60, borderRadius: 18, flexShrink: 0,
+    background: landing.cardBg, border: landing.cardBorder,
+    boxShadow: "0 14px 36px rgba(8,31,73,0.10)",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
-  greetingRow: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const },
-  greeting: { fontSize: 22, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.5px" },
-  roleTag: { fontSize: 11, fontWeight: 700, color: palette.indigo500, background: palette.indigoSoft, padding: "3px 10px", borderRadius: 20 },
-  addr: { fontFamily: fontFamily.mono, fontSize: 12, color: palette.slate400, margin: "3px 0 0" },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 12,
+  avatarInner: {
+    width: 44, height: 44, borderRadius: 13,
+    background: "linear-gradient(135deg, rgba(3,190,195,0.18), rgba(120,82,255,0.16))",
+    color: "#03bec3", display: "flex", alignItems: "center", justifyContent: "center",
   },
+  eyebrow: { color: "#03bec3", fontWeight: 700, fontSize: 12, letterSpacing: "0.05em", textTransform: "uppercase" as const, margin: 0 },
+  greetingRow: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const, margin: "5px 0 0" },
+  greeting: { fontSize: 28, fontWeight: 700, color: landing.navy, margin: 0, letterSpacing: "-0.03em" },
+  roleTag: { fontSize: 11, fontWeight: 700, color: "#fff", background: gradients.brand, padding: "4px 12px", borderRadius: 999 },
+  addr: { fontFamily: "monospace", fontSize: 12, color: landing.textBody, margin: "5px 0 0" },
+  grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 },
   card: {
-    border: "1.5px solid",
-    borderRadius: 18,
-    padding: "20px",
-    cursor: "pointer",
-    display: "flex", flexDirection: "column" as const, gap: 8,
-    transition: "transform 0.15s, box-shadow 0.15s",
+    background: landing.cardBg, border: landing.cardBorder,
+    borderRadius: 22, padding: "26px 24px", textAlign: "left" as const,
+    cursor: "pointer", fontFamily: fontFamily.sans,
+    display: "flex", flexDirection: "column" as const, gap: 10,
+    transition: "transform 0.18s ease, box-shadow 0.18s ease",
   },
-  cardTop: { display: "flex", alignItems: "flex-start", justifyContent: "space-between" },
-  iconWrap: {
-    width: 44, height: 44, borderRadius: 12,
+  cardIcon: {
+    width: 56, height: 56, borderRadius: 16,
     display: "flex", alignItems: "center", justifyContent: "center",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
   },
-  badge: {
-    fontSize: 10, fontWeight: 700,
-    background: "rgba(255,255,255,0.8)", color: palette.slate600,
-    padding: "3px 8px", borderRadius: 20, maxWidth: 100,
-    textAlign: "center" as const,
-  },
-  cardTitle: { fontSize: 15, fontWeight: 700, color: palette.slate900, margin: 0, letterSpacing: "-0.3px" },
-  cardDesc: { fontSize: 12, color: palette.slate500, margin: 0, lineHeight: 1.5, flexGrow: 1 },
-  arrow: {
-    display: "inline-flex", alignItems: "center", gap: 3,
-    fontSize: 12, fontWeight: 600, color: palette.slate400, marginTop: 4,
+  cardTitle: { fontSize: 18, fontWeight: 700, color: landing.navy, margin: "4px 0 0", letterSpacing: "-0.01em" },
+  cardDesc: { fontSize: 14, color: landing.textBody, margin: 0, lineHeight: 1.6, flexGrow: 1 },
+  cardCta: {
+    display: "inline-flex", alignItems: "center", gap: 6, marginTop: 6, alignSelf: "flex-start",
+    color: "#fff", fontWeight: 700, fontSize: 14, padding: "9px 18px", borderRadius: 999,
   },
 };
