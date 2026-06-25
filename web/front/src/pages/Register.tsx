@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../context/WalletContext";
-import { getUserRegistry } from "../lib/contracts";
+import { getUserRegistry, explorerTxUrl } from "../lib/contracts";
 import { api } from "../lib/api";
 import { useLoader } from "../components/common/Loader";
+import { useToast } from "../components/common/Toast";
 import Select from "../components/common/Select";
 import { SPECIALTY_OPTIONS } from "../lib/specialties";
 import { palette, fontFamily } from "../styles";
@@ -28,6 +29,7 @@ export default function Register() {
   const { refresh, address } = useWallet();
   const navigate = useNavigate();
   const loader = useLoader();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<OptionKey>(() =>
@@ -66,6 +68,7 @@ export default function Register() {
       }
       loader.show("Registrando en la blockchain…");
       await tx.wait();
+      toast.show("Cuenta registrada en la blockchain", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
 
       // El nombre (y apellido si es persona) se guardan off-chain en la base de datos
       // (la blockchain solo guarda la address y el rol).

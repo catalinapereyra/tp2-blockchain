@@ -3,14 +3,25 @@ import { colors, fontFamily, fontSize, fontWeight, radius, shadow } from "../../
 
 type ToastType = "success" | "error" | "info";
 
+interface ToastLink {
+  href: string;
+  label: string;
+}
+
 interface ToastItem {
   id: number;
   message: string;
   type: ToastType;
+  link?: ToastLink;
+}
+
+interface ToastOptions {
+  // Link opcional (ej: ver la transacción firmada en Etherscan).
+  link?: ToastLink;
 }
 
 interface ToastContextValue {
-  show: (message: string, type?: ToastType) => void;
+  show: (message: string, type?: ToastType, options?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -45,6 +56,17 @@ function ToastCard({ item }: { item: ToastItem }) {
         )}
       </span>
       <span style={s.message}>{item.message}</span>
+      {item.link && (
+        <a
+          href={item.link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ ...s.link, color: ACCENT[item.type].color }}
+        >
+          {item.link.label}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+        </a>
+      )}
     </div>
   );
 }
@@ -52,10 +74,12 @@ function ToastCard({ item }: { item: ToastItem }) {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const show = useCallback((message: string, type: ToastType = "success") => {
+  const show = useCallback((message: string, type: ToastType = "success", options?: ToastOptions) => {
     const id = Date.now() + Math.random();
-    setToasts((t) => [...t, { id, message, type }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3000);
+    setToasts((t) => [...t, { id, message, type, link: options?.link }]);
+    // Si hay un link para clickear, le damos más tiempo al usuario.
+    const duration = options?.link ? 8000 : 3000;
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), duration);
   }, []);
 
   return (
@@ -98,7 +122,18 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: fontWeight.semibold,
     animation: "toastIn 0.18s ease-out",
     minWidth: 220,
+    pointerEvents: "auto",
   },
   icon: { display: "flex", flexShrink: 0 },
   message: { lineHeight: 1.3 },
+  link: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    marginLeft: 4,
+    flexShrink: 0,
+    textDecoration: "underline",
+    cursor: "pointer",
+    fontWeight: fontWeight.semibold,
+  },
 };

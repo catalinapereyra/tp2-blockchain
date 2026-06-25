@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
 import { api, type DocumentMetadata, type PrescriptionMeta } from "../../lib/api";
-import { getPrescriptionManager } from "../../lib/contracts";
+import { getPrescriptionManager, explorerTxUrl } from "../../lib/contracts";
 import { getErrorMessage } from "../../lib/error";
 import { useDocViewer } from "../../components/common/DocViewer";
 import { useToast } from "../../components/common/Toast";
@@ -103,7 +103,7 @@ export default function MisRecetasPage() {
       const tx = await pm.cancelPrescription(id);
       loader.show("Procesando transacción…");
       await tx.wait();
-      toast.show("Solicitud cancelada");
+      toast.show("Solicitud cancelada", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
       await load();
     } catch (e) {
       toast.show(getErrorMessage(e) || "No se pudo cancelar", "error");

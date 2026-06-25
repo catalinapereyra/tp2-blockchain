@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { useWallet } from "../../context/WalletContext";
 import { api } from "../../lib/api";
-import { getPrescriptionManager, DOCUMENT_REGISTRY_ABI } from "../../lib/contracts";
+import { getPrescriptionManager, DOCUMENT_REGISTRY_ABI, explorerTxUrl } from "../../lib/contracts";
 import { getErrorMessage } from "../../lib/error";
 import { useToast } from "../../components/common/Toast";
 import { useLoader } from "../../components/common/Loader";
@@ -76,7 +76,7 @@ export default function RecetasPage() {
       const tx = await pm.acceptPrescription(id);
       loader.show("Procesando transacción…");
       await tx.wait();
-      toast.show("Receta aceptada");
+      toast.show("Receta aceptada", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
       await load();
     } catch (e) {
       toast.show(getErrorMessage(e) || "No se pudo aceptar", "error");
@@ -94,7 +94,7 @@ export default function RecetasPage() {
       const tx = await pm.rejectPrescription(id);
       loader.show("Procesando transacción…");
       await tx.wait();
-      toast.show("Receta rechazada");
+      toast.show("Receta rechazada", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
       await load();
     } catch (e) {
       toast.show(getErrorMessage(e) || "No se pudo rechazar", "error");
@@ -154,7 +154,7 @@ export default function RecetasPage() {
         mimeType: upload.mimeType,
       });
 
-      toast.show("Receta emitida");
+      toast.show("Receta emitida", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
       await load();
     } catch (err) {
       toast.show(getErrorMessage(err) || "No se pudo emitir la receta", "error");

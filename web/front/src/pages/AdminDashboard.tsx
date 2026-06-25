@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ethers } from "ethers";
-import { getUserRegistry, getUserRegistryReadOnly, ADDRESSES, ROLE_LABELS } from "../lib/contracts";
+import { getUserRegistry, getUserRegistryReadOnly, ADDRESSES, ROLE_LABELS, explorerTxUrl } from "../lib/contracts";
 import { api } from "../lib/api";
 import { useLoader } from "../components/common/Loader";
 import { palette, colors, fontFamily, fontSize, fontWeight, radius, shadow, gradients } from "../styles";
@@ -81,6 +81,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [successTxHash, setSuccessTxHash] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const [tab, setTab] = useState<Tab>("pending");
@@ -126,7 +127,7 @@ export default function AdminDashboard() {
   }
 
   async function action(fn: "approveUser" | "rejectUser" | "revokeUser", addr: string) {
-    setError(""); setSuccess("");
+    setError(""); setSuccess(""); setSuccessTxHash(null);
     setActionLoading(addr + fn);
     loader.show("Confirmá en MetaMask…");
     try {
@@ -136,6 +137,7 @@ export default function AdminDashboard() {
       await tx.wait();
       const labels: Record<string, string> = { approveUser: "aprobado", rejectUser: "rechazado", revokeUser: "revocado" };
       setSuccess(`Usuario ${labels[fn]} correctamente`);
+      setSuccessTxHash(tx.hash);
       await load();
       if (searchData?.address.toLowerCase() === addr.toLowerCase()) {
         const c = getUserRegistryReadOnly();
@@ -192,7 +194,17 @@ export default function AdminDashboard() {
         </div>
 
         {error && <div style={s.alertError}>{error}</div>}
-        {success && <div style={s.alertSuccess}>{success}</div>}
+        {success && (
+          <div style={s.alertSuccess}>
+            {success}
+            {successTxHash && (
+              <a href={explorerTxUrl(successTxHash)} target="_blank" rel="noopener noreferrer" style={s.alertLink}>
+                Ver en Etherscan
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Stats */}
         <div style={s.stats}>
@@ -318,7 +330,8 @@ const s: Record<string, React.CSSProperties> = {
   subtitle: { fontSize: fontSize.base, color: colors.textFaint, margin: "2px 0 0" },
   refreshBtn: { background: palette.white, border: `1px solid ${colors.border}`, borderRadius: radius.sm, cursor: "pointer", padding: "8px 10px", display: "flex", alignItems: "center", color: colors.textMuted, flexShrink: 0 },
   alertError: { background: colors.error.bg, color: colors.error.fg, border: `1px solid ${colors.error.border}`, padding: "10px 14px", borderRadius: radius.md, marginBottom: 16, fontSize: fontSize.base },
-  alertSuccess: { background: colors.success.bg, color: colors.success.fg, border: `1px solid ${colors.success.border}`, padding: "10px 14px", borderRadius: radius.md, marginBottom: 16, fontSize: fontSize.base },
+  alertSuccess: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", background: colors.success.bg, color: colors.success.fg, border: `1px solid ${colors.success.border}`, padding: "10px 14px", borderRadius: radius.md, marginBottom: 16, fontSize: fontSize.base },
+  alertLink: { display: "inline-flex", alignItems: "center", gap: 5, color: colors.success.fg, fontWeight: 600, textDecoration: "underline", whiteSpace: "nowrap" },
   stats: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 },
   statCard: { background: palette.white, border: `1.5px solid ${colors.bgSubtle}`, borderRadius: radius.lg, padding: "14px 12px", display: "flex", flexDirection: "column" as const, alignItems: "flex-start", gap: 2, boxShadow: shadow.sm, fontFamily: fontFamily.sans, transition: "border-color 0.15s" },
   statValue: { fontSize: fontSize.xl, fontWeight: fontWeight.bold },

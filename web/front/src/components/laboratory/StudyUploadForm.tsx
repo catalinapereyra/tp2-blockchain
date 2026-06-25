@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ethers } from "ethers";
 import { api, AppUser } from "../../lib/api";
-import { getDocumentRegistry, getUserRegistryReadOnly } from "../../lib/contracts";
+import { getDocumentRegistry, getUserRegistryReadOnly, explorerTxUrl } from "../../lib/contracts";
 import { useWallet } from "../../context/WalletContext";
 import { LaboratoryCard } from "./LaboratoryCard";
 import UserSelect from "../common/UserSelect";
@@ -198,7 +198,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
       });
 
       setMessage(null);
-      toast.show("Estudio subido correctamente");
+      toast.show("Estudio subido correctamente", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
       onStudyCreated?.();
       setPatientAddress("");
       setDocumentType("");

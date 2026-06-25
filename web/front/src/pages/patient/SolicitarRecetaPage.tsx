@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { useWallet } from "../../context/WalletContext";
 import { api, AppUser } from "../../lib/api";
-import { getPrescriptionManager } from "../../lib/contracts";
+import { getPrescriptionManager, explorerTxUrl } from "../../lib/contracts";
 import { getErrorMessage } from "../../lib/error";
 import UserSelect from "../../components/common/UserSelect";
 import { useToast } from "../../components/common/Toast";
@@ -63,7 +63,7 @@ export default function SolicitarRecetaPage() {
       // Guardamos el texto privado off-chain
       await api.createPrescription({ prescriptionIdOnChain, doctorAddress: ethers.getAddress(doctorAddress), description: description.trim() });
 
-      toast.show("Solicitud enviada");
+      toast.show("Solicitud enviada", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
       setSubmitted(true);
     } catch (err: unknown) {
       toast.show(getErrorMessage(err) || "No se pudo enviar la solicitud", "error");

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
 import { api } from "../../lib/api";
 import { ethers } from "ethers";
-import { getDocumentRegistry, DOCUMENT_REGISTRY_ABI } from "../../lib/contracts";
+import { getDocumentRegistry, DOCUMENT_REGISTRY_ABI, explorerTxUrl } from "../../lib/contracts";
 import { landing, sectionAccent, colors, palette, fontFamily, fontSize, fontWeight, radius } from "../../styles";
 import { STUDY_CATEGORIES } from "../../lib/categories";
 import Select from "../../components/common/Select";
@@ -28,6 +28,7 @@ export default function SubirEstudioPage() {
 
   const [step, setStep] = useState<Step>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [txHash, setTxHash] = useState<string | null>(null);
 
   const canSubmit = file && studyType && title && studyDate && step === "idle";
 
@@ -53,6 +54,7 @@ export default function SubirEstudioPage() {
       }
 
       const tx = await registry.uploadOwnDocument(fileHash, category, "");
+      setTxHash(tx.hash);
       const receipt = await tx.wait();
 
       const iface = new ethers.Interface(DOCUMENT_REGISTRY_ABI);
@@ -98,6 +100,7 @@ export default function SubirEstudioPage() {
     setStudyDate("");
     setLabName("");
     setNotes("");
+    setTxHash(null);
     setStep("idle");
     setErrorMsg("");
   }
@@ -111,6 +114,12 @@ export default function SubirEstudioPage() {
           </div>
           <h2 style={s.successTitle}>Estudio subido</h2>
           <p style={s.successDesc}>Tu estudio quedó registrado en blockchain y aparece en tu historial.</p>
+          {txHash && (
+            <a href={explorerTxUrl(txHash)} target="_blank" rel="noopener noreferrer" style={s.explorerLink}>
+              Ver la transacción en Etherscan
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+            </a>
+          )}
           <div style={s.successActions}>
             <button style={{ ...accentPill(accent), marginLeft: 0 }} onClick={() => navigate("/patient/estudios")}>
               <Icon name="arrow" size={15} />Ver mis estudios
@@ -268,7 +277,8 @@ const s: Record<string, React.CSSProperties> = {
   },
   successBox: { ...lu.card, borderRadius: radius["3xl"], padding: "48px 32px", textAlign: "center" as const },
   successTitle: { fontSize: fontSize["3xl"], fontWeight: fontWeight.bold, color: landing.navy, margin: "0 0 8px" },
-  successDesc: { fontSize: fontSize.md, color: landing.textBody, margin: "0 0 24px" },
+  successDesc: { fontSize: fontSize.md, color: landing.textBody, margin: "0 0 16px" },
+  explorerLink: { display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 20, color: accent.main, fontSize: fontSize.sm, fontWeight: fontWeight.semibold, textDecoration: "underline" },
   successActions: { display: "flex", gap: 10, justifyContent: "center" },
   btnSecondary: {
     background: "none", color: landing.textBody, border: "1.5px solid rgba(8,31,73,0.12)",

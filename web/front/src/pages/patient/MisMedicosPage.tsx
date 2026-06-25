@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { useWallet } from "../../context/WalletContext";
 import { api, AppUser } from "../../lib/api";
-import { getPermissionManager, getUserRegistryReadOnly } from "../../lib/contracts";
+import { getPermissionManager, getUserRegistryReadOnly, explorerTxUrl } from "../../lib/contracts";
 import { getErrorMessage } from "../../lib/error";
 import UserSelect from "../../components/common/UserSelect";
 import { useToast } from "../../components/common/Toast";
@@ -133,9 +133,11 @@ export default function MisMedicosPage() {
     }
   }
 
-  async function grantDocs(targetDoctor: string, docIds: number[], onError: (m: string) => void) {
-    if (!address || docIds.length === 0) return;
+  // Devuelve el hash de la última transacción on-chain realizada (para el link a Etherscan).
+  async function grantDocs(targetDoctor: string, docIds: number[], onError: (m: string) => void): Promise<string | null> {
+    if (!address || docIds.length === 0) return null;
     const pm = await getPermissionManager();
+    let lastTxHash: string | null = null;
     for (let i = 0; i < docIds.length; i++) {
       const docId = docIds[i];
       loader.show(
@@ -145,6 +147,7 @@ export default function MisMedicosPage() {
       );
       try {
         const tx = await pm.grantDocumentAccess(docId, targetDoctor);
+        lastTxHash = tx.hash;
         loader.show("Procesando transacción…");
         await tx.wait();
       } catch (contractErr: unknown) {
@@ -153,6 +156,12 @@ export default function MisMedicosPage() {
       }
       await api.grantPermission({ patientAddress: address, doctorAddress: targetDoctor, documentIdOnChain: docId });
     }
+    return lastTxHash;
+  }
+
+  // Opciones de toast con link a Etherscan (solo si hubo una tx on-chain).
+  function txLink(hash: string | null) {
+    return hash ? { link: { href: explorerTxUrl(hash), label: "Ver en Etherscan" } } : undefined;
   }
 
   async function handleGrantNew() {
@@ -160,12 +169,12 @@ export default function MisMedicosPage() {
     setGranting(true);
     setGrantError("");
     try {
-      await grantDocs(newDoctorAddr, newSelectedIds, setGrantError);
+      const hash = await grantDocs(newDoctorAddr, newSelectedIds, setGrantError);
       setShowGrant(false);
       setNewDoctorAddr("");
       setNewSelectedIds([]);
       await load();
-      toast.show("Acceso otorgado");
+      toast.show("Acceso otorgado", "success", txLink(hash));
     } catch (e: unknown) {
       setGrantError(getErrorMessage(e));
       toast.show("No se pudo otorgar el acceso", "error");
@@ -200,10 +209,12 @@ export default function MisMedicosPage() {
     setGranting(true);
     setGrantError("");
     loader.show("Confirmá en MetaMask…");
+    let txHash: string | null = null;
     try {
       const pm = await getPermissionManager();
       try {
         const tx = await pm.grantGlobalAccess(newDoctorAddr);
+        txHash = tx.hash;
         loader.show("Procesando transacción…");
         await tx.wait();
       } catch (contractErr: unknown) {
@@ -217,7 +228,7 @@ export default function MisMedicosPage() {
       setNewDoctorAddr("");
       setNewSelectedIds([]);
       await load();
-      toast.show("Acceso total otorgado");
+      toast.show("Acceso total otorgado", "success", txLink(txHash));
     } catch (e: unknown) {
       setGrantError(getErrorMessage(e));
       toast.show("No se pudo otorgar el acceso", "error");
@@ -238,10 +249,12 @@ export default function MisMedicosPage() {
     if (!ok) return;
     setGrantingAllTo(doctorAddress);
     loader.show("Confirmá en MetaMask…");
+    let txHash: string | null = null;
     try {
       const pm = await getPermissionManager();
       try {
         const tx = await pm.grantGlobalAccess(doctorAddress);
+        txHash = tx.hash;
         loader.show("Procesando transacción…");
         await tx.wait();
       } catch (contractErr: unknown) {
@@ -253,7 +266,7 @@ export default function MisMedicosPage() {
       }
       setAddingToDoctor(null);
       await load();
-      toast.show("Acceso total otorgado");
+      toast.show("Acceso total otorgado", "success", txLink(txHash));
     } catch (e: unknown) {
       toast.show("No se pudo otorgar el acceso", "error");
     } finally {
@@ -267,11 +280,11 @@ export default function MisMedicosPage() {
     setAddingDocs(true);
     setAddDocError("");
     try {
-      await grantDocs(doctorAddress, addDocIds, setAddDocError);
+      const hash = await grantDocs(doctorAddress, addDocIds, setAddDocError);
       setAddingToDoctor(null);
       setAddDocIds([]);
       await load();
-      toast.show("Acceso otorgado");
+      toast.show("Acceso otorgado", "success", txLink(hash));
     } catch (e: unknown) {
       setAddDocError(getErrorMessage(e));
       toast.show("No se pudo otorgar el acceso", "error");
@@ -312,7 +325,7 @@ export default function MisMedicosPage() {
         for (const doc of entry?.documents ?? []) {
           await api.revokePermission({ patientAddress: address, doctorAddress, documentIdOnChain: doc.documentIdOnChain });
         }
-        toast.show("Acceso total revocado");
+        toast.show("Acceso total revocado", "success", txLink(tx.hash));
       } else {
         setRevoking(key);
         loader.show("Confirmá en MetaMask…");
@@ -320,7 +333,7 @@ export default function MisMedicosPage() {
         loader.show("Procesando transacción…");
         await tx.wait();
         await api.revokePermission({ patientAddress: address, doctorAddress, documentIdOnChain: docId });
-        toast.show("Acceso revocado");
+        toast.show("Acceso revocado", "success", txLink(tx.hash));
       }
 
       await load();

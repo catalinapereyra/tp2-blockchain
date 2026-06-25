@@ -67,6 +67,28 @@ export const PRESCRIPTION_MANAGER_ABI = [
   "event PrescriptionIssued(uint256 indexed id, address indexed doctor, bytes32 documentHash)",
 ];
 
+// Base del explorer según la red. Sepolia (11155111) usa sepolia.etherscan.io;
+// para mainnet u otra red se ajusta acá.
+const EXPLORER_BASE: Record<number, string> = {
+  11155111: "https://sepolia.etherscan.io",
+  1: "https://etherscan.io",
+};
+
+function explorerBase(): string {
+  const chainId = Number(import.meta.env.VITE_CHAIN_ID);
+  return EXPLORER_BASE[chainId] || "https://sepolia.etherscan.io";
+}
+
+// Link a una transacción en el explorer (para ver qué fue lo que se firmó/envió).
+export function explorerTxUrl(txHash: string): string {
+  return `${explorerBase()}/tx/${txHash}`;
+}
+
+// Link a una dirección (contrato o wallet) en el explorer.
+export function explorerAddressUrl(address: string): string {
+  return `${explorerBase()}/address/${address}`;
+}
+
 export function getProvider() {
   return new ethers.JsonRpcProvider(import.meta.env.VITE_RPC_URL);
 }

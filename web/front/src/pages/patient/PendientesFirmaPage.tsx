@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { useWallet } from "../../context/WalletContext";
 import { api, type SignedDoc } from "../../lib/api";
-import { getDocumentRegistry } from "../../lib/contracts";
+import { getDocumentRegistry, explorerTxUrl } from "../../lib/contracts";
 import { categoryLabel } from "../../lib/categories";
 import { getErrorMessage } from "../../lib/error";
 import { useToast } from "../../components/common/Toast";
@@ -74,7 +74,7 @@ export default function PendientesFirmaPage() {
 
       await api.registerSignedDocument(doc.id, documentIdOnChain);
 
-      toast.show("Documento registrado en tu historial");
+      toast.show("Documento registrado en tu historial", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
       setDocs((prev) => prev.filter((d) => d.id !== doc.id));
     } catch (e: unknown) {
       toast.show(getErrorMessage(e) || "No se pudo registrar", "error");
