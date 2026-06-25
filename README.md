@@ -1,5 +1,5 @@
 # MediChain
-
+https://tp2-blockchain-ten.vercel.app/
 Aplicación descentralizada (dApp) para la gestión de la historia clínica digital de un paciente. Permite que pacientes, médicos, laboratorios e instituciones interactúen sobre una base de confianza verificable en blockchain, manteniendo los datos sensibles (archivos, diagnósticos, texto de recetas) fuera de la cadena por motivos de privacidad y costo.
 
 La integridad de cada documento queda anclada on-chain mediante su hash, mientras que el archivo en sí se almacena off-chain en la base de datos. El estado de los usuarios, los permisos de acceso y el ciclo de vida de las recetas viven en los smart contracts, que son la fuente de verdad del sistema.
