@@ -163,6 +163,7 @@ html {
   width: min(1180px, calc(100% - 48px));
   min-height: 560px;
   margin: 0 auto;
+  padding-top: 32px;
   display: grid;
   grid-template-columns: 0.86fr 1.14fr;
   align-items: center;

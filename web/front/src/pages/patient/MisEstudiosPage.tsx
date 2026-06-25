@@ -76,9 +76,7 @@ export default function MisEstudiosPage() {
     setLoading(true);
     api
       .getDocuments(address)
-      .then((docs: DocRecord[]) => {
-        setGrupos(groupDocuments(docs, address));
-      })
+      .then((docs: DocRecord[]) => setGrupos(groupDocuments(docs, address)))
       .catch((err: any) => setError(err.message || "Error cargando estudios"))
       .finally(() => setLoading(false));
   }, [address]);
