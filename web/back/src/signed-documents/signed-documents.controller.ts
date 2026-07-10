@@ -5,12 +5,12 @@ import { SignedDocumentsService, CreateSignedDocumentDto } from "./signed-docume
 import { WalletAddress } from "../auth/wallet.decorator";
 
 @Controller("signed-documents")
+@UseGuards(AuthGuard("jwt"))
 export class SignedDocumentsController {
   constructor(private readonly service: SignedDocumentsService) {}
 
   //medico logueado firma off-chain y guarda el documento pendiente
   @Post()
-  @UseGuards(AuthGuard("jwt"))
   create(@WalletAddress() wallet: string, @Body() dto: CreateSignedDocumentDto) {
     return this.service.create(wallet, dto);
   }
@@ -32,7 +32,6 @@ export class SignedDocumentsController {
 
   //paciente ya registro el documento on-chain, pasamos el archivo a su historial
   @Post(":id/register")
-  @UseGuards(AuthGuard("jwt"))
   register(@Param("id", ParseIntPipe) id: number, @Body() body: { documentIdOnChain: number }) {
     return this.service.register(id, body.documentIdOnChain);
   }
