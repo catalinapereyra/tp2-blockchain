@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
 export interface CreateDocumentDto {
@@ -147,7 +147,11 @@ export class DocumentsService {
     return doc;
   }
 
-  async create(dto: CreateDocumentDto) {
+  async create(wallet: string, dto: CreateDocumentDto) {
+    if (dto.emitterAddress.toLowerCase() !== wallet.toLowerCase()) {
+      throw new ForbiddenException("No podés registrar un documento en nombre de otro médico");
+    }
+
     const existing = await this.prisma.documentMetadata.findUnique({
       where: { documentIdOnChain: dto.documentIdOnChain },
     });

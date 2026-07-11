@@ -2,6 +2,7 @@ import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards } fr
 import { AuthGuard } from "@nestjs/passport";
 import { CreateLaboratoryStudyDto } from "./dto/create-laboratory-study.dto";
 import { LaboratoryService } from "./laboratory.service";
+import { WalletAddress } from "../auth/wallet.decorator";
 
 @Controller("laboratory")
 @UseGuards(AuthGuard("jwt"))
@@ -15,7 +16,7 @@ export class LaboratoryController {
   }
 
   @Post("studies")
-  createStudy(@Body() dto: CreateLaboratoryStudyDto) {
-    return this.laboratoryService.createStudy(dto);
+  createStudy(@WalletAddress() wallet: string, @Body() dto: CreateLaboratoryStudyDto) {
+    return this.laboratoryService.createStudy(wallet, dto);
   }
 }

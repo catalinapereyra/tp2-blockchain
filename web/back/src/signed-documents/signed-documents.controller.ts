@@ -32,7 +32,11 @@ export class SignedDocumentsController {
 
   //paciente ya registro el documento on-chain, pasamos el archivo a su historial
   @Post(":id/register")
-  register(@Param("id", ParseIntPipe) id: number, @Body() body: { documentIdOnChain: number }) {
-    return this.service.register(id, body.documentIdOnChain);
+  register(
+    @WalletAddress() wallet: string,
+    @Param("id", ParseIntPipe) id: number,
+    @Body() body: { documentIdOnChain: number },
+  ) {
+    return this.service.register(wallet, id, body.documentIdOnChain);
   }
 }

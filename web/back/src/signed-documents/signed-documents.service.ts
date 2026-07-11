@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
 export interface CreateSignedDocumentDto {
@@ -93,9 +93,12 @@ export class SignedDocumentsService {
 
   //paciente ya registro el doc on-chain: muevo el archivo a
   //documentMetadata y marco la firma como registrada
-  async register(id: number, documentIdOnChain: number) {
+  async register(wallet: string, id: number, documentIdOnChain: number) {
     const signed = await this.prisma.signedDocument.findUnique({ where: { id } });
     if (!signed) throw new NotFoundException("Documento firmado no encontrado");
+    if (signed.patientAddress !== wallet.toLowerCase()) {
+      throw new ForbiddenException("No podés registrar el documento de otro paciente");
+    }
     if (signed.status === "REGISTERED") throw new ConflictException("Ya fue registrado");
 
     const exists = await this.prisma.documentMetadata.findUnique({

@@ -31,8 +31,8 @@ export class DocumentsController {
 
   //Guarda los metadatos off-chain de un documento desp de que el médico lo registro on-chain
   @Post()
-  create(@Body() dto: CreateDocumentDto) {
-    return this.documentsService.create(dto);
+  create(@WalletAddress() wallet: string, @Body() dto: CreateDocumentDto) {
+    return this.documentsService.create(wallet, dto);
   }
 
   //El médico logueado guarda/edita su diagnóstico sobre un documento (off-chain)
