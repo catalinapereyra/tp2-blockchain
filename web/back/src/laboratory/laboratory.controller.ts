@@ -1,8 +1,10 @@
-import { BadRequestException, Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
 import { CreateLaboratoryStudyDto } from "./dto/create-laboratory-study.dto";
 import { LaboratoryService } from "./laboratory.service";
 
 @Controller("laboratory")
+@UseGuards(AuthGuard("jwt"))
 export class LaboratoryController {
   constructor(private readonly laboratoryService: LaboratoryService) {}
 
