@@ -4,12 +4,12 @@ import { PrescriptionsService, CreatePrescriptionDto } from "./prescriptions.ser
 import { WalletAddress } from "../auth/wallet.decorator";
 
 @Controller("prescriptions")
+@UseGuards(AuthGuard("jwt"))
 export class PrescriptionsController {
   constructor(private readonly service: PrescriptionsService) {}
 
   // El paciente logueado guarda el texto privado de la receta solicitada
   @Post()
-  @UseGuards(AuthGuard("jwt"))
   create(@WalletAddress() wallet: string, @Body() dto: CreatePrescriptionDto) {
     return this.service.create(wallet, dto);
   }

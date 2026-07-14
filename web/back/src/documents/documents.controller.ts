@@ -5,6 +5,7 @@ import { DocumentsService, CreateDocumentDto } from "./documents.service";
 import { WalletAddress } from "../auth/wallet.decorator";
 
 @Controller("documents")
+@UseGuards(AuthGuard("jwt"))
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
@@ -30,13 +31,12 @@ export class DocumentsController {
 
   //Guarda los metadatos off-chain de un documento desp de que el médico lo registro on-chain
   @Post()
-  create(@Body() dto: CreateDocumentDto) {
-    return this.documentsService.create(dto);
+  create(@WalletAddress() wallet: string, @Body() dto: CreateDocumentDto) {
+    return this.documentsService.create(wallet, dto);
   }
 
   //El médico logueado guarda/edita su diagnóstico sobre un documento (off-chain)
   @Put(":id/diagnosis")
-  @UseGuards(AuthGuard("jwt"))
   saveDiagnosis(
     @Param("id", ParseIntPipe) id: number,
     @WalletAddress() wallet: string,
