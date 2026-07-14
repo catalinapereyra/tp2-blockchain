@@ -1,28 +1,43 @@
-import { Controller, Get, Post, Put, Param, Body, Query, ParseIntPipe, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Put, Param, Body, Query, ParseIntPipe, Res, UseGuards, ForbiddenException } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import type { Response } from "express";
 import { DocumentsService, CreateDocumentDto } from "./documents.service";
 import { WalletAddress } from "../auth/wallet.decorator";
+import { BlockchainService } from "../blockchain/blockchain.service";
 
 @Controller("documents")
 @UseGuards(AuthGuard("jwt"))
 export class DocumentsController {
-  constructor(private readonly documentsService: DocumentsService) {}
+  constructor(
+    private readonly documentsService: DocumentsService,
+    private readonly blockchainService: BlockchainService,
+  ) {}
 
-  //devuelve documentos guardados en la base de datos, con filtros opcionales
+  //devuelve documentos guardados en la base de datos; el filtro tiene que ser el wallet logueado
   @Get()
-  findAll(@Query("patient") patient?: string, @Query("emitter") emitter?: string) {
+  findAll(@WalletAddress() wallet: string, @Query("patient") patient?: string, @Query("emitter") emitter?: string) {
+    if (!patient && !emitter) {
+      throw new ForbiddenException("Falta indicar patient o emitter");
+    }
+    if (patient && patient.toLowerCase() !== wallet.toLowerCase()) {
+      throw new ForbiddenException("No podés consultar documentos de otro paciente");
+    }
+    if (emitter && emitter.toLowerCase() !== wallet.toLowerCase()) {
+      throw new ForbiddenException("No podés consultar documentos de otro emisor");
+    }
     return this.documentsService.findAll({ patientAddress: patient, emitterAddress: emitter });
   }
 
   @Get(":id")
-  findOne(@Param("id", ParseIntPipe) id: number) {
+  async findOne(@WalletAddress() wallet: string, @Param("id", ParseIntPipe) id: number) {
+    await this.assertOnChainAccess(id, wallet);
     return this.documentsService.findOne(id);
   }
 
   //Descarga el archivo (PDF/imagen) guardado en la base de datos
   @Get(":id/file")
-  async downloadFile(@Param("id", ParseIntPipe) id: number, @Res() res: Response) {
+  async downloadFile(@WalletAddress() wallet: string, @Param("id", ParseIntPipe) id: number, @Res() res: Response) {
+    await this.assertOnChainAccess(id, wallet);
     const file = await this.documentsService.getFile(id);
     res.setHeader("Content-Type", file.mimeType);
     res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(file.fileName)}"`);
@@ -43,5 +58,15 @@ export class DocumentsController {
     @Body() body: { text: string },
   ) {
     return this.documentsService.upsertDiagnosis(id, wallet, body.text);
+  }
+
+  //valida contra el contrato PermissionManager que el wallet logueado tenga
+  //autorización real (paciente dueño, emisor original, o acceso otorgado on-chain)
+  //antes de devolver el documento guardado en la base de datos
+  private async assertOnChainAccess(documentIdOnChain: number, wallet: string) {
+    const allowed = await this.blockchainService.canAccessDocument(documentIdOnChain, wallet);
+    if (!allowed) {
+      throw new ForbiddenException("No tenés autorización on-chain para acceder a este documento");
+    }
   }
 }

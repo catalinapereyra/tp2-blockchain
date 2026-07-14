@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, ForbiddenException, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { CreateLaboratoryStudyDto } from "./dto/create-laboratory-study.dto";
 import { LaboratoryService } from "./laboratory.service";
@@ -10,8 +10,11 @@ export class LaboratoryController {
   constructor(private readonly laboratoryService: LaboratoryService) {}
 
   @Get("studies")
-  findStudies(@Query("emitter") emitterAddress: string) {
+  findStudies(@WalletAddress() wallet: string, @Query("emitter") emitterAddress: string) {
     if (!emitterAddress) throw new BadRequestException("emitter es requerido");
+    if (emitterAddress.toLowerCase() !== wallet.toLowerCase()) {
+      throw new ForbiddenException("No podés consultar estudios de otro emisor");
+    }
     return this.laboratoryService.findStudies(emitterAddress);
   }
 

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { BlockchainService } from "../blockchain/blockchain.service";
 
 export interface CreateSignedDocumentDto {
   patientAddress: string;
@@ -35,11 +36,36 @@ const SELECT = {
 
 @Injectable()
 export class SignedDocumentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly blockchainService: BlockchainService,
+  ) {}
 
-  //medicofirma off-chain y guarda el documento pendiente (no paga gas)
+  //medico firma off-chain y guarda el documento pendiente (no paga gas)
   async create(doctorAddress: string, dto: CreateSignedDocumentDto) {
     if (!dto.fileBase64) throw new BadRequestException("Falta el contenido del archivo");
+
+    //verifica criptográficamente (EIP-712) que la firma corresponda al médico logueado
+    //y a estos datos exactos, antes de confiar en lo que mandó el frontend
+    let signer: string;
+    try {
+      signer = this.blockchainService.recoverMedicalDocumentSigner(
+        {
+          patient: dto.patientAddress,
+          documentHash: dto.documentHash,
+          documentType: dto.documentType,
+          offChainRef: dto.offChainRef,
+          doctor: doctorAddress,
+        },
+        dto.signature,
+      );
+    } catch {
+      throw new BadRequestException("Firma inválida");
+    }
+    if (signer !== doctorAddress.toLowerCase()) {
+      throw new ForbiddenException("La firma no corresponde al médico logueado ni a los datos enviados");
+    }
+
     return this.prisma.signedDocument.create({
       data: {
         patientAddress: dto.patientAddress.toLowerCase(),
@@ -81,13 +107,19 @@ export class SignedDocumentsService {
     return docs.map((d) => ({ ...d, doctorName: nameByAddr.get(d.doctorAddress) || null }));
   }
 
-  //devuelve el archivo (para preview antes de registrar)
-  async getFile(id: number) {
+  //devuelve el archivo (para preview antes de registrar), solo al paciente o al médico firmante
+  async getFile(id: number, wallet: string) {
     const doc = await this.prisma.signedDocument.findUnique({
       where: { id },
-      select: { fileData: true, fileName: true, mimeType: true },
+      select: { fileData: true, fileName: true, mimeType: true, patientAddress: true, doctorAddress: true },
     });
     if (!doc) throw new NotFoundException("Documento firmado no encontrado");
+
+    const address = wallet.toLowerCase();
+    if (doc.patientAddress !== address && doc.doctorAddress !== address) {
+      throw new ForbiddenException("No tenés acceso a este documento firmado");
+    }
+
     return doc;
   }
 
@@ -105,6 +137,20 @@ export class SignedDocumentsService {
       where: { documentIdOnChain },
     });
     if (exists) throw new ConflictException("Ya existe metadata para ese documento");
+
+    //el frontend podría mandar cualquier documentIdOnChain: confirmamos contra la
+    //blockchain que ESE id corresponde exactamente a esta firma (mismo paciente,
+    //mismo médico emisor, mismo hash de archivo) antes de promoverla
+    const matches = await this.blockchainService.documentMatchesSignedRecord(documentIdOnChain, {
+      patient: signed.patientAddress,
+      doctor: signed.doctorAddress,
+      documentHash: signed.documentHash,
+    });
+    if (!matches) {
+      throw new ConflictException(
+        "El documento on-chain no corresponde a esta firma (paciente, médico o hash distintos)",
+      );
+    }
 
     return this.prisma.$transaction(async (tx) => {
       const meta = await tx.documentMetadata.create({

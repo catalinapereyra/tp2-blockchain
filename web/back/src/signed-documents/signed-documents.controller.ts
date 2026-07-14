@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query, ParseIntPipe, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Param, Body, Query, ParseIntPipe, Res, UseGuards, ForbiddenException } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import type { Response } from "express";
 import { SignedDocumentsService, CreateSignedDocumentDto } from "./signed-documents.service";
@@ -15,16 +15,20 @@ export class SignedDocumentsController {
     return this.service.create(wallet, dto);
   }
 
-  //docs firmados pendientes de registrar de un paciente
+  //docs firmados pendientes de registrar de un paciente (todavía no existen on-chain,
+  //por eso la autorización se valida contra el dueño en la base de datos, no contra el contrato)
   @Get()
-  getPending(@Query("patient") patient: string) {
+  getPending(@WalletAddress() wallet: string, @Query("patient") patient: string) {
+    if (!patient || patient.toLowerCase() !== wallet.toLowerCase()) {
+      throw new ForbiddenException("No podés consultar documentos firmados de otro paciente");
+    }
     return this.service.getPendingByPatient(patient);
   }
 
   //descarga/preview del archivo firmado pendiente
   @Get(":id/file")
-  async downloadFile(@Param("id", ParseIntPipe) id: number, @Res() res: Response) {
-    const file = await this.service.getFile(id);
+  async downloadFile(@WalletAddress() wallet: string, @Param("id", ParseIntPipe) id: number, @Res() res: Response) {
+    const file = await this.service.getFile(id, wallet);
     res.setHeader("Content-Type", file.mimeType);
     res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(file.fileName)}"`);
     res.send(Buffer.from(file.fileData));
