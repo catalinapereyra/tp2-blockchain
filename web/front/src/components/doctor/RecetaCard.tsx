@@ -10,6 +10,11 @@ export interface Receta {
   description: string;
   requestedAt: string;
   status: RecetaStatus;
+  // hash del documento emitido on-chain (solo si status === "issued")
+  documentHash?: string;
+  // true si se emitió en blockchain pero el PDF nunca se guardó en el backend
+  // (la transacción se confirmó pero el paso siguiente se cortó a mitad de camino)
+  missingDocument?: boolean;
 }
 
 const STATUS_CONFIG: Record<RecetaStatus, { label: string; bg: string; color: string }> = {
@@ -74,6 +79,18 @@ export default function RecetaCard({ receta, busy, onAccept, onReject, onIssue }
           </button>
         </div>
       )}
+
+      {receta.status === "issued" && receta.missingDocument && (
+        <div style={{ ...s.actions, flexDirection: "column" as const, alignItems: "stretch", gap: 8 }}>
+          <span style={s.warnText}>
+            Se emitió en la blockchain pero el PDF no llegó a guardarse. Volvé a adjuntar el mismo archivo.
+          </span>
+          <button style={{ ...s.btnAccept, opacity: busy ? 0.5 : 1 }} disabled={busy} onClick={() => onIssue?.(receta.id)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            {busy ? "Guardando…" : "Reintentar guardado del PDF"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -106,6 +123,7 @@ const s: Record<string, React.CSSProperties> = {
   patientName: { fontSize: 14, fontWeight: 600, color: palette.slate900 },
   addrSmall: { fontFamily: fontFamily.mono, fontSize: 11, color: palette.slate400 },
   desc: { fontSize: 13, color: palette.slate600, margin: 0, fontStyle: "italic" },
+  warnText: { fontSize: 12, color: palette.amber600, fontWeight: 600 },
   statusPill: { fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 },
   date: { fontSize: 11, color: palette.slate400 },
   actions: { display: "flex", gap: 8, paddingTop: 4, borderTop: `1px solid ${palette.slate50}` },

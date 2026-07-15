@@ -71,16 +71,29 @@ export default function Register() {
       toast.show("Cuenta registrada en la blockchain", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
 
       // El nombre (y apellido si es persona) se guardan off-chain en la base de datos
-      // (la blockchain solo guarda la address y el rol).
-      try {
-        await api.updateProfile({
-          name: name.trim(),
-          lastName: isOrg ? undefined : lastName.trim(),
-          role: roleNumber,
-          specialty: selected === "doctor" && specialty ? specialty : undefined,
-        });
-      } catch (profileErr) {
-        console.error("No se pudo guardar el perfil off-chain", profileErr);
+      // (la blockchain solo guarda la address y el rol). El registro on-chain ya se
+      // confirmó y no se puede repetir, así que reintentamos un par de veces antes
+      // de avisarle al usuario que tiene que completarlo a mano — nunca lo ocultamos.
+      let profileSaved = false;
+      for (let attempt = 0; attempt < 3 && !profileSaved; attempt++) {
+        try {
+          await api.updateProfile({
+            name: name.trim(),
+            lastName: isOrg ? undefined : lastName.trim(),
+            role: roleNumber,
+            specialty: selected === "doctor" && specialty ? specialty : undefined,
+          });
+          profileSaved = true;
+        } catch (profileErr) {
+          console.error("No se pudo guardar el perfil off-chain", profileErr);
+          if (attempt < 2) await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+        }
+      }
+      if (!profileSaved) {
+        toast.show(
+          "Te registraste en la blockchain, pero no pudimos guardar tu nombre. Completalo desde tu perfil.",
+          "error",
+        );
       }
 
       // El RPC a veces tarda un bloque en reflejar el registro recién minado.

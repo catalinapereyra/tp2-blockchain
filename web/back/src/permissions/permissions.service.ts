@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
 const METADATA_SELECT = {
@@ -145,6 +145,9 @@ export class PermissionsService {
     });
   }
 
+  // Idempotente a propósito: si el permiso ya no está (por ejemplo, un reintento
+  // después de que la revocación on-chain se confirmó pero esta limpieza en la DB
+  // había fallado antes), no hay nada más que hacer — no es un error.
   async revoke(patientAddress: string, doctorAddress: string, documentIdOnChain: number) {
     const record = await this.prisma.documentAccess.findUnique({
       where: {
@@ -155,10 +158,9 @@ export class PermissionsService {
         },
       },
     });
-    if (!record) throw new NotFoundException("No existe ese permiso");
+    if (!record) return { ok: true };
 
-    return this.prisma.documentAccess.delete({
-      where: { id: record.id },
-    });
+    await this.prisma.documentAccess.delete({ where: { id: record.id } });
+    return { ok: true };
   }
 }

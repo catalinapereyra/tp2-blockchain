@@ -150,42 +150,67 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
       const upload = await api.uploadFile(studyFile);
       const bytes = new Uint8Array(await studyFile.arrayBuffer());
       const documentHash = ethers.keccak256(bytes);
+      const normalizedPatient = ethers.getAddress(patientAddress);
 
       setMessage("Registrando documento en blockchain...");
       const documentRegistry = await getDocumentRegistry();
 
+      let documentIdOnChain: number;
+      let txHash: string | undefined;
 
       if (await documentRegistry.isHashRegistered(documentHash)) {
-        throw new Error(
-          "Este archivo ya fue registrado anteriormente en la blockchain. Subí un archivo distinto.",
+        // Puede ser un reintento de una subida anterior que se cortó después de
+        // confirmar la transacción pero antes de guardar los datos en el backend.
+        // El contrato no deja re-registrar el mismo hash, así que primero revisamos
+        // si ya quedó asociado a este paciente antes de asumir que es un duplicado.
+        const lookup = await api.lookupDocumentByHash(normalizedPatient, documentHash);
+        if (lookup.documentIdOnChain === null) {
+          throw new Error(
+            "Este archivo ya fue registrado anteriormente en la blockchain para otro paciente. Subí un archivo distinto.",
+          );
+        }
+        if (lookup.alreadySaved) {
+          toast.show("Este estudio ya estaba subido — no hacía falta repetirlo", "success");
+          onStudyCreated?.();
+          setPatientAddress("");
+          setDocumentType("");
+          setTitle("");
+          setStudyType("");
+          setNotes("");
+          setStudyFile(null);
+          setPatientStatus(null);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
+        documentIdOnChain = lookup.documentIdOnChain;
+      } else {
+        const tx = await documentRegistry.registerDocument(
+          normalizedPatient,
+          documentHash,
+          documentType.trim(),
+          "",
         );
+        txHash = tx.hash;
+        const receipt = await tx.wait();
+
+        const event = receipt.logs
+          .map((log: any) => {
+            try {
+              return documentRegistry.interface.parseLog(log);
+            } catch {
+              return null;
+            }
+          })
+          .find((parsed: any) => parsed?.name === "DocumentRegistered");
+
+        if (!event) throw new Error("No se pudo obtener el id del documento registrado");
+        documentIdOnChain = Number(event.args.documentId ?? event.args[0]);
       }
-
-      const tx = await documentRegistry.registerDocument(
-        ethers.getAddress(patientAddress),
-        documentHash,
-        documentType.trim(),
-        "",
-      );
-      const receipt = await tx.wait();
-
-      const event = receipt.logs
-        .map((log: any) => {
-          try {
-            return documentRegistry.interface.parseLog(log);
-          } catch {
-            return null;
-          }
-        })
-        .find((parsed: any) => parsed?.name === "DocumentRegistered");
-
-      if (!event) throw new Error("No se pudo obtener el id del documento registrado");
-      const documentIdOnChain = Number(event.args.documentId ?? event.args[0]);
 
       setMessage("Guardando datos del estudio...");
       await api.createLaboratoryStudy({
         documentIdOnChain,
-        patientAddress: ethers.getAddress(patientAddress),
+        patientAddress: normalizedPatient,
         emitterAddress: ethers.getAddress(address),
         title: title.trim(),
         documentType: documentType.trim(),
@@ -198,7 +223,11 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
       });
 
       setMessage(null);
-      toast.show("Estudio subido correctamente", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
+      toast.show(
+        "Estudio subido correctamente",
+        "success",
+        txHash ? { link: { href: explorerTxUrl(txHash), label: "Ver en Etherscan" } } : undefined,
+      );
       onStudyCreated?.();
       setPatientAddress("");
       setDocumentType("");

@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ethers } from 'ethers';
 import { PrismaService } from '../prisma/prisma.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly blockchainService: BlockchainService,
   ) {}
 
   /**
@@ -78,14 +80,32 @@ export class AuthService {
 
   /**
    * Completa o actualiza el perfil del usuario (nombre, apellido, email, rol).
+   * El rol nunca se guarda "tal cual" lo manda el cliente: se valida contra
+   * UserRegistry y se persiste el que diga el contrato, para que nadie pueda
+   * aparecer como médico/laboratorio/institución si on-chain no está registrado con ese rol.
    */
   async updateProfile(
     walletAddress: string,
     data: { name?: string; lastName?: string; email?: string; role?: number; specialty?: string },
   ) {
+    const address = walletAddress.toLowerCase();
+    const { role: requestedRole, ...rest } = data;
+
+    if (requestedRole === undefined) {
+      return this.prisma.userProfile.update({ where: { walletAddress: address }, data: rest });
+    }
+
+    const onChainRole = await this.blockchainService.getOnChainRole(address);
+    if (onChainRole === null) {
+      throw new ForbiddenException('Esta wallet todavía no está registrada en UserRegistry');
+    }
+    if (onChainRole !== requestedRole) {
+      throw new ForbiddenException('El rol enviado no coincide con el rol registrado on-chain');
+    }
+
     return this.prisma.userProfile.update({
-      where: { walletAddress: walletAddress.toLowerCase() },
-      data,
+      where: { walletAddress: address },
+      data: { ...rest, role: onChainRole },
     });
   }
 
@@ -105,13 +125,21 @@ export class AuthService {
    * Lista los usuarios de un rol (0=paciente, 1=médico, 2=laboratorio, 3=institución)
    * con su nombre, apellido y dirección. Sirve para armar los desplegables
    * (elegir médico, elegir paciente) mostrando el nombre off-chain + la address.
+   * Solo devuelve wallets que UserRegistry marca como aprobadas: un médico en estado
+   * PENDING (recién registrado, sin aprobar por el admin) no debe aparecer como opción.
    */
   async getUsersByRole(role: number) {
-    return this.prisma.userProfile.findMany({
+    const profiles = await this.prisma.userProfile.findMany({
       where: { role, name: { not: "" } },
       select: { walletAddress: true, name: true, lastName: true, specialty: true },
       orderBy: [{ name: "asc" }, { lastName: "asc" }],
     });
+    if (profiles.length === 0) return profiles;
+
+    const approved = await this.blockchainService.filterApprovedAddresses(
+      profiles.map((p) => p.walletAddress),
+    );
+    return profiles.filter((p) => approved.has(p.walletAddress.toLowerCase()));
   }
 
   /**

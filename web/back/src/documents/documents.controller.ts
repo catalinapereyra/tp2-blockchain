@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Param, Body, Query, ParseIntPipe, Res, UseGuards, ForbiddenException } from "@nestjs/common";
+import { Controller, Get, Post, Put, Param, Body, Query, ParseIntPipe, Res, UseGuards, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import type { Response } from "express";
 import { DocumentsService, CreateDocumentDto } from "./documents.service";
@@ -26,6 +26,17 @@ export class DocumentsController {
       throw new ForbiddenException("No podés consultar documentos de otro emisor");
     }
     return this.documentsService.findAll({ patientAddress: patient, emitterAddress: emitter });
+  }
+
+  //recupera un flujo de subida cortado a mitad de camino: si el hash ya está registrado
+  //on-chain para ese paciente, devuelve el documentIdOnChain y si su metadata ya se guardó,
+  //para que el frontend pueda completar el paso que falló sin repetir la transacción
+  @Get("lookup")
+  async lookupByHash(@Query("patient") patient: string, @Query("hash") hash: string) {
+    if (!patient || !hash) {
+      throw new BadRequestException("Faltan patient o hash");
+    }
+    return this.documentsService.findByHash(patient, hash);
   }
 
   @Get(":id")

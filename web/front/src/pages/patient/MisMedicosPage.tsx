@@ -317,23 +317,41 @@ export default function MisMedicosPage() {
         if (!ok) return;
         setRevoking(key);
         loader.show("Confirmá en MetaMask…");
-        const tx = await pm.revokeGlobalAccess(doctor);
-        loader.show("Procesando transacción…");
-        await tx.wait();
+        let txHash: string | null = null;
+        try {
+          const tx = await pm.revokeGlobalAccess(doctor);
+          txHash = tx.hash;
+          loader.show("Procesando transacción…");
+          await tx.wait();
+        } catch (contractErr: unknown) {
+          // Puede ser un reintento: la revocación ya se confirmó on-chain en un intento
+          // anterior pero la limpieza en el backend falló a mitad de camino. El contrato
+          // no deja revocar dos veces, así que si es ese el motivo seguimos igual con
+          // la limpieza de la DB en vez de dejar al usuario trabado.
+          const msg = getErrorMessage(contractErr);
+          if (!msg.includes("no tiene acceso global")) throw contractErr;
+        }
         // Limpiamos en la DB todos los accesos de ese médico
         const entry = doctors.find((d) => d.doctorAddress === doctorAddress);
         for (const doc of entry?.documents ?? []) {
           await api.revokePermission({ patientAddress: address, doctorAddress, documentIdOnChain: doc.documentIdOnChain });
         }
-        toast.show("Acceso total revocado", "success", txLink(tx.hash));
+        toast.show("Acceso total revocado", "success", txLink(txHash));
       } else {
         setRevoking(key);
         loader.show("Confirmá en MetaMask…");
-        const tx = await pm.revokeDocumentAccess(docId, doctor);
-        loader.show("Procesando transacción…");
-        await tx.wait();
+        let txHash: string | null = null;
+        try {
+          const tx = await pm.revokeDocumentAccess(docId, doctor);
+          txHash = tx.hash;
+          loader.show("Procesando transacción…");
+          await tx.wait();
+        } catch (contractErr: unknown) {
+          const msg = getErrorMessage(contractErr);
+          if (!msg.includes("no tiene acceso al documento")) throw contractErr;
+        }
         await api.revokePermission({ patientAddress: address, doctorAddress, documentIdOnChain: docId });
-        toast.show("Acceso revocado", "success", txLink(tx.hash));
+        toast.show("Acceso revocado", "success", txLink(txHash));
       }
 
       await load();

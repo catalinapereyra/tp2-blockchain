@@ -1,10 +1,14 @@
 import { ConflictException, ForbiddenException, Injectable } from "@nestjs/common";
 import { CreateLaboratoryStudyDto } from "./dto/create-laboratory-study.dto";
 import { LaboratoryRepository } from "./laboratory.repository";
+import { BlockchainService } from "../blockchain/blockchain.service";
 
 @Injectable()
 export class LaboratoryService {
-  constructor(private readonly laboratoryRepository: LaboratoryRepository) {}
+  constructor(
+    private readonly laboratoryRepository: LaboratoryRepository,
+    private readonly blockchainService: BlockchainService,
+  ) {}
 
   findStudies(emitterAddress: string) {
     return this.laboratoryRepository.findByEmitter(emitterAddress);
@@ -17,6 +21,16 @@ export class LaboratoryService {
 
     const existing = await this.laboratoryRepository.findByDocumentId(dto.documentIdOnChain);
     if (existing) throw new ConflictException("Ya existe metadata para ese estudio");
+
+    //el frontend podría mandar cualquier documentIdOnChain: confirmamos contra la
+    //blockchain que ESE id corresponde exactamente a este paciente y emisor antes de guardar
+    const matches = await this.blockchainService.documentMatchesOwner(dto.documentIdOnChain, {
+      patient: dto.patientAddress,
+      emitter: dto.emitterAddress,
+    });
+    if (!matches) {
+      throw new ConflictException("El documento on-chain no corresponde a este paciente y emisor");
+    }
 
     return this.laboratoryRepository.createStudy(dto);
   }

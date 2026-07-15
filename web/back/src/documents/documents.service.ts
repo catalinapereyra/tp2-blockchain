@@ -1,5 +1,6 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { BlockchainService } from "../blockchain/blockchain.service";
 
 export interface CreateDocumentDto {
   documentIdOnChain: number;
@@ -42,7 +43,10 @@ const METADATA_SELECT = {
 
 @Injectable()
 export class DocumentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly blockchainService: BlockchainService,
+  ) {}
 
 
   private async enrichWithNames<T extends { patientAddress: string; emitterAddress: string }>(
@@ -138,6 +142,20 @@ export class DocumentsService {
     return withDiagnoses;
   }
 
+  // Recupera un flujo de subida cortado a mitad de camino: dado un paciente y el hash del
+  // archivo, busca si ya existe un documentIdOnChain para ese hash y si su metadata
+  // off-chain ya se guardó. Así, si la transacción se confirmó pero el paso siguiente
+  // (guardar en el backend) falló, el frontend puede retomar sin repetir el registro
+  // on-chain (el contrato no deja re-registrar un hash ya usado).
+  async findByHash(patientAddress: string, documentHash: string) {
+    const documentIdOnChain = await this.blockchainService.findDocumentIdByHash(patientAddress, documentHash);
+    if (documentIdOnChain === null) {
+      return { documentIdOnChain: null, alreadySaved: false };
+    }
+    const existing = await this.prisma.documentMetadata.findUnique({ where: { documentIdOnChain } });
+    return { documentIdOnChain, alreadySaved: !!existing };
+  }
+
   async getFile(documentIdOnChain: number) {
     const doc = await this.prisma.documentMetadata.findUnique({
       where: { documentIdOnChain },
@@ -158,6 +176,18 @@ export class DocumentsService {
     if (existing) throw new ConflictException("Ya existe metadata para ese documento");
 
     if (!dto.fileBase64) throw new BadRequestException("Falta el contenido del archivo");
+
+    //el frontend podría mandar cualquier documentIdOnChain: confirmamos contra la
+    //blockchain que ESE id corresponde exactamente a este paciente y emisor antes de guardar
+    const matches = await this.blockchainService.documentMatchesOwner(dto.documentIdOnChain, {
+      patient: dto.patientAddress,
+      emitter: dto.emitterAddress,
+    });
+    if (!matches) {
+      throw new ConflictException(
+        "El documento on-chain no corresponde a este paciente y emisor",
+      );
+    }
 
     return this.prisma.documentMetadata.create({
       data: {

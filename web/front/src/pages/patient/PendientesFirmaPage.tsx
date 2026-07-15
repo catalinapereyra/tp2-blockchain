@@ -49,32 +49,54 @@ export default function PendientesFirmaPage() {
     loader.show("Confirmá en MetaMask…");
     try {
       const registry = await getDocumentRegistry();
+      const normalizedAddress = ethers.getAddress(address);
+
+      let documentIdOnChain: number;
+      let txHash: string | undefined;
 
       if (await registry.isHashRegistered(doc.documentHash)) {
-        throw new Error("Este documento ya fue registrado en la blockchain.");
+        // Puede ser un reintento: una vez anterior la transacción se confirmó pero
+        // guardar el registro en el backend falló a mitad de camino. El contrato no
+        // deja re-registrar el mismo hash, así que buscamos si ya quedó asociado a
+        // este paciente en vez de asumir directamente que es un duplicado real.
+        const lookup = await api.lookupDocumentByHash(normalizedAddress, doc.documentHash);
+        if (lookup.documentIdOnChain === null) {
+          throw new Error("Este documento ya fue registrado en la blockchain para otro paciente.");
+        }
+        if (lookup.alreadySaved) {
+          toast.show("Este documento ya estaba registrado en tu historial", "success");
+          setDocs((prev) => prev.filter((d) => d.id !== doc.id));
+          return;
+        }
+        documentIdOnChain = lookup.documentIdOnChain;
+      } else {
+        //paciente paga el gas, el contrato verifica la firma del medico
+        const tx = await registry.registerSignedDocument(
+          normalizedAddress,
+          doc.documentHash,
+          doc.documentType,
+          doc.offChainRef,
+          ethers.getAddress(doc.doctorAddress),
+          doc.signature,
+        );
+        txHash = tx.hash;
+        loader.show("Registrando en la blockchain…");
+        const receipt = await tx.wait();
+
+        const event = receipt.logs
+          .map((log: any) => { try { return registry.interface.parseLog(log); } catch { return null; } })
+          .find((parsed: any) => parsed?.name === "DocumentRegistered");
+        if (!event) throw new Error("No se pudo obtener el id del documento registrado");
+        documentIdOnChain = Number(event.args.documentId ?? event.args[0]);
       }
-
-      //paciente paga el gas, el contrato verifica la firma del medico
-      const tx = await registry.registerSignedDocument(
-        ethers.getAddress(address),
-        doc.documentHash,
-        doc.documentType,
-        doc.offChainRef,
-        ethers.getAddress(doc.doctorAddress),
-        doc.signature,
-      );
-      loader.show("Registrando en la blockchain…");
-      const receipt = await tx.wait();
-
-      const event = receipt.logs
-        .map((log: any) => { try { return registry.interface.parseLog(log); } catch { return null; } })
-        .find((parsed: any) => parsed?.name === "DocumentRegistered");
-      if (!event) throw new Error("No se pudo obtener el id del documento registrado");
-      const documentIdOnChain = Number(event.args.documentId ?? event.args[0]);
 
       await api.registerSignedDocument(doc.id, documentIdOnChain);
 
-      toast.show("Documento registrado en tu historial", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
+      toast.show(
+        "Documento registrado en tu historial",
+        "success",
+        txHash ? { link: { href: explorerTxUrl(txHash), label: "Ver en Etherscan" } } : undefined,
+      );
       setDocs((prev) => prev.filter((d) => d.id !== doc.id));
     } catch (e: unknown) {
       toast.show(getErrorMessage(e) || "No se pudo registrar", "error");

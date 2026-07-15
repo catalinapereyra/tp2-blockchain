@@ -142,6 +142,12 @@ export const api = {
   },
   getLaboratoryStudies: (emitter: string) =>
     request(`/api/laboratory/studies?emitter=${encodeURIComponent(emitter)}`) as Promise<DocumentMetadata[]>,
+  // Recupera un flujo de subida cortado a mitad de camino: si el archivo ya se registró
+  // on-chain para ese paciente, devuelve el documentIdOnChain y si la metadata ya se guardó.
+  lookupDocumentByHash: (patient: string, hash: string) =>
+    request(
+      `/api/documents/lookup?patient=${encodeURIComponent(patient)}&hash=${encodeURIComponent(hash)}`,
+    ) as Promise<{ documentIdOnChain: number | null; alreadySaved: boolean }>,
   getDocument: (id: number) => request(`/api/documents/${id}`),
   // El médico logueado guarda/edita su diagnóstico sobre un documento (off-chain)
   saveDiagnosis: (documentIdOnChain: number, text: string) =>

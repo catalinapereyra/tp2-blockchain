@@ -60,10 +60,22 @@ export default function SolicitarRecetaPage() {
       if (!event) throw new Error("No se pudo obtener el id de la receta");
       const prescriptionIdOnChain = Number(event.args.id ?? event.args[0]);
 
-      // Guardamos el texto privado off-chain
-      await api.createPrescription({ prescriptionIdOnChain, doctorAddress: ethers.getAddress(doctorAddress), description: description.trim() });
-
-      toast.show("Solicitud enviada", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
+      // Guardamos el texto privado off-chain. Si esto falla, la solicitud on-chain ya
+      // se envió y no hay forma de deshacerla automáticamente (el paciente puede
+      // cancelarla desde "Mis recetas" si prefiere reintentar de cero), así que
+      // avisamos con un mensaje distinto en vez de dar a entender que no pasó nada
+      // — total, si el usuario reintentara este formulario, generaría OTRA solicitud
+      // duplicada on-chain en vez de arreglar la que ya se mandó.
+      try {
+        await api.createPrescription({ prescriptionIdOnChain, doctorAddress: ethers.getAddress(doctorAddress), description: description.trim() });
+        toast.show("Solicitud enviada", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
+      } catch (descErr) {
+        console.error("No se pudo guardar la descripción de la receta", descErr);
+        toast.show(
+          "La solicitud se envió a la blockchain, pero no pudimos guardar la descripción. El médico la va a ver con un texto genérico — podés cancelarla desde \"Mis recetas\" si preferís reintentar.",
+          "error",
+        );
+      }
       setSubmitted(true);
     } catch (err: unknown) {
       toast.show(getErrorMessage(err) || "No se pudo enviar la solicitud", "error");

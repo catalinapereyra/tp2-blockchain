@@ -47,13 +47,28 @@ export default function RecetasPage() {
           const id = Number(idBn);
           const p = await pm.getPrescription(idBn);
           const meta = metaById.get(id);
+          const status = STATUS[Number(p.status)] ?? "pending";
+
+          // Si ya se emitió on-chain, el hash del documento queda guardado en el
+          // contrato pase lo que pase con el backend. Lo usamos para detectar si el
+          // PDF nunca llegó a guardarse (la tx se confirmó pero el paso siguiente falló).
+          let missingDocument = false;
+          if (status === "issued" && p.documentHash && p.documentHash !== ethers.ZeroHash) {
+            try {
+              const lookup = await api.lookupDocumentByHash(p.patient as string, p.documentHash as string);
+              missingDocument = !lookup.alreadySaved;
+            } catch { /* si falla la consulta, no bloqueamos la carga de la lista */ }
+          }
+
           return {
             id,
             patientAddress: p.patient as string,
             patientName: meta?.patientName ?? undefined,
             description: meta?.description ?? p.prescriptionType,
             requestedAt: fmtDate(p.requestedAt),
-            status: STATUS[Number(p.status)] ?? "pending",
+            status,
+            documentHash: p.documentHash as string,
+            missingDocument,
           } as Receta;
         }),
       );
@@ -117,35 +132,60 @@ export default function RecetasPage() {
     if (!file || id == null || !address) return;
 
     const receta = recetas.find((r) => r.id === id);
+    const patientAddress = receta?.patientAddress ?? address;
     setBusyId(id);
     loader.show("Procesando archivo…");
     try {
       const upload = await api.uploadFile(file);
       const bytes = new Uint8Array(await file.arrayBuffer());
       const documentHash = ethers.keccak256(bytes);
-      const offChainRef = crypto.randomUUID();
 
-      loader.show("Confirmá en MetaMask…");
-      const pm = await getPrescriptionManager();
-      const tx = await pm.issuePrescription(id, documentHash, offChainRef);
-      loader.show("Registrando en la blockchain…");
-      const receipt = await tx.wait();
+      let documentIdOnChain: number;
+      let txHash: string | undefined;
 
-      // El documento lo registra MedicalDocumentRegistry (evento DocumentRegistered)
-      const iface = new ethers.Interface(DOCUMENT_REGISTRY_ABI);
-      let documentIdOnChain = -1;
-      for (const log of receipt.logs) {
-        try {
-          const parsed = iface.parseLog(log);
-          if (parsed?.name === "DocumentRegistered") { documentIdOnChain = Number(parsed.args.documentId); break; }
-        } catch { /* otro contrato */ }
+      if (receta?.status === "issued" && receta.missingDocument) {
+        // Recuperando: la receta ya se emitió on-chain en un intento anterior (el hash
+        // quedó guardado en el contrato) pero el PDF nunca llegó a guardarse en el
+        // backend. No hay que repetir la transacción, solo verificar que el archivo
+        // adjuntado ahora sea el mismo que se firmó entonces.
+        if (documentHash !== receta.documentHash) {
+          throw new Error("Este no es el mismo archivo que se emitió — adjuntá el PDF original.");
+        }
+        const lookup = await api.lookupDocumentByHash(patientAddress, documentHash);
+        if (lookup.documentIdOnChain === null) {
+          throw new Error("No se encontró el documento en la blockchain. Contactá a soporte.");
+        }
+        if (lookup.alreadySaved) {
+          toast.show("Esta receta ya estaba guardada", "success");
+          await load();
+          return;
+        }
+        documentIdOnChain = lookup.documentIdOnChain;
+      } else {
+        const offChainRef = crypto.randomUUID();
+        loader.show("Confirmá en MetaMask…");
+        const pm = await getPrescriptionManager();
+        const tx = await pm.issuePrescription(id, documentHash, offChainRef);
+        txHash = tx.hash;
+        loader.show("Registrando en la blockchain…");
+        const receipt = await tx.wait();
+
+        // El documento lo registra MedicalDocumentRegistry (evento DocumentRegistered)
+        const iface = new ethers.Interface(DOCUMENT_REGISTRY_ABI);
+        documentIdOnChain = -1;
+        for (const log of receipt.logs) {
+          try {
+            const parsed = iface.parseLog(log);
+            if (parsed?.name === "DocumentRegistered") { documentIdOnChain = Number(parsed.args.documentId); break; }
+          } catch { /* otro contrato */ }
+        }
+        if (documentIdOnChain < 0) throw new Error("No se pudo obtener el id del documento");
       }
-      if (documentIdOnChain < 0) throw new Error("No se pudo obtener el id del documento");
 
       // Guardamos el PDF en la DB (emisor = el médico, para que el paciente lo vea como receta médica)
       await api.createDocument({
         documentIdOnChain,
-        patientAddress: receta?.patientAddress ?? address,
+        patientAddress,
         emitterAddress: ethers.getAddress(address),
         title: "Receta médica",
         documentType: "receta",
@@ -154,7 +194,11 @@ export default function RecetasPage() {
         mimeType: upload.mimeType,
       });
 
-      toast.show("Receta emitida", "success", { link: { href: explorerTxUrl(tx.hash), label: "Ver en Etherscan" } });
+      toast.show(
+        "Receta emitida",
+        "success",
+        txHash ? { link: { href: explorerTxUrl(txHash), label: "Ver en Etherscan" } } : undefined,
+      );
       await load();
     } catch (err) {
       toast.show(getErrorMessage(err) || "No se pudo emitir la receta", "error");

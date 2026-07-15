@@ -47,26 +47,40 @@ export default function SubirEstudioPage() {
       setStep("signing");
       const registry = await getDocumentRegistry();
 
+      let documentIdOnChain: number;
+
       if (await registry.isHashRegistered(fileHash)) {
-        throw new Error(
-          "Este archivo ya fue registrado anteriormente en la blockchain. Subí un archivo distinto.",
-        );
-      }
+        // Puede ser un reintento de una subida anterior que se cortó después de
+        // confirmar la transacción pero antes de guardar los datos en el backend.
+        // El contrato no deja re-registrar el mismo hash, así que primero revisamos
+        // si ya quedó asociado a este paciente antes de asumir que es un duplicado.
+        const lookup = await api.lookupDocumentByHash(address, fileHash);
+        if (lookup.documentIdOnChain === null) {
+          throw new Error(
+            "Este archivo ya fue registrado anteriormente en la blockchain. Subí un archivo distinto.",
+          );
+        }
+        if (lookup.alreadySaved) {
+          setStep("done");
+          return;
+        }
+        documentIdOnChain = lookup.documentIdOnChain;
+      } else {
+        const tx = await registry.uploadOwnDocument(fileHash, category, "");
+        setTxHash(tx.hash);
+        const receipt = await tx.wait();
 
-      const tx = await registry.uploadOwnDocument(fileHash, category, "");
-      setTxHash(tx.hash);
-      const receipt = await tx.wait();
-
-      const iface = new ethers.Interface(DOCUMENT_REGISTRY_ABI);
-      let documentIdOnChain = 0;
-      for (const log of receipt.logs) {
-        try {
-          const parsed = iface.parseLog(log);
-          if (parsed?.name === "DocumentRegistered") {
-            documentIdOnChain = Number(parsed.args.documentId);
-            break;
-          }
-        } catch { /* log de otro contrato, ignorar */ }
+        const iface = new ethers.Interface(DOCUMENT_REGISTRY_ABI);
+        documentIdOnChain = 0;
+        for (const log of receipt.logs) {
+          try {
+            const parsed = iface.parseLog(log);
+            if (parsed?.name === "DocumentRegistered") {
+              documentIdOnChain = Number(parsed.args.documentId);
+              break;
+            }
+          } catch { /* log de otro contrato, ignorar */ }
+        }
       }
 
       setStep("saving");
