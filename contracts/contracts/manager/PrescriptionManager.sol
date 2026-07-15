@@ -17,6 +17,8 @@ contract PrescriptionManager is Ownable {
         CANCELLED
     }
 
+    //no guarda "updatedAt": ni el front ni el back lo leen, cada transición de estado
+    //(aceptar/rechazar/emitir/cancelar) ya emite su propio evento indexado en la blockchain
     struct Prescription {
         uint256 id;
         address patient;
@@ -26,7 +28,6 @@ contract PrescriptionManager is Ownable {
         bytes32 documentHash;   // vacío hasta que se emite
         string offChainRef;     // referencia off-chain en la base de datos, vacío hasta que se emite
         uint256 requestedAt;
-        uint256 updatedAt;
     }
 
 
@@ -83,8 +84,7 @@ contract PrescriptionManager is Ownable {
             status: PrescriptionStatus.PENDING,
             documentHash: bytes32(0),
             offChainRef: "",
-            requestedAt: block.timestamp,
-            updatedAt: block.timestamp
+            requestedAt: block.timestamp
         });
 
         _patientPrescriptions[msg.sender].push(id);
@@ -98,6 +98,8 @@ contract PrescriptionManager is Ownable {
     /**
      * El paciente cancela su solicitud mientras esté PENDING o ACCEPTED.
      */
+    //"storage" (no memory): p.status se escribe directo en el mapping, hace falta
+    //una referencia a la ubicación real, no una copia
     function cancelPrescription(uint256 id) external {
         require(id < _nextId, "PrescriptionManager: receta no existe");
         Prescription storage p = _prescriptions[id];
@@ -108,7 +110,6 @@ contract PrescriptionManager is Ownable {
         );
 
         p.status = PrescriptionStatus.CANCELLED;
-        p.updatedAt = block.timestamp;
 
         emit PrescriptionCancelled(id, msg.sender);
     }
@@ -124,7 +125,6 @@ contract PrescriptionManager is Ownable {
         require(p.status == PrescriptionStatus.PENDING, "PrescriptionManager: no esta pendiente");
 
         p.status = PrescriptionStatus.ACCEPTED;
-        p.updatedAt = block.timestamp;
 
         emit PrescriptionAccepted(id, msg.sender);
     }
@@ -139,7 +139,6 @@ contract PrescriptionManager is Ownable {
         require(p.status == PrescriptionStatus.PENDING, "PrescriptionManager: no esta pendiente");
 
         p.status = PrescriptionStatus.REJECTED;
-        p.updatedAt = block.timestamp;
 
         emit PrescriptionRejected(id, msg.sender);
     }
@@ -163,7 +162,6 @@ contract PrescriptionManager is Ownable {
         p.status = PrescriptionStatus.ISSUED;
         p.documentHash = documentHash;
         p.offChainRef = offChainRef;
-        p.updatedAt = block.timestamp;
 
         // Registrar en el historial médico del paciente
         _documentRegistry.registerDocument(p.patient, documentHash, p.prescriptionType, offChainRef);
@@ -172,6 +170,8 @@ contract PrescriptionManager is Ownable {
     }
 
 
+    //"memory": view externa que devuelve el struct completo; no se puede devolver
+    //una referencia storage fuera del contrato, tiene que ser una copia
     function getPrescription(uint256 id) external view returns (Prescription memory) {
         require(id < _nextId, "PrescriptionManager: receta no existe");
         return _prescriptions[id];

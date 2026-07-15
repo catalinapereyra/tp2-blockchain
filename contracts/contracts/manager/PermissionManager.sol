@@ -61,6 +61,9 @@ contract PermissionManager is Ownable {
         require(grantee != msg.sender, "PermissionManager: no puede autorizarse a si mismo");
         require(_documentRegistry.documentExists(documentId), "PermissionManager: documento no existe");
 
+        //"memory" acá no es una elección: getDocument() es una llamada cross-contract
+        //(external), y esas siempre devuelven una copia — nunca se puede recibir una
+        //referencia storage de otro contrato
         MedicalDocumentRegistry.MedicalDocument memory doc = _documentRegistry.getDocument(documentId);
         require(doc.patient == msg.sender, "PermissionManager: no es dueno del documento");
 

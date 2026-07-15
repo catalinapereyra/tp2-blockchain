@@ -22,11 +22,12 @@ contract UserRegistry is Ownable {
     }
 
     //defino la estrctura user (para agrupar datos relacionados)
+    //no guarda "updatedAt": ningún caller (front ni back) lo lee, y cada transición de
+    //estado ya emite su propio evento con block.timestamp si algún día hace falta auditarlo
     struct User {
         Role role;
         UserStatus status;
         uint256 registeredAt;
-        uint256 updatedAt; //ultima vez q se actualizo el estado del usuario
     }
 
 
@@ -61,8 +62,7 @@ contract UserRegistry is Ownable {
         _users[msg.sender] = User({ //dirección de la wallet que firmo la transaccion
             role: Role.PATIENT,
             status: UserStatus.APPROVED,
-            registeredAt: block.timestamp,
-            updatedAt: block.timestamp
+            registeredAt: block.timestamp
         });
 
         emit PatientRegistered(msg.sender); //emite evento avisando q el paciente fue registrado
@@ -78,8 +78,7 @@ contract UserRegistry is Ownable {
         _users[msg.sender] = User({
             role: role, //crea con el rol elegido
             status: UserStatus.PENDING,
-            registeredAt: block.timestamp,
-            updatedAt: block.timestamp
+            registeredAt: block.timestamp
         });
 
         //Emite un evento indicando que ese profesional pidio registrarse
@@ -95,7 +94,6 @@ contract UserRegistry is Ownable {
         );
 
         _users[user].status = UserStatus.APPROVED;
-        _users[user].updatedAt = block.timestamp;
 
         emit UserApproved(user, _users[user].role);
     }
@@ -109,7 +107,6 @@ contract UserRegistry is Ownable {
         );
 
         _users[user].status = UserStatus.REJECTED;
-        _users[user].updatedAt = block.timestamp;
 
         emit UserRejected(user);
     }
@@ -124,7 +121,6 @@ contract UserRegistry is Ownable {
         );
 
         _users[user].status = UserStatus.REVOKED;
-        _users[user].updatedAt = block.timestamp;
 
         emit UserRevoked(user);
     }
@@ -152,7 +148,9 @@ contract UserRegistry is Ownable {
         return _users[user].role;
     }
 
-    //para obtener toda la información del usuario
+    //para obtener toda la información del usuario. Devuelve una copia en memory
+    //porque es una view externa: no se va a modificar, y no se puede devolver una
+    //referencia storage fuera del contrato
     function getUser(address user) external view returns (User memory) {
         require(_isRegistered(user), "UserRegistry: no registrado");
         return _users[user];

@@ -19,6 +19,9 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         REVOKED
     }
 
+    //no guarda "issuedAt": ni el front ni el back lo leen (la fecha que se muestra al
+    //usuario es la del registro off-chain), y el evento DocumentRegistered ya queda en
+    //el historial de la blockchain con su propio timestamp si hiciera falta auditarlo
     struct MedicalDocument {
         uint256 id;
         bytes32 documentHash;
@@ -26,7 +29,6 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         address issuer;
         string documentType;
         string offChainRef;     //referencia off-chain al documento guardado en la base de datos
-        uint256 issuedAt;
         DocumentStatus status;
     }
 
@@ -99,7 +101,6 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
             issuer: msg.sender,
             documentType: documentType,
             offChainRef: offChainRef,
-            issuedAt: block.timestamp,
             status: DocumentStatus.VERIFIED_ISSUER_DOCUMENT
         });
 
@@ -162,7 +163,6 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
             issuer: doctor,
             documentType: documentType,
             offChainRef: offChainRef,
-            issuedAt: block.timestamp,
             status: DocumentStatus.VERIFIED_ISSUER_DOCUMENT
         });
 
@@ -198,7 +198,6 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
             issuer: msg.sender,
             documentType: documentType,
             offChainRef: offChainRef,
-            issuedAt: block.timestamp,
             status: DocumentStatus.PATIENT_UPLOADED
         });
 
@@ -212,6 +211,7 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
 
 
     //emisor original puede revocar un documento que emitio y paciente puede revocar sus propios uploads
+    //"storage": necesitamos escribir doc.status directo en el mapping, no una copia
     function revokeDocument(uint256 documentId) external {
         require(documentId < _nextDocumentId, "MedicalDocumentRegistry: documento no existe");
         MedicalDocument storage doc = _documents[documentId];
@@ -228,6 +228,8 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
 
 
     //Verifica que el hash del archivo actual coincida con el registrado
+    //"storage" (no memory): solo leemos 2 campos, así que apuntar al storage evita
+    //copiar todo el struct (incluidos los strings) a memory para nada
     function verifyDocument(uint256 documentId, bytes32 hashToVerify) external view returns (bool) {
         require(documentId < _nextDocumentId, "MedicalDocumentRegistry: documento no existe");
         MedicalDocument storage doc = _documents[documentId];
@@ -236,6 +238,8 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
 
 
     //Consultado por PermissionManager para saber quién es el paciente dueño del documento
+    //"memory": es una view externa que devuelve el struct completo; una función external
+    //no puede devolver una referencia storage, tiene que ser una copia
     function getDocument(uint256 documentId) external view returns (MedicalDocument memory) {
         require(documentId < _nextDocumentId, "MedicalDocumentRegistry: documento no existe");
         return _documents[documentId];

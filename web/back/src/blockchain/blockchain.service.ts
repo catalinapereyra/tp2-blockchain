@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { ethers } from "ethers";
 
 const DOCUMENT_REGISTRY_ABI = [
-  "function getDocument(uint256 documentId) external view returns (tuple(uint256 id, bytes32 documentHash, address patient, address issuer, string documentType, string offChainRef, uint256 issuedAt, uint8 status))",
+  "function getDocument(uint256 documentId) external view returns (tuple(uint256 id, bytes32 documentHash, address patient, address issuer, string documentType, string offChainRef, uint8 status))",
   "function getPatientDocuments(address patient) external view returns (uint256[])",
 ];
 
