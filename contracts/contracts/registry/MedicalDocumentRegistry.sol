@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -7,8 +8,7 @@ import "./UserRegistry.sol";
 
 contract MedicalDocumentRegistry is Ownable, EIP712 {
 
-
-    //define el tipo de dato que va a firmar el medico con EIP-712
+    //define el tipo de dato que va a firmar el médico con EIP-712
     bytes32 private constant MEDICAL_DOCUMENT_TYPEHASH = keccak256(
         "MedicalDocument(address patient,bytes32 documentHash,string documentType,string offChainRef,address doctor)"
     );
@@ -32,17 +32,15 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         DocumentStatus status;
     }
 
-
-    mapping(uint256 => MedicalDocument) private _documents; //guarda docs x id
+    mapping(uint256 => MedicalDocument) private _documents;
     mapping(bytes32 => bool) private _hashExists;
     mapping(address => uint256[]) private _patientDocuments;
-    uint256 private _nextDocumentId; //para asignar IDs a los documentos
+    uint256 private _nextDocumentId;
 
     UserRegistry private immutable _userRegistry;
 
-    //direccion autorizada a registrar documentos en nombre de un emisor (ej: PrescriptionManager)
+    //dirección autorizada a registrar documentos en nombre de un emisor (ej: PrescriptionManager)
     address private _authorizedCaller;
-
 
     event DocumentRegistered(
         uint256 indexed documentId,
@@ -54,12 +52,11 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
     event DocumentRevoked(uint256 indexed documentId, address indexed revokedBy);
     event AuthorizedCallerSet(address indexed caller);
 
-
-    constructor(address userRegistry) Ownable(msg.sender) EIP712("MedicalDocumentRegistry", "1") { //Inicializa el dominio EIP-712
+    //inicializa el dominio EIP-712
+    constructor(address userRegistry) Ownable(msg.sender) EIP712("MedicalDocumentRegistry", "1") {
         require(userRegistry != address(0), "MedicalDocumentRegistry: userRegistry invalido");
         _userRegistry = UserRegistry(userRegistry);
     }
-
 
     //admin autoriza a un contrato (ej: PrescriptionManager) a registrar documentos
     function setAuthorizedCaller(address caller) external onlyOwner {
@@ -72,9 +69,8 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         return _authorizedCaller;
     }
 
-
-    //profesional verificado registra un documento medico para un paciente
-    //consulta UserRegistry para confirmar que el emisor esta habilitado
+    //profesional verificado registra un documento médico para un paciente
+    //consulta UserRegistry para confirmar que el emisor está habilitado
     function registerDocument(
         address patient,
         bytes32 documentHash,
@@ -112,7 +108,7 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         return documentId;
     }
 
-    //Registra un documento firmado off-chain por un medico autorizado.
+    //registra un documento firmado off-chain por un médico autorizado
     function registerSignedDocument(
         address patient,
         bytes32 documentHash,
@@ -128,7 +124,7 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         require(bytes(offChainRef).length > 0, "MedicalDocumentRegistry: referencia invalida");
         require(signature.length > 0, "MedicalDocumentRegistry: firma requerida");
 
-        //reconstruye el mensaje que el medico debio haber firmado (hasheado)
+        //reconstruye el mensaje que el médico debió haber firmado (hasheado)
         bytes32 structHash = keccak256(
             abi.encode(
                 MEDICAL_DOCUMENT_TYPEHASH,
@@ -139,8 +135,9 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
                 doctor
             )
         );
-        bytes32 digest = _hashTypedDataV4(structHash); //agarra el structHash y le agrega información del esxtandar EIP-712
-        address signer = ECDSA.recover(digest, signature); //recupera el firmante a partir del hash y la firma
+        //arma el digest final agregándole al structHash la información del dominio EIP-712
+        bytes32 digest = _hashTypedDataV4(structHash);
+        address signer = ECDSA.recover(digest, signature);
         require(signer != address(0), "MedicalDocumentRegistry: firma invalida");
         require(signer == doctor, "MedicalDocumentRegistry: firma no corresponde al medico");
         require(
@@ -153,8 +150,7 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         );
         require(!_hashExists[documentHash], "MedicalDocumentRegistry: hash ya registrado");
 
-        uint256 documentId = _nextDocumentId++; //asigna un nuevo ID al documento
-
+        uint256 documentId = _nextDocumentId++;
 
         _documents[documentId] = MedicalDocument({
             id: documentId,
@@ -174,9 +170,8 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         return documentId;
     }
 
-
-     //El paciente sube un documento propio
-    //Queda marcado como PATIENT_UPLOADED, sin respaldo de emisor verificado
+    //el paciente sube un documento propio
+    //queda marcado como PATIENT_UPLOADED, sin respaldo de emisor verificado
     function uploadOwnDocument(
         bytes32 documentHash,
         string calldata documentType,
@@ -209,8 +204,7 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         return documentId;
     }
 
-
-    //emisor original puede revocar un documento que emitio y paciente puede revocar sus propios uploads
+    //emisor original puede revocar un documento que emitió y paciente puede revocar sus propios uploads
     //"storage": necesitamos escribir doc.status directo en el mapping, no una copia
     function revokeDocument(uint256 documentId) external {
         require(documentId < _nextDocumentId, "MedicalDocumentRegistry: documento no existe");
@@ -226,8 +220,7 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         emit DocumentRevoked(documentId, msg.sender);
     }
 
-
-    //Verifica que el hash del archivo actual coincida con el registrado
+    //verifica que el hash del archivo actual coincida con el registrado
     //"storage" (no memory): solo leemos 2 campos, así que apuntar al storage evita
     //copiar todo el struct (incluidos los strings) a memory para nada
     function verifyDocument(uint256 documentId, bytes32 hashToVerify) external view returns (bool) {
@@ -236,8 +229,7 @@ contract MedicalDocumentRegistry is Ownable, EIP712 {
         return doc.documentHash == hashToVerify && doc.status != DocumentStatus.REVOKED;
     }
 
-
-    //Consultado por PermissionManager para saber quién es el paciente dueño del documento
+    //consultado por PermissionManager para saber quién es el paciente dueño del documento
     //"memory": es una view externa que devuelve el struct completo; una función external
     //no puede devolver una referencia storage, tiene que ser una copia
     function getDocument(uint256 documentId) external view returns (MedicalDocument memory) {

@@ -5,9 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../registry/UserRegistry.sol";
 import "../registry/MedicalDocumentRegistry.sol";
 
-
 contract PrescriptionManager is Ownable {
-
 
     enum PrescriptionStatus {
         PENDING,
@@ -30,7 +28,6 @@ contract PrescriptionManager is Ownable {
         uint256 requestedAt;
     }
 
-
     mapping(uint256 => Prescription) private _prescriptions;
     mapping(address => uint256[]) private _patientPrescriptions;
     mapping(address => uint256[]) private _doctorPrescriptions;
@@ -38,7 +35,6 @@ contract PrescriptionManager is Ownable {
 
     UserRegistry private immutable _userRegistry;
     MedicalDocumentRegistry private immutable _documentRegistry;
-
 
     event PrescriptionRequested(
         uint256 indexed id,
@@ -51,7 +47,6 @@ contract PrescriptionManager is Ownable {
     event PrescriptionIssued(uint256 indexed id, address indexed doctor, bytes32 documentHash);
     event PrescriptionCancelled(uint256 indexed id, address indexed patient);
 
-
     constructor(
         address userRegistry,
         address documentRegistry
@@ -61,7 +56,6 @@ contract PrescriptionManager is Ownable {
         _userRegistry = UserRegistry(userRegistry);
         _documentRegistry = MedicalDocumentRegistry(documentRegistry);
     }
-
 
     /**
      * El paciente solicita una receta a un médico verificado.
@@ -114,7 +108,6 @@ contract PrescriptionManager is Ownable {
         emit PrescriptionCancelled(id, msg.sender);
     }
 
-
     /**
      * El médico asignado acepta la solicitud.
      */
@@ -163,12 +156,11 @@ contract PrescriptionManager is Ownable {
         p.documentHash = documentHash;
         p.offChainRef = offChainRef;
 
-        // Registrar en el historial médico del paciente
+        //registra el documento en el historial médico del paciente
         _documentRegistry.registerDocument(p.patient, documentHash, p.prescriptionType, offChainRef);
 
         emit PrescriptionIssued(id, msg.sender, documentHash);
     }
-
 
     //"memory": view externa que devuelve el struct completo; no se puede devolver
     //una referencia storage fuera del contrato, tiene que ser una copia

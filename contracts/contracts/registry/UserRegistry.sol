@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract UserRegistry is Ownable {
 
-
     enum Role {
         PATIENT,
         DOCTOR,
@@ -21,7 +20,7 @@ contract UserRegistry is Ownable {
         REVOKED
     }
 
-    //defino la estrctura user (para agrupar datos relacionados)
+    //agrupa los datos de un usuario registrado.
     //no guarda "updatedAt": ningún caller (front ni back) lo lee, y cada transición de
     //estado ya emite su propio evento con block.timestamp si algún día hace falta auditarlo
     struct User {
@@ -30,11 +29,9 @@ contract UserRegistry is Ownable {
         uint256 registeredAt;
     }
 
-
-    //unico mapa de usuarios. Para saber si una wallet esta registrada
-    //alcanza con mirar registeredAt (0 = nunca se registro)
+    //único mapa de usuarios. Para saber si una wallet está registrada
+    //alcanza con mirar registeredAt (0 = nunca se registró)
     mapping(address => User) private _users;
-
 
     event PatientRegistered(address indexed patient);
     event ProfessionalRegistrationRequested(address indexed professional, Role role);
@@ -42,50 +39,44 @@ contract UserRegistry is Ownable {
     event UserRejected(address indexed user);
     event UserRevoked(address indexed user);
 
+    //la wallet que deploya el contrato queda como owner (admin)
+    constructor() Ownable(msg.sender) {}
 
-    constructor() Ownable(msg.sender) {} //indica que la wallet que deploya el contrato sera el owner
-
-
-    //helper interno: una wallet esta registrada si tiene registeredAt distinto de 0
+    //helper interno: una wallet está registrada si tiene registeredAt distinto de 0
     function _isRegistered(address user) private view returns (bool) {
         return _users[user].registeredAt != 0;
     }
 
-
-    //El paciente se registra directamente, sin aprobación del admin
-    // Queda con estado APPROVED desde el momento en que se registra
-
-    //para q una wallet se registre como paciente
+    //el paciente se registra directamente, sin aprobación del admin:
+    //queda con estado APPROVED desde el momento en que se registra
     function registerAsPatient() external {
         require(!_isRegistered(msg.sender), "UserRegistry: ya registrado");
 
-        _users[msg.sender] = User({ //dirección de la wallet que firmo la transaccion
+        _users[msg.sender] = User({
             role: Role.PATIENT,
             status: UserStatus.APPROVED,
             registeredAt: block.timestamp
         });
 
-        emit PatientRegistered(msg.sender); //emite evento avisando q el paciente fue registrado
+        emit PatientRegistered(msg.sender);
     }
 
-
-    //medico, laboratorio o institución se registran como PENDING
-    //No pueden operar hasta que el admin los apruebe
+    //médico, laboratorio o institución se registran como PENDING
+    //no pueden operar hasta que el admin los apruebe
     function registerAsProfessional(Role role) external {
         require(!_isRegistered(msg.sender), "UserRegistry: ya registrado");
         require(role != Role.PATIENT, "UserRegistry: usar registerAsPatient");
 
         _users[msg.sender] = User({
-            role: role, //crea con el rol elegido
+            role: role,
             status: UserStatus.PENDING,
             registeredAt: block.timestamp
         });
 
-        //Emite un evento indicando que ese profesional pidio registrarse
         emit ProfessionalRegistrationRequested(msg.sender, role);
     }
 
-
+    //admin aprueba una solicitud pendiente
     function approveUser(address user) external onlyOwner {
         require(_isRegistered(user), "UserRegistry: no registrado");
         require(
@@ -111,7 +102,6 @@ contract UserRegistry is Ownable {
         emit UserRejected(user);
     }
 
-
     //admin revoca a un profesional aprobado
     function revokeUser(address user) external onlyOwner {
         require(_isRegistered(user), "UserRegistry: no registrado");
@@ -125,7 +115,6 @@ contract UserRegistry is Ownable {
         emit UserRevoked(user);
     }
 
-
     function isApproved(address user) external view returns (bool) {
         return _users[user].status == UserStatus.APPROVED && _isRegistered(user);
     }
@@ -134,8 +123,7 @@ contract UserRegistry is Ownable {
         return _isRegistered(user);
     }
 
-    //un emisor verificado es un profesional (no paciente) aprobado.
-    //Reemplaza lo que antes hacia MedicalRegistry.isVerifiedEmitter
+    //un emisor verificado es un profesional (no paciente) aprobado
     function isVerifiedEmitter(address user) external view returns (bool) {
         return
             _isRegistered(user) &&

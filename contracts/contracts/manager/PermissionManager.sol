@@ -5,22 +5,18 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../registry/MedicalDocumentRegistry.sol";
 import "../registry/UserRegistry.sol";
 
-
 contract PermissionManager is Ownable {
 
     mapping(address => mapping(address => bool)) private _globalAccess;
-
     mapping(address => mapping(uint256 => mapping(address => bool))) private _documentAccess;
 
     MedicalDocumentRegistry private immutable _documentRegistry;
     UserRegistry private immutable _userRegistry;
 
-
     event GlobalAccessGranted(address indexed patient, address indexed grantee);
     event GlobalAccessRevoked(address indexed patient, address indexed grantee);
     event DocumentAccessGranted(address indexed patient, uint256 indexed documentId, address indexed grantee);
     event DocumentAccessRevoked(address indexed patient, uint256 indexed documentId, address indexed grantee);
-
 
     constructor(address documentRegistry, address userRegistry) Ownable(msg.sender) {
         require(documentRegistry != address(0), "PermissionManager: documentRegistry invalido");
@@ -29,8 +25,7 @@ contract PermissionManager is Ownable {
         _userRegistry = UserRegistry(userRegistry);
     }
 
-
-    //El paciente da acceso total a todos sus documentos a una dirección
+    //el paciente da acceso total a todos sus documentos a una dirección
     function grantGlobalAccess(address grantee) external {
         require(_userRegistry.isRegistered(msg.sender), "PermissionManager: no registrado");
         require(grantee != address(0), "PermissionManager: beneficiario invalido");
@@ -42,8 +37,7 @@ contract PermissionManager is Ownable {
         emit GlobalAccessGranted(msg.sender, grantee);
     }
 
-
-    //paciente revoca el acceso global que había otorgado
+    //el paciente revoca el acceso global que había otorgado
     function revokeGlobalAccess(address grantee) external {
         require(_globalAccess[msg.sender][grantee], "PermissionManager: no tiene acceso global");
 
@@ -52,9 +46,7 @@ contract PermissionManager is Ownable {
         emit GlobalAccessRevoked(msg.sender, grantee);
     }
 
-
-
-    //el paciente da acceso a un documento especifico, verifica que el documento exista y le pertenezca
+    //el paciente da acceso a un documento específico, verifica que el documento exista y le pertenezca
     function grantDocumentAccess(uint256 documentId, address grantee) external {
         require(_userRegistry.isRegistered(msg.sender), "PermissionManager: no registrado");
         require(grantee != address(0), "PermissionManager: beneficiario invalido");
@@ -77,8 +69,7 @@ contract PermissionManager is Ownable {
         emit DocumentAccessGranted(msg.sender, documentId, grantee);
     }
 
-
-    //paciente revoca el acceso a un documento
+    //el paciente revoca el acceso a un documento
     function revokeDocumentAccess(uint256 documentId, address grantee) external {
         require(
             _documentAccess[msg.sender][documentId][grantee],
@@ -89,8 +80,6 @@ contract PermissionManager is Ownable {
 
         emit DocumentAccessRevoked(msg.sender, documentId, grantee);
     }
-
-
 
     function hasAccess(address patient, uint256 documentId, address grantee) external view returns (bool) {
         return _globalAccess[patient][grantee] || _documentAccess[patient][documentId][grantee];
