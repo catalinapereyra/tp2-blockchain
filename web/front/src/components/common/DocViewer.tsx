@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { ethers } from "ethers";
+import { api } from "../../lib/api";
 import { getDocumentRegistry } from "../../lib/contracts";
 import { colors, palette, fontFamily, fontSize, fontWeight, radius, shadow } from "../../styles";
 
@@ -38,21 +39,57 @@ export function useDocViewer() {
 
 export function DocViewerProvider({ children }: { children: ReactNode }) {
   const [doc, setDoc] = useState<DocViewerOptions | null>(null);
+  const [blob, setBlob] = useState<Blob | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<VerifyResult>(null);
 
   const open = useCallback((opts: DocViewerOptions) => { setDoc(opts); setVerifyResult(null); }, []);
-  const close = useCallback(() => { setDoc(null); setVerifyResult(null); }, []);
+  const close = useCallback(() => setDoc(null), []);
+
+  // doc.url apunta a un endpoint protegido por JWT (/api/documents/:id/file). No se puede
+  // usar directamente como src de un <iframe>: el navegador no manda el header
+  // Authorization en esas requests, así que el backend respondería 401. Por eso lo bajamos
+  // una sola vez acá como Blob (autenticado) y reusamos ese mismo blob para ver, verificar
+  // y descargar.
+  useEffect(() => {
+    if (!doc) {
+      setBlob(null);
+      setBlobUrl(null);
+      setLoadError(false);
+      return;
+    }
+
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    setBlob(null);
+    setBlobUrl(null);
+    setLoadError(false);
+
+    api.fetchFileBlob(doc.url)
+      .then((b) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(b);
+        setBlob(b);
+        setBlobUrl(objectUrl);
+      })
+      .catch(() => { if (!cancelled) setLoadError(true); });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [doc]);
 
   // Recalcula el hash del archivo actual y lo compara con el on-chain (sin gas).
   async function verify() {
-    if (!doc || doc.documentId == null) return;
+    if (!doc || doc.documentId == null || !blob) return;
     setVerifying(true);
     setVerifyResult(null);
     try {
-      const res = await fetch(doc.url);
-      const buf = await res.arrayBuffer();
+      const buf = await blob.arrayBuffer();
       const keccak = ethers.keccak256(new Uint8Array(buf));
       const shaBytes = new Uint8Array(await crypto.subtle.digest("SHA-256", buf));
       const sha = "0x" + Array.from(shaBytes).map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -70,21 +107,16 @@ export function DocViewerProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function download() {
-    if (!doc) return;
+  function download() {
+    if (!doc || !blobUrl) return;
     setDownloading(true);
     try {
-      const res = await fetch(doc.url);
-      const blob = await res.blob();
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
+      a.href = blobUrl;
       a.download = doc.fileName || doc.title || "documento";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(a.href);
-    } catch {
-      window.open(doc.url, "_blank");
     } finally {
       setDownloading(false);
     }
@@ -103,13 +135,13 @@ export function DocViewerProvider({ children }: { children: ReactNode }) {
                   verifyResult ? (
                     <span style={{ ...s.verifyBadge, ...VERIFY_STYLE[verifyResult] }}>{VERIFY_LABEL[verifyResult]}</span>
                   ) : (
-                    <button style={s.verifyBtn} onClick={verify} disabled={verifying}>
+                    <button style={s.verifyBtn} onClick={verify} disabled={verifying || !blob}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
                       {verifying ? "Verificando…" : "Verificar integridad"}
                     </button>
                   )
                 )}
-                <button style={s.downloadBtn} onClick={download} disabled={downloading}>
+                <button style={s.downloadBtn} onClick={download} disabled={downloading || !blobUrl}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   {downloading ? "Descargando…" : "Descargar"}
                 </button>
@@ -119,7 +151,11 @@ export function DocViewerProvider({ children }: { children: ReactNode }) {
               </div>
             </div>
             <div style={s.body}>
-              <iframe src={doc.url} title={doc.title || "Documento"} style={s.frame} />
+              {blobUrl ? (
+                <iframe src={blobUrl} title={doc.title || "Documento"} style={s.frame} />
+              ) : (
+                <div style={s.loadingBox}>{loadError ? "No se pudo cargar el archivo." : "Cargando documento…"}</div>
+              )}
             </div>
           </div>
         </div>
@@ -182,5 +218,9 @@ const s: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   body: { flex: 1, background: colors.bgApp, minHeight: 0 },
+  loadingBox: {
+    width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+    color: colors.textMuted, fontSize: fontSize.base,
+  },
   frame: { width: "100%", height: "100%", border: "none" },
 };

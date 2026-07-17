@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ethers } from "ethers";
 import { api, AppUser } from "../../lib/api";
 import { getDocumentRegistry, getUserRegistryReadOnly, explorerTxUrl } from "../../lib/contracts";
+import { findExistingDocument, extractDocumentIdFromReceipt } from "../../lib/documentRecovery";
 import { useWallet } from "../../context/WalletContext";
 import { LaboratoryCard } from "./LaboratoryCard";
 import UserSelect from "../common/UserSelect";
@@ -158,18 +159,9 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
       let documentIdOnChain: number;
       let txHash: string | undefined;
 
-      if (await documentRegistry.isHashRegistered(documentHash)) {
-        // Puede ser un reintento de una subida anterior que se cortó después de
-        // confirmar la transacción pero antes de guardar los datos en el backend.
-        // El contrato no deja re-registrar el mismo hash, así que primero revisamos
-        // si ya quedó asociado a este paciente antes de asumir que es un duplicado.
-        const lookup = await api.lookupDocumentByHash(normalizedPatient, documentHash);
-        if (lookup.documentIdOnChain === null) {
-          throw new Error(
-            "Este archivo ya fue registrado anteriormente en la blockchain para otro paciente. Subí un archivo distinto.",
-          );
-        }
-        if (lookup.alreadySaved) {
+      const existing = await findExistingDocument(documentRegistry, normalizedPatient, documentHash);
+      if (existing) {
+        if (existing.alreadySaved) {
           toast.show("Este estudio ya estaba subido — no hacía falta repetirlo", "success");
           onStudyCreated?.();
           setPatientAddress("");
@@ -182,7 +174,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
           if (fileInputRef.current) fileInputRef.current.value = "";
           return;
         }
-        documentIdOnChain = lookup.documentIdOnChain;
+        documentIdOnChain = existing.documentIdOnChain;
       } else {
         const tx = await documentRegistry.registerDocument(
           normalizedPatient,
@@ -192,19 +184,7 @@ export function StudyUploadForm({ onStudyCreated }: StudyUploadFormProps) {
         );
         txHash = tx.hash;
         const receipt = await tx.wait();
-
-        const event = receipt.logs
-          .map((log: any) => {
-            try {
-              return documentRegistry.interface.parseLog(log);
-            } catch {
-              return null;
-            }
-          })
-          .find((parsed: any) => parsed?.name === "DocumentRegistered");
-
-        if (!event) throw new Error("No se pudo obtener el id del documento registrado");
-        documentIdOnChain = Number(event.args.documentId ?? event.args[0]);
+        documentIdOnChain = extractDocumentIdFromReceipt(receipt);
       }
 
       setMessage("Guardando datos del estudio...");

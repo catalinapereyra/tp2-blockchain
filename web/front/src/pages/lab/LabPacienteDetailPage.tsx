@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useWallet } from "../../context/WalletContext";
 import { api, type DocumentMetadata } from "../../lib/api";
 import { categoryLabel } from "../../lib/categories";
+import { useDocViewer } from "../../components/common/DocViewer";
 import { palette, colors, fontFamily, fontSize, fontWeight, radius, shadow, gradients } from "../../styles";
 
 function fmtDate(d?: string): string {
@@ -16,6 +17,7 @@ export default function LabPacienteDetailPage() {
   const navigate = useNavigate();
   const { address: patientAddress } = useParams<{ address: string }>();
   const { address } = useWallet();
+  const viewer = useDocViewer();
   const [studies, setStudies] = useState<DocumentMetadata[]>([]);
   const [patientName, setPatientName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,10 +89,21 @@ export default function LabPacienteDetailPage() {
 
               {d.notes && <p style={s.notes}>📝 {d.notes}</p>}
 
-              <a href={api.fileUrl(d.documentIdOnChain)} target="_blank" rel="noreferrer" style={s.viewBtn}>
+              <button
+                type="button"
+                style={{ ...s.viewBtn, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                onClick={() =>
+                  viewer.open({
+                    url: api.fileUrl(d.documentIdOnChain),
+                    fileName: d.fileName,
+                    title: d.title,
+                    documentId: d.documentIdOnChain,
+                  })
+                }
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 Ver / descargar documento
-              </a>
+              </button>
             </div>
           ))}
         </div>

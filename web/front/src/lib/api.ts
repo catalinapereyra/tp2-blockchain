@@ -142,6 +142,17 @@ export const api = {
   },
   getLaboratoryStudies: (emitter: string) =>
     request(`/api/laboratory/studies?emitter=${encodeURIComponent(emitter)}`) as Promise<DocumentMetadata[]>,
+  // Baja el archivo de un endpoint protegido (fileUrl/signedDocFileUrl) como Blob. No se
+  // puede usar la URL directamente como src de un <iframe>/<img>: el navegador no manda el
+  // header Authorization en esas requests, así que el backend siempre respondería 401.
+  fetchFileBlob: async (url: string): Promise<Blob> => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("No se pudo cargar el archivo");
+    return res.blob();
+  },
   // Recupera un flujo de subida cortado a mitad de camino: si el archivo ya se registró
   // on-chain para ese paciente, devuelve el documentIdOnChain y si la metadata ya se guardó.
   lookupDocumentByHash: (patient: string, hash: string) =>

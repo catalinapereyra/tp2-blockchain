@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { useWallet } from "../../context/WalletContext";
 import { api } from "../../lib/api";
-import { getPrescriptionManager, DOCUMENT_REGISTRY_ABI, explorerTxUrl } from "../../lib/contracts";
+import { getPrescriptionManager, getDocumentRegistry, explorerTxUrl } from "../../lib/contracts";
+import { findExistingDocument, extractDocumentIdFromReceipt } from "../../lib/documentRecovery";
 import { getErrorMessage } from "../../lib/error";
 import { useToast } from "../../components/common/Toast";
 import { useLoader } from "../../components/common/Loader";
@@ -151,16 +152,17 @@ export default function RecetasPage() {
         if (documentHash !== receta.documentHash) {
           throw new Error("Este no es el mismo archivo que se emitió — adjuntá el PDF original.");
         }
-        const lookup = await api.lookupDocumentByHash(patientAddress, documentHash);
-        if (lookup.documentIdOnChain === null) {
+        const documentRegistry = await getDocumentRegistry();
+        const existing = await findExistingDocument(documentRegistry, patientAddress, documentHash);
+        if (!existing) {
           throw new Error("No se encontró el documento en la blockchain. Contactá a soporte.");
         }
-        if (lookup.alreadySaved) {
+        if (existing.alreadySaved) {
           toast.show("Esta receta ya estaba guardada", "success");
           await load();
           return;
         }
-        documentIdOnChain = lookup.documentIdOnChain;
+        documentIdOnChain = existing.documentIdOnChain;
       } else {
         const offChainRef = crypto.randomUUID();
         loader.show("Confirmá en MetaMask…");
@@ -169,17 +171,7 @@ export default function RecetasPage() {
         txHash = tx.hash;
         loader.show("Registrando en la blockchain…");
         const receipt = await tx.wait();
-
-        // El documento lo registra MedicalDocumentRegistry (evento DocumentRegistered)
-        const iface = new ethers.Interface(DOCUMENT_REGISTRY_ABI);
-        documentIdOnChain = -1;
-        for (const log of receipt.logs) {
-          try {
-            const parsed = iface.parseLog(log);
-            if (parsed?.name === "DocumentRegistered") { documentIdOnChain = Number(parsed.args.documentId); break; }
-          } catch { /* otro contrato */ }
-        }
-        if (documentIdOnChain < 0) throw new Error("No se pudo obtener el id del documento");
+        documentIdOnChain = extractDocumentIdFromReceipt(receipt);
       }
 
       // Guardamos el PDF en la DB (emisor = el médico, para que el paciente lo vea como receta médica)

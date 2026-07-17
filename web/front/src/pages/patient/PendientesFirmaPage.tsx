@@ -4,10 +4,12 @@ import { ethers } from "ethers";
 import { useWallet } from "../../context/WalletContext";
 import { api, type SignedDoc } from "../../lib/api";
 import { getDocumentRegistry, explorerTxUrl } from "../../lib/contracts";
+import { findExistingDocument, extractDocumentIdFromReceipt } from "../../lib/documentRecovery";
 import { categoryLabel } from "../../lib/categories";
 import { getErrorMessage } from "../../lib/error";
 import { useToast } from "../../components/common/Toast";
 import { useLoader } from "../../components/common/Loader";
+import { useDocViewer } from "../../components/common/DocViewer";
 import { Icon } from "../../components/landing/Icon";
 import PageShell, { lu, iconBox, accentPill } from "../../components/patient/PageShell";
 import { landing, sectionAccent, palette, fontFamily } from "../../styles";
@@ -26,6 +28,7 @@ export default function PendientesFirmaPage() {
   const { address } = useWallet();
   const toast = useToast();
   const loader = useLoader();
+  const viewer = useDocViewer();
 
   const [docs, setDocs] = useState<SignedDoc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,21 +57,14 @@ export default function PendientesFirmaPage() {
       let documentIdOnChain: number;
       let txHash: string | undefined;
 
-      if (await registry.isHashRegistered(doc.documentHash)) {
-        // Puede ser un reintento: una vez anterior la transacción se confirmó pero
-        // guardar el registro en el backend falló a mitad de camino. El contrato no
-        // deja re-registrar el mismo hash, así que buscamos si ya quedó asociado a
-        // este paciente en vez de asumir directamente que es un duplicado real.
-        const lookup = await api.lookupDocumentByHash(normalizedAddress, doc.documentHash);
-        if (lookup.documentIdOnChain === null) {
-          throw new Error("Este documento ya fue registrado en la blockchain para otro paciente.");
-        }
-        if (lookup.alreadySaved) {
+      const existing = await findExistingDocument(registry, normalizedAddress, doc.documentHash);
+      if (existing) {
+        if (existing.alreadySaved) {
           toast.show("Este documento ya estaba registrado en tu historial", "success");
           setDocs((prev) => prev.filter((d) => d.id !== doc.id));
           return;
         }
-        documentIdOnChain = lookup.documentIdOnChain;
+        documentIdOnChain = existing.documentIdOnChain;
       } else {
         //paciente paga el gas, el contrato verifica la firma del medico
         const tx = await registry.registerSignedDocument(
@@ -82,12 +78,7 @@ export default function PendientesFirmaPage() {
         txHash = tx.hash;
         loader.show("Registrando en la blockchain…");
         const receipt = await tx.wait();
-
-        const event = receipt.logs
-          .map((log: any) => { try { return registry.interface.parseLog(log); } catch { return null; } })
-          .find((parsed: any) => parsed?.name === "DocumentRegistered");
-        if (!event) throw new Error("No se pudo obtener el id del documento registrado");
-        documentIdOnChain = Number(event.args.documentId ?? event.args[0]);
+        documentIdOnChain = extractDocumentIdFromReceipt(receipt);
       }
 
       await api.registerSignedDocument(doc.id, documentIdOnChain);
@@ -145,10 +136,16 @@ export default function PendientesFirmaPage() {
             {doc.notes && <p style={s.notes}>📝 {doc.notes}</p>}
 
             <div style={s.actions}>
-              <a href={api.signedDocFileUrl(doc.id)} target="_blank" rel="noreferrer" style={{ ...s.viewBtn, color: accent.main }}>
+              <button
+                type="button"
+                style={{ ...s.viewBtn, color: accent.main, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                onClick={() =>
+                  viewer.open({ url: api.signedDocFileUrl(doc.id), fileName: doc.title, title: doc.title })
+                }
+              >
                 <Icon name="arrow" size={13} />
                 Ver documento
-              </a>
+              </button>
               <button
                 style={{ ...s.registerBtn, background: accent.main, opacity: registering === doc.id ? 0.6 : 1 }}
                 disabled={registering === doc.id}
