@@ -37,11 +37,8 @@ export interface MedicalDocumentValue {
   doctor: string;
 }
 
-// Debe reflejar el enum DocumentStatus de MedicalDocumentRegistry.sol
 enum DocumentStatus {
-  PATIENT_UPLOADED = 0,
   VERIFIED_ISSUER_DOCUMENT = 1,
-  REVOKED = 2,
 }
 
 interface OnChainDocument {
@@ -102,7 +99,7 @@ export class BlockchainService implements OnModuleInit {
     }
   }
 
-  // De una lista de wallets, devuelve el subconjunto (en minúscula) que UserRegistry
+  // De una lista de wallets, devuelve el subconjunto que UserRegistry
   // marca como aprobadas. Son llamadas view (sin gas, no son transacciones) y van en
   // paralelo: ethers las agrupa en un solo request HTTP al RPC en la mayoría de los casos,
   // así que consultar 50 wallets no es mucho más lento que consultar una sola.
