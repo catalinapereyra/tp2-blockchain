@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Body, Query, UseGuards, ForbiddenException } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { PrescriptionsService, CreatePrescriptionDto } from "./prescriptions.service";
 import { WalletAddress } from "../auth/wallet.decorator";
@@ -14,9 +14,15 @@ export class PrescriptionsController {
     return this.service.create(wallet, dto);
   }
 
-  //recetas por medico o por paciente (texto + nombres off-chain)
+  //recetas por medico o por paciente (texto + nombres off-chain); el filtro tiene que ser el wallet logueado
   @Get()
-  list(@Query("doctor") doctor?: string, @Query("patient") patient?: string) {
+  list(@WalletAddress() wallet: string, @Query("doctor") doctor?: string, @Query("patient") patient?: string) {
+    if (doctor && doctor.toLowerCase() !== wallet.toLowerCase()) {
+      throw new ForbiddenException("No podés consultar recetas de otro médico");
+    }
+    if (patient && patient.toLowerCase() !== wallet.toLowerCase()) {
+      throw new ForbiddenException("No podés consultar recetas de otro paciente");
+    }
     if (doctor) return this.service.getByDoctor(doctor);
     if (patient) return this.service.getByPatient(patient);
     return [];
