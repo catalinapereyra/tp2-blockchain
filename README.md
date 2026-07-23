@@ -90,7 +90,7 @@ Chain ID: `11155111`
 │   │   ├── registry/     # UserRegistry, MedicalDocumentRegistry
 │   │   └── manager/      # PermissionManager, PrescriptionManager
 │   ├── test/             # Tests de los contratos
-│   └── scripts/          # deploy.ts, demo.ts, deployed.json
+│   └── scripts/          # deploy.ts, deployed.json
 ├── web/
 │   ├── back/             # API NestJS + Prisma
 │   └── front/            # SPA React + Vite
