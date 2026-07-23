@@ -63,11 +63,12 @@ export class DocumentsController {
 
   //El médico logueado guarda/edita su diagnóstico sobre un documento (off-chain)
   @Put(":id/diagnosis")
-  saveDiagnosis(
+  async saveDiagnosis(
     @Param("id", ParseIntPipe) id: number,
     @WalletAddress() wallet: string,
     @Body() body: { text: string },
   ) {
+    await this.assertOnChainAccess(id, wallet);
     return this.documentsService.upsertDiagnosis(id, wallet, body.text);
   }
 
