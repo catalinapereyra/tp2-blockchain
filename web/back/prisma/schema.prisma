@@ -23,17 +23,17 @@ model UserProfile {
   updatedAt     DateTime @updatedAt
 }
 
-// Documento firmado off-chain por un médico (EIP-712), pendiente de que el
-// paciente lo registre on-chain. El médico no paga gas: solo firma. El archivo
-// y la firma quedan acá hasta que el paciente paga la tx y lo registra.
+//doc firmado off-chain por un medico (EIP-712), pendiente de que el
+//paciente lo registre on-chain. el medico no paga gas: solo firma. El archivo
+// y la firma quedan acá hasta que el paciente paga la tx y lo registra
 model SignedDocument {
   id             Int      @id @default(autoincrement())
   patientAddress String
   doctorAddress  String
-  documentHash   String // bytes32 hex (keccak256 del archivo)
-  documentType   String // categoría genérica (on-chain)
-  offChainRef    String // referencia usada dentro de la firma EIP-712
-  signature      String // firma EIP-712 del médico
+  documentHash   String //bytes32 hex (keccak256 del archivo)
+  documentType   String //categoria generica (on-chain)
+  offChainRef    String //referencia usada dentro de la firma EIP-712
+  signature      String //firma EIP-712 del medico
   title          String
   studyType      String?
   notes          String?
@@ -44,8 +44,8 @@ model SignedDocument {
   createdAt      DateTime @default(now())
 }
 
-// Diagnóstico / comentario de un médico sobre un documento. Off-chain y privado.
-// Cada médico tiene a lo sumo un diagnóstico por documento (puede editarlo).
+//diagnostico/comentario de un medico sobre un documento. off-chain y privado
+//cada medico tiene a lo sumo un diagnostico por doc (puede editarlo)
 model Diagnosis {
   id                Int      @id @default(autoincrement())
   documentIdOnChain Int
@@ -57,8 +57,8 @@ model Diagnosis {
   @@unique([documentIdOnChain, doctorAddress])
 }
 
-// Relación "este es mi médico" (off-chain). Permite tener un médico en la lista
-// sin compartirle ningún documento. No necesita estar on-chain.
+//relación "este es mi medico" (off-chain). Permite tener un medico en la lista
+//sin compartirle ningun documento, no necesita estar on-chain
 model PatientDoctor {
   id             Int      @id @default(autoincrement())
   patientAddress String
@@ -68,7 +68,7 @@ model PatientDoctor {
   @@unique([patientAddress, doctorAddress])
 }
 
-// Texto privado de la receta (off-chain). On-chain solo queda el estado y el hash.
+//texto privado de la receta (off-chain), on-chain solo queda el estado y el hash
 model Prescription {
   id                    Int      @id @default(autoincrement())
   prescriptionIdOnChain Int      @unique
@@ -100,8 +100,6 @@ model DocumentMetadata {
   labName           String?
   notes             String?
   studyDate         DateTime?
-  // El documento (PDF/imagen) se guarda directamente en la base de datos
-  // para mantenerlo privado, en vez de publicarlo en IPFS.
   fileData          Bytes
   fileName          String
   mimeType          String
