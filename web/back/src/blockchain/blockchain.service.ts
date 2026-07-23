@@ -17,6 +17,11 @@ const USER_REGISTRY_ABI = [
   "function isApproved(address user) external view returns (bool)",
 ];
 
+const PRESCRIPTION_MANAGER_ABI = [
+  "function getPatientPrescriptions(address patient) external view returns (uint256[])",
+  "function getPrescription(uint256 id) external view returns (tuple(uint256 id, address patient, address doctor, string prescriptionType, uint8 status, bytes32 documentHash, string offChainRef, uint256 requestedAt))",
+];
+
 // mismo dominio y tipos eip-712 que MedicalDocumentRegistry.sol y el front (contracts.ts)
 const MEDICAL_DOCUMENT_TYPES = {
   MedicalDocument: [
@@ -40,6 +45,10 @@ enum DocumentStatus {
   VERIFIED_ISSUER_DOCUMENT = 1,
 }
 
+enum PrescriptionStatus {
+  ISSUED = 3,
+}
+
 interface OnChainDocument {
   patient: string;
   issuer: string;
@@ -54,7 +63,9 @@ export class BlockchainService implements OnModuleInit {
   private documentRegistry!: ethers.Contract;
   private permissionManager!: ethers.Contract;
   private userRegistry!: ethers.Contract;
+  private prescriptionManager!: ethers.Contract;
   private documentRegistryAddress!: string;
+  private prescriptionManagerAddress!: string;
   private chainId!: number;
 
   constructor(private readonly config: ConfigService) {}
@@ -64,11 +75,19 @@ export class BlockchainService implements OnModuleInit {
     const documentRegistryAddress = this.config.get<string>("DOCUMENT_REGISTRY_ADDRESS");
     const permissionManagerAddress = this.config.get<string>("PERMISSION_MANAGER_ADDRESS");
     const userRegistryAddress = this.config.get<string>("USER_REGISTRY_ADDRESS");
+    const prescriptionManagerAddress = this.config.get<string>("PRESCRIPTION_MANAGER_ADDRESS");
     const chainId = this.config.get<string>("CHAIN_ID");
 
-    if (!rpcUrl || !documentRegistryAddress || !permissionManagerAddress || !userRegistryAddress || !chainId) {
+    if (
+      !rpcUrl ||
+      !documentRegistryAddress ||
+      !permissionManagerAddress ||
+      !userRegistryAddress ||
+      !prescriptionManagerAddress ||
+      !chainId
+    ) {
       throw new Error(
-        "Faltan variables de entorno de blockchain: RPC_URL, DOCUMENT_REGISTRY_ADDRESS, PERMISSION_MANAGER_ADDRESS, USER_REGISTRY_ADDRESS, CHAIN_ID",
+        "Faltan variables de entorno de blockchain: RPC_URL, DOCUMENT_REGISTRY_ADDRESS, PERMISSION_MANAGER_ADDRESS, USER_REGISTRY_ADDRESS, PRESCRIPTION_MANAGER_ADDRESS, CHAIN_ID",
       );
     }
 
@@ -76,7 +95,9 @@ export class BlockchainService implements OnModuleInit {
     this.documentRegistry = new ethers.Contract(documentRegistryAddress, DOCUMENT_REGISTRY_ABI, provider);
     this.permissionManager = new ethers.Contract(permissionManagerAddress, PERMISSION_MANAGER_ABI, provider);
     this.userRegistry = new ethers.Contract(userRegistryAddress, USER_REGISTRY_ABI, provider);
+    this.prescriptionManager = new ethers.Contract(prescriptionManagerAddress, PRESCRIPTION_MANAGER_ABI, provider);
     this.documentRegistryAddress = documentRegistryAddress;
+    this.prescriptionManagerAddress = prescriptionManagerAddress;
     this.chainId = Number(chainId);
   }
 
@@ -159,10 +180,41 @@ export class BlockchainService implements OnModuleInit {
     expected: { patient: string; emitter: string },
   ): Promise<boolean> {
     const doc = await this.getDocumentOnChain(documentIdOnChain);
-    return (
-      doc.patient.toLowerCase() === expected.patient.toLowerCase() &&
-      doc.issuer.toLowerCase() === expected.emitter.toLowerCase()
-    );
+    if (doc.patient.toLowerCase() !== expected.patient.toLowerCase()) return false;
+    if (doc.issuer.toLowerCase() === expected.emitter.toLowerCase()) return true;
+
+    // si el documento se registro desde issuePrescription(), el issuer on-chain queda
+    // como la address de PrescriptionManager (msg.sender de ese llamado interno), no la
+    // wallet del medico. En ese caso el medico real hay que buscarlo en la receta.
+    if (doc.issuer.toLowerCase() !== this.prescriptionManagerAddress.toLowerCase()) return false;
+    return this.documentMatchesIssuedPrescription(expected.patient, expected.emitter, doc.documentHash);
+  }
+
+  private async documentMatchesIssuedPrescription(
+    patient: string,
+    doctor: string,
+    documentHash: string,
+  ): Promise<boolean> {
+    let ids: bigint[];
+    try {
+      ids = (await this.prescriptionManager.getPatientPrescriptions(patient)) as bigint[];
+    } catch (err) {
+      this.logger.error(`No se pudo leer las recetas on-chain de ${patient}`, err as Error);
+      throw new InternalServerErrorException("No se pudo validar la receta contra la blockchain");
+    }
+
+    const hash = documentHash.toLowerCase();
+    for (const idBn of ids) {
+      const p = await this.prescriptionManager.getPrescription(idBn);
+      if (
+        Number(p.status) === PrescriptionStatus.ISSUED &&
+        (p.documentHash as string).toLowerCase() === hash &&
+        (p.doctor as string).toLowerCase() === doctor.toLowerCase()
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // busca entre los documentos on-chain del paciente el que tiene este hash, para recuperar
