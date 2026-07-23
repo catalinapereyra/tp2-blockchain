@@ -11,7 +11,7 @@ export interface CreatePrescriptionDto {
 export class PrescriptionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // El paciente guarda el texto privado de la receta tras solicitarla on-chain.
+  //paciente guarda el texto priv de la receta tras solicitarla on-chain
   async create(patientAddress: string, dto: CreatePrescriptionDto) {
     const existing = await this.prisma.prescription.findUnique({
       where: { prescriptionIdOnChain: dto.prescriptionIdOnChain },
@@ -28,7 +28,7 @@ export class PrescriptionsService {
     });
   }
 
-  // Nombres off-chain del paciente y del médico, para mostrar junto a la address.
+  //nombres off chain del paciente y del medico, para mostrar junto a la address
   private async enrich(items: { patientAddress: string; doctorAddress: string }[]) {
     const addrs = [...new Set(items.flatMap((p) => [p.patientAddress, p.doctorAddress]))];
     const profiles = addrs.length

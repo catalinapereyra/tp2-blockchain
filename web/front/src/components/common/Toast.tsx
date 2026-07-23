@@ -26,10 +26,6 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-/**
- * Hook para disparar un popup (toast) desde cualquier pantalla.
- * Ej: const toast = useToast(); toast.show("Diagnóstico enviado");
- */
 export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error("useToast debe usarse dentro de <ToastProvider>");

@@ -7,7 +7,6 @@ export class CreateLaboratoryStudyDto {
   studyType?: string;
   labName?: string;
   notes?: string;
-  // Contenido del estudio (PDF/imagen) en base64. Se guarda en la base de datos.
   fileBase64!: string;
   fileName!: string;
   mimeType!: string;

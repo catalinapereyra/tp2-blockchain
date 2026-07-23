@@ -8,13 +8,13 @@ import { WalletAddress } from "../auth/wallet.decorator";
 export class PrescriptionsController {
   constructor(private readonly service: PrescriptionsService) {}
 
-  // El paciente logueado guarda el texto privado de la receta solicitada
+  //el paciente logueado guarda el texto privado de la receta solicitada
   @Post()
   create(@WalletAddress() wallet: string, @Body() dto: CreatePrescriptionDto) {
     return this.service.create(wallet, dto);
   }
 
-  // Recetas por médico o por paciente (texto + nombres off-chain)
+  //recetas por medico o por paciente (texto + nombres off-chain)
   @Get()
   list(@Query("doctor") doctor?: string, @Query("patient") patient?: string) {
     if (doctor) return this.service.getByDoctor(doctor);

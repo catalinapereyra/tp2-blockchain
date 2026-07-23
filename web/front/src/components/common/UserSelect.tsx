@@ -21,11 +21,6 @@ function userName(u: AppUser) {
   return `${u.name} ${u.lastName ?? ""}`.trim();
 }
 
-/**
- * Desplegable reutilizable para elegir un usuario (médico / paciente).
- * Muestra el nombre y apellido off-chain en grande y la address chiquita.
- * Estilado para combinar con el resto de la app (no usa el <select> nativo).
- */
 export default function UserSelect({
   users,
   value,

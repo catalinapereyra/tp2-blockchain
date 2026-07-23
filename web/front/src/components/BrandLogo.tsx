@@ -4,9 +4,7 @@ import { palette, fontFamily } from "../styles";
 // Logo MediChain (cubo + wordmark) reutilizable, con estilos inline tomados del
 // design system para que funcione en cualquier lado sin depender de Landing.css.
 interface BrandLogoProps {
-  /** Alto del cubo en px; el resto escala proporcional. Default 28 (navbar). */
   markHeight?: number;
-  /** Tamaño del wordmark en px. Default 16. */
   fontSize?: number;
 }
 

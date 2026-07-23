@@ -6,8 +6,6 @@ import { AppModule } from "./app.module";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // FRONT_URL puede ser una lista separada por comas (ej: dominio de prod de
-  // Vercel + previews). Si no se setea, se permite el front local de desarrollo.
   const allowedOrigins = (process.env.FRONT_URL || "http://localhost:5173")
     .split(",")
     .map((o) => o.trim())
@@ -17,8 +15,6 @@ async function bootstrap() {
     origin: allowedOrigins,
   });
 
-  // Los documentos (PDF/imagen) se mandan en base64 dentro del JSON al guardar
-  // la metadata, así que subimos el límite del body parser (10MB en base64 ≈ 13.4MB).
   app.use(json({ limit: "15mb" }));
   app.use(urlencoded({ extended: true, limit: "15mb" }));
 

@@ -145,9 +145,6 @@ export class PermissionsService {
     });
   }
 
-  // Idempotente a propósito: si el permiso ya no está (por ejemplo, un reintento
-  // después de que la revocación on-chain se confirmó pero esta limpieza en la DB
-  // había fallado antes), no hay nada más que hacer — no es un error.
   async revoke(patientAddress: string, doctorAddress: string, documentIdOnChain: number) {
     const record = await this.prisma.documentAccess.findUnique({
       where: {

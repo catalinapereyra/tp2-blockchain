@@ -17,8 +17,7 @@ const USER_REGISTRY_ABI = [
   "function isApproved(address user) external view returns (bool)",
 ];
 
-// Mismo dominio y tipos EIP-712 que MedicalDocumentRegistry.sol y que firma el
-// front (ver web/front/src/lib/contracts.ts) para el flujo de firma sin gas.
+// mismo dominio y tipos eip-712 que MedicalDocumentRegistry.sol y el front (contracts.ts)
 const MEDICAL_DOCUMENT_TYPES = {
   MedicalDocument: [
     { name: "patient", type: "address" },
@@ -48,9 +47,7 @@ interface OnChainDocument {
   status: number;
 }
 
-// Fuente de verdad de permisos: el contrato PermissionManager. La tabla
-// documentAccess de Postgres es solo un espejo para listar más rápido,
-// puede desincronizarse (el front llama al contrato y a la API por separado).
+// fuente de verdad de permisos es el contrato, postgres es solo un espejo para listar
 @Injectable()
 export class BlockchainService implements OnModuleInit {
   private readonly logger = new Logger(BlockchainService.name);
@@ -83,10 +80,7 @@ export class BlockchainService implements OnModuleInit {
     this.chainId = Number(chainId);
   }
 
-  // Rol on-chain de una wallet en UserRegistry (0=PATIENT,1=DOCTOR,2=LABORATORY,3=INSTITUTION),
-  // o null si esa wallet todavía no se registró en el contrato. Es la única fuente de
-  // verdad del rol: el campo `role` de UserProfile en Postgres es solo un espejo para
-  // listar usuarios rápido y nunca debería aceptarse directamente de lo que manda el cliente.
+  // devuelve el rol on-chain de la wallet (0=patient,1=doctor,2=laboratory,3=institution) o null si no esta registrada
   async getOnChainRole(address: string): Promise<number | null> {
     try {
       const registered = (await this.userRegistry.isRegistered(address)) as boolean;
@@ -99,10 +93,7 @@ export class BlockchainService implements OnModuleInit {
     }
   }
 
-  // De una lista de wallets, devuelve el subconjunto que UserRegistry
-  // marca como aprobadas. Son llamadas view (sin gas, no son transacciones) y van en
-  // paralelo: ethers las agrupa en un solo request HTTP al RPC en la mayoría de los casos,
-  // así que consultar 50 wallets no es mucho más lento que consultar una sola.
+  // de una lista de wallets, devuelve las que estan aprobadas en el contrato
   async filterApprovedAddresses(addresses: string[]): Promise<Set<string>> {
     if (addresses.length === 0) return new Set();
     try {
@@ -118,10 +109,7 @@ export class BlockchainService implements OnModuleInit {
     }
   }
 
-  // Recupera qué dirección firmó realmente `value` con EIP-712 (mismo dominio que
-  // usa el contrato al verificar registerSignedDocument). No hace falta red: es
-  // criptografía pura (ECDSA), así que un doctorAddress falso o datos alterados
-  // recuperan una dirección distinta a la que dice ser el firmante.
+  // recupera que direccion firmo realmente value con eip-712 (no necesita red, es solo criptografia)
   recoverMedicalDocumentSigner(value: MedicalDocumentValue, signature: string): string {
     const domain = {
       name: "MedicalDocumentRegistry",
@@ -132,8 +120,7 @@ export class BlockchainService implements OnModuleInit {
     return ethers.verifyTypedData(domain, MEDICAL_DOCUMENT_TYPES, value, signature).toLowerCase();
   }
 
-  // true si el que pide el documento es el paciente dueño, el emisor original,
-  // o tiene acceso otorgado on-chain (global o a ese documento puntual)
+  // true si quien pide el documento es el paciente, el emisor, o tiene acceso otorgado on-chain
   async canAccessDocument(documentIdOnChain: number, requester: string): Promise<boolean> {
     const address = requester.toLowerCase();
 
@@ -151,11 +138,7 @@ export class BlockchainService implements OnModuleInit {
     }
   }
 
-  // true si el documento `documentIdOnChain` ya registrado en la blockchain corresponde
-  // exactamente a esta firma pendiente (mismo paciente, mismo médico emisor, mismo hash
-  // de archivo, y con status de emisor verificado). Se usa antes de promover un documento
-  // firmado sin gas a metadata "registrada": el frontend podría mandar cualquier
-  // documentIdOnChain, así que no alcanza con confiar en que "dice" haber sido registrado.
+  // true si el documento on-chain coincide con esta firma pendiente (mismo paciente, doctor y hash)
   async documentMatchesSignedRecord(
     documentIdOnChain: number,
     expected: { patient: string; doctor: string; documentHash: string },
@@ -170,10 +153,7 @@ export class BlockchainService implements OnModuleInit {
     );
   }
 
-  // true si `documentIdOnChain` ya existe on-chain con exactamente ese paciente y emisor.
-  // Se usa antes de guardar metadata off-chain para un documento ya registrado
-  // (subida directa, no firma sin gas): el frontend podría mandar cualquier
-  // documentIdOnChain, así que no alcanza con confiar en que "dice" haberlo registrado él.
+  // true si el documento on-chain ya existe con exactamente ese paciente y emisor
   async documentMatchesOwner(
     documentIdOnChain: number,
     expected: { patient: string; emitter: string },
@@ -185,11 +165,8 @@ export class BlockchainService implements OnModuleInit {
     );
   }
 
-  // Busca, entre los documentos on-chain de `patient`, el que tiene este hash exacto de
-  // archivo. Sirve para recuperar el documentIdOnChain cuando la transacción de registro
-  // ya se confirmó en la blockchain pero el paso siguiente (guardar metadata en el backend)
-  // se cortó a mitad de camino (se cerró la pestaña, cayó la red, etc.): sin esto, el
-  // usuario queda trabado porque el contrato no deja re-registrar un hash ya usado.
+  // busca entre los documentos on-chain del paciente el que tiene este hash, para recuperar
+  // el documentId si el registro se confirmo pero guardar la metadata se corto a mitad de camino
   async findDocumentIdByHash(patient: string, documentHash: string): Promise<number | null> {
     let ids: bigint[];
     try {

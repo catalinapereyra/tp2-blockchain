@@ -5,10 +5,10 @@ import { getDocumentRegistry } from "../../lib/contracts";
 import { colors, palette, fontFamily, fontSize, fontWeight, radius, shadow } from "../../styles";
 
 interface DocViewerOptions {
-  url: string; // URL del archivo (sirve para verlo y descargarlo)
+  url: string; //URL del archivo (sirve para verlo y descargarlo)
   fileName?: string; //nombre sugerido al descargar
   title?: string;
-  documentId?: number; // id on-chain, para verificar integridad
+  documentId?: number; //id on-chain, para verificar integridad
 }
 
 type VerifyResult = "ok" | "fail" | "error" | null;
@@ -49,11 +49,6 @@ export function DocViewerProvider({ children }: { children: ReactNode }) {
   const open = useCallback((opts: DocViewerOptions) => { setDoc(opts); setVerifyResult(null); }, []);
   const close = useCallback(() => setDoc(null), []);
 
-  // doc.url apunta a un endpoint protegido por JWT (/api/documents/:id/file). No se puede
-  // usar directamente como src de un <iframe>: el navegador no manda el header
-  // Authorization en esas requests, así que el backend respondería 401. Por eso lo bajamos
-  // una sola vez acá como Blob (autenticado) y reusamos ese mismo blob para ver, verificar
-  // y descargar.
   useEffect(() => {
     if (!doc) {
       setBlob(null);
@@ -83,7 +78,7 @@ export function DocViewerProvider({ children }: { children: ReactNode }) {
     };
   }, [doc]);
 
-  // Recalcula el hash del archivo actual y lo compara con el on-chain (sin gas).
+  //recalcula el hash del archivo actual y lo compara con el on-chain (sin gas).
   async function verify() {
     if (!doc || doc.documentId == null || !blob) return;
     setVerifying(true);

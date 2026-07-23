@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateLaboratoryStudyDto } from "./dto/create-laboratory-study.dto";
 
-// No incluye fileData (los bytes del archivo) en los listados.
 const METADATA_SELECT = {
   id: true,
   documentIdOnChain: true,

@@ -8,9 +8,6 @@ interface SpinnerProps {
   style?: React.CSSProperties;
 }
 
-/**
- * Círculo de carga animado, reutilizable. Usa el @keyframes spin global (index.css).
- */
 export default function Spinner({ size = 18, color = colors.primary, thickness = 2, style }: SpinnerProps) {
   return (
     <span

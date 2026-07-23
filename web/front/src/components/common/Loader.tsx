@@ -9,13 +9,6 @@ interface LoaderContextValue {
 
 const LoaderContext = createContext<LoaderContextValue | null>(null);
 
-/**
- * Hook para mostrar un overlay con loader mientras se espera una firma o
- * transacción (ej: MetaMask). Ej:
- *   const loader = useLoader();
- *   loader.show("Confirmá en MetaMask…");
- *   try { ...tx... } finally { loader.hide(); }
- */
 export function useLoader() {
   const ctx = useContext(LoaderContext);
   if (!ctx) throw new Error("useLoader debe usarse dentro de <LoaderProvider>");
